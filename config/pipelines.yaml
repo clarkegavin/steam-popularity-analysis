@@ -9,11 +9,11 @@
 pipelines:
   - name: roblox_extraction
     type: pipelines.data_extractor_pipeline.DataExtractorPipeline
-    extractor_type: roblox  # indicates which extractor to create
+    extractor_type: roblox
     params:
       output_csv: "output/roblox_data.csv"
       extractor_params:
-        sample_size: 100   # only used if type = "sample"
+        sample_size: 1000
 
   - name: split_data
     type: pipelines.data_splitter_pipeline.DataSplitterPipeline
@@ -21,3 +21,15 @@ pipelines:
       target_column: "Genre"
       test_size: 0.2
       random_state: 42
+
+  - name: encode_target
+    type: pipelines.target_feature_pipeline.TargetFeaturePipeline
+    params:
+      target_column: "Genre"
+
+#  - name: encode_features
+#    type: pipelines.feature_encoder_pipeline.FeatureEncoderPipeline
+#    encoders:
+#      - name: label
+#        columns: ["Creator"]
+#        params: {}

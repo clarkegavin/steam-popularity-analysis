@@ -10,7 +10,11 @@ def main():
     pipelines = PipelineFactory.build_pipelines_from_yaml(yaml_path)
 
     orchestrator = PipelineOrchestrator(pipelines=pipelines, parallel=False, max_retries=3)
-    orchestrator.run()
+
+    data = None  # If your first pipeline extracts data, this can be None
+
+    X_train, X_test, y_train, y_test = orchestrator.run(data=data, target_column="Genre")
+
 
 if __name__ == "__main__":
     main()

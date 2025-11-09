@@ -2,6 +2,8 @@
 from typing import Optional
 import os
 import pandas as pd
+
+from data import ExtractorFactory
 from data.extractor import DataExtractor
 from logs.logger import get_logger
 from pipelines.base import Pipeline
@@ -18,6 +20,32 @@ class DataExtractorPipeline(Pipeline):
         self.logger = get_logger(self.__class__.__name__)
         self.df: Optional[pd.DataFrame] = None
         self.output_csv = output_csv or os.getenv("OUTPUT_CSV", "output.csv")
+
+    @classmethod
+    def from_config(cls, cfg: dict):
+        """
+        Construct DataExtractorPipeline from YAML config.
+        Example config keys:
+          extractor_type: "roblox"
+          params:
+            output_csv: "output.csv"
+            extractor_params:
+              sample_size: 100
+        """
+
+        params = cfg.get("params", {})
+        extractor_type = cfg.get("extractor_type", "roblox")
+        extractor_params = params.pop("extractor_params", {})
+
+        # Create the extractor via factory
+        if extractor_type == "roblox":
+            extractor = ExtractorFactory.create_roblox_extractor(**extractor_params)
+        else:
+            raise ValueError(f"Unknown extractor type '{extractor_type}'")
+
+        #output_csv = cfg.get("params", {}).get("output_csv")
+        return cls(extractor=extractor, **params)
+
 
     def extract(self) -> None:
         """Extract data using the configured DataExtractor."""
