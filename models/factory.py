@@ -1,4 +1,4 @@
-#factory.py
+#models/factory.py
 from logs.logger import get_logger
 
 class ModelFactory:
@@ -17,6 +17,8 @@ class ModelFactory:
     @classmethod
     def get_model(cls, name: str, **kwargs):
         model = cls._registry.get(name)
+        cls.logger.info(f"Retrieving model class for name: {name}")
         if not model:
             cls.logger.warning(f"Model '{name}' not found in registry")
-        return model(**kwargs) if model else None
+        cls.logger.info(f"Instantiating model '{name}' with kwargs: {kwargs}")
+        return model(name, **kwargs) if model else None

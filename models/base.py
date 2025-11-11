@@ -13,6 +13,7 @@ class Model(ABC):
     logger = get_logger("ModelBase")
 
     def __init__(self, name: str, **params):
+        self.logger = get_logger(f"Initializing Base Model.{name}")
         self.name = name
         self.params = params
         self.model = None
@@ -64,9 +65,9 @@ class Model(ABC):
         self.logger.info(f"Model saved with name: {self.name} in MLflow")
 
 
-    @abstractmethod
-    def to_dict(self):
-        """
-        Convert the model instance to a dictionary.
-        """
-        pass
+    # @abstractmethod
+    # def to_dict(self):
+    #     """
+    #     Convert the model instance to a dictionary.
+    #     """
+    #     pass

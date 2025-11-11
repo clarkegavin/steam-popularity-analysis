@@ -33,3 +33,24 @@ pipelines:
 #      - name: label
 #        columns: ["Creator"]
 #        params: {}
+
+#  - name: run_experiment
+#    type: pipelines.experiment_pipeline.ExperimentPipeline
+#    params:
+#      experiment_name: "classification"
+#      experiment_params:
+#        experiment_run_name: "roblox_genre_classification"
+#        model_name: "naive_bayes"
+#        evaluator_name: "classification"
+#        metrics: ["accuracy", "f1", "precision", "recall"]
+
+  - name: naive_bayes
+    type: pipelines.experiment_pipeline.ExperimentPipeline
+    params:
+      experiment_type: "classification"
+      model_name: "naive_bayes"
+      evaluator_name: "classification"
+      metrics: ["accuracy", "f1", "precision", "recall"]
+      mlflow_experiment: "Naive Bayes Experiments"
+      experiments:
+        - params: {}  # default params

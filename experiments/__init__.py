@@ -1,4 +1,4 @@
-# __init__.py
+# experiments\__init__.py
 from .classification_experiment import ClassificationExperiment
 from .clustering_experiment import ClusteringExperiment
 from .factory import ExperimentFactory
@@ -11,7 +11,7 @@ ExperimentFactory.register_experiment("clustering", ClusteringExperiment)
 
 __all__ = [
     "ExperimentFactory",
-    "classification_experiment",
-    "clustering_experiment",
+    "ClassificationExperiment",
+    "ClusteringExperiment",
 ]
 

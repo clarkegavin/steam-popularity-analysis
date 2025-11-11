@@ -14,8 +14,10 @@ class EvaluatorFactory:
         cls.logger.info(f"Registered evaluator: {name}")
 
     @classmethod
-    def get_evaluator(cls, name: str, **kwargs):
+    def get_evaluator(cls, name: str = None, **kwargs):
+        cls.logger.info(f"Retrieving evaluator: {name} with params {kwargs}")
         evaluator = cls._registry.get(name)
         if not evaluator:
             cls.logger.warning(f"Evaluator '{name}' not found in registry")
-        return evaluator(**kwargs) if evaluator else None
+        cls.logger.info(f"Evaluator found: {evaluator}")
+        return evaluator(name, **kwargs) if evaluator else None

@@ -3,11 +3,12 @@ from typing import List, Optional, Dict
 from logs.logger import get_logger
 import pandas as pd
 
-from pipelines import TargetFeaturePipeline, DataSplitterPipeline
+from pipelines import TargetFeaturePipeline, DataSplitterPipeline, FeatureEncoderPipeline
+from pipelines.experiment_pipeline import ExperimentPipeline
 
 
-class FeatureEncoderPipeline:
-    pass
+# class FeatureEncoderPipeline:
+#     pass
 
 
 class PipelineOrchestrator:
@@ -32,6 +33,14 @@ class PipelineOrchestrator:
                     result = pipeline.execute(
                         y=extra["y"],
                         fit=extra.get("fit", True)
+                    )
+                elif isinstance(pipeline, ExperimentPipeline):
+                    self.logger.info("Executing ExperimentPipeline with train/test data")
+                    result = pipeline.execute(
+                        X_train=extra["X_train"],
+                        X_test=extra["X_test"],
+                        y_train=extra["y_train"],
+                        y_test=extra["y_test"]
                     )
                 else:
                     result = pipeline.execute(data)
@@ -66,6 +75,14 @@ class PipelineOrchestrator:
             elif isinstance(pipeline, FeatureEncoderPipeline):
                 X_train = self.run_pipeline(pipeline, data=X_train, extra={"fit": True})
                 X_test = self.run_pipeline(pipeline, data=X_test, extra={"fit": False})
+            elif isinstance(pipeline, ExperimentPipeline):
+                # Pass train/test data explicitly
+                self.run_pipeline(pipeline, extra={
+                    "X_train": X_train,
+                    "X_test": X_test,
+                    "y_train": y_train,
+                    "y_test": y_test
+                })
             else:
                 # Other pipelines that operate on the full dataset
                 current_data = self.run_pipeline(pipeline, data=current_data)

@@ -1,10 +1,11 @@
-from base import Experiment
+# experiments/clustering_experiment.py
+from .base import Experiment
 from logs.logger import get_logger
 import mlflow
 
 class ClusteringExperiment(Experiment):
     """
-    Concrete experiment class for clustering tasks.
+    Concrete experiments class for clustering tasks.
     """
 
     def __init__(self, name, model, evaluator, X):
@@ -15,7 +16,7 @@ class ClusteringExperiment(Experiment):
         self.logger = get_logger(f"ClusteringExperiment.{self.name}")
 
     def run(self):
-        self.logger.info(f"Starting clustering experiment '{self.name}'")
+        self.logger.info(f"Starting clustering experiments '{self.name}'")
 
         with mlflow.start_run(run_name=self.name):
             self.model.fit(self.X)
@@ -25,5 +26,5 @@ class ClusteringExperiment(Experiment):
             mlflow.log_params(self.model.get_params())
             mlflow.log_metrics(metrics)
 
-        self.logger.info(f"Completed experiment '{self.name}' → {metrics}")
+        self.logger.info(f"Completed experiments '{self.name}' → {metrics}")
         return metrics
