@@ -4,6 +4,8 @@ from .factory import PipelineFactory
 from .data_extractor_pipeline import DataExtractorPipeline
 from .target_feature_pipeline import TargetFeaturePipeline
 from .feature_encoder_pipeline import FeatureEncoderPipeline
+from .experiment_pipeline import ExperimentPipeline
+from .filter_pipeline import FilterPipeline
 
 
 __all__ = [

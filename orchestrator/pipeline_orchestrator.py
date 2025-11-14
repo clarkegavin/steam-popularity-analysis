@@ -3,8 +3,8 @@ from typing import List, Optional, Dict
 from logs.logger import get_logger
 import pandas as pd
 
-from pipelines import TargetFeaturePipeline, DataSplitterPipeline, FeatureEncoderPipeline
-from pipelines.experiment_pipeline import ExperimentPipeline
+from pipelines import TargetFeaturePipeline, DataSplitterPipeline, FeatureEncoderPipeline, FilterPipeline, ExperimentPipeline
+# from pipelines.experiment_pipeline import ExperimentPipeline
 
 
 # class FeatureEncoderPipeline:
@@ -44,6 +44,7 @@ class PipelineOrchestrator:
                     )
                 else:
                     result = pipeline.execute(data)
+                    self.logger.info(f"Pipeline {pipeline.__class__.__name__} output shape: {result.shape if isinstance(result, pd.DataFrame) else 'N/A'}")
 
                 self.logger.info(f"Pipeline {pipeline.__class__.__name__} completed successfully")
                 return result
@@ -85,7 +86,9 @@ class PipelineOrchestrator:
                 })
             else:
                 # Other pipelines that operate on the full dataset
+                self.logger.info(f"Running general pipeline: {pipeline.__class__.__name__}")
                 current_data = self.run_pipeline(pipeline, data=current_data)
+                self.logger.info(f"Data shape after {pipeline.__class__.__name__}: {current_data.shape}")
 
         self.logger.info("Pipeline orchestration complete")
         return X_train, X_test, y_train, y_test

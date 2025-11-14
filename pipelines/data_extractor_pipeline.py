@@ -53,6 +53,7 @@ class DataExtractorPipeline(Pipeline):
         self.df = pd.DataFrame(self.extractor.fetch_all())
         self.logger.info(f"Extracted {len(self.df)} rows")
 
+
     def transform(self) -> None:
         """Perform any data transformations."""
         self.logger.info("Starting transformation")

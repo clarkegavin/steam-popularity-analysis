@@ -10,5 +10,6 @@ from .label_encoder import SklearnLabelEncoder
 EncoderFactory.register("sklearn_label", SklearnLabelEncoder)
 EncoderFactory.register("label", SklearnLabelEncoder)
 
-__all__ = ["EncoderFactory", "SklearnLabelEncoder"]
+__all__ = ["EncoderFactory",
+           "SklearnLabelEncoder"]
 
