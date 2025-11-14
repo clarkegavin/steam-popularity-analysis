@@ -15,6 +15,17 @@ pipelines:
       extractor_params:
         sample_size: 1000
 
+  - name: filter_features
+    type: pipelines.filter_pipeline.FilterPipeline
+    filter_features:
+      - name: drop_columns
+        params:
+          columns_to_drop:
+            [ 'Id', 'Date', 'Active_Users', 'Favorites', 'Total_Visits',
+              'Date_Created', 'Last_Updated', 'Server_Size', 'Title',
+              'Creator', 'gameID', 'Category', 'URL' ]
+
+
   - name: split_data
     type: pipelines.data_splitter_pipeline.DataSplitterPipeline
     params:
@@ -26,6 +37,9 @@ pipelines:
     type: pipelines.target_feature_pipeline.TargetFeaturePipeline
     params:
       target_column: "Genre"
+
+
+
 
 #  - name: encode_features
 #    type: pipelines.feature_encoder_pipeline.FeatureEncoderPipeline
