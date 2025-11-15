@@ -7,6 +7,10 @@ import mlflow
 import json, os
 from datetime import datetime
 from typing import Optional, Dict, List
+from sklearn.model_selection import KFold, StratifiedKFold
+import numpy as np
+from vectorizers.factory import VectorizerFactory
+from mlflow.models import infer_signature
 
 class ClassificationExperiment(Experiment):
     def __init__(
@@ -21,80 +25,172 @@ class ClassificationExperiment(Experiment):
         mlflow_tracking: bool = True,
         mlflow_experiment: Optional[str] = None,
         vectorizer: Optional[Dict] = None,
+        cv_enabled: bool = False,
+        cv_folds: int = 5,
+        cv_stratified: bool = True,
+        description: Optional[str] = None,
+        cv_shuffle: Optional[bool] = True,
+        cv_random_state: Optional[int] = 42,
     ):
 
         super().__init__(name, mlflow_tracking, mlflow_experiment)
         self.model_name = model_name
         self.evaluator_name = evaluator_name
+        self.description  = description
         self.metrics = metrics
         self.save_path = save_path
         self.model_params = model_params or {}
         self.evaluator_params = evaluator_params or {}
+        # Initialize logger
         self.logger = get_logger(f"ClassificationExperiment:{name}")
         self.logger.info('Initializing classification experiment')
         self.logger.info(f'Classification model name: {model_name}')
         self.logger.info(f'Classification model params: {self.model_params}')
+        # Initialize model
         self.model = ModelFactory.get_model(model_name, **self.model_params)
         self.logger.info(f'Classification model: {self.model}')
+        # Initialize evaluator
         self.logger.info(f'Evaluator params: {self.evaluator_params}')
         self.evaluator = EvaluatorFactory.get_evaluator(name=evaluator_name,  **self.evaluator_params)
-        self.results = {}
+        # Cross-fold validation support
+        self.cv_enabled = cv_enabled
+        self.cv_folds = cv_folds
+        self.cv_stratified = cv_stratified
+        self.cv_shuffle = cv_shuffle
+        self.cv_random_state = cv_random_state
+
+        # Vectorizer support
         self.vectorizer = vectorizer or {}
         self.vectorizer_name = self.vectorizer.get("vectorizer_name")
         self.vectorizer_field = self.vectorizer.get("vectorizer_field")
         self.vectorizer_params = self.vectorizer.get("vectorizer_params", {})
 
+        self.results = {}
+
     def run(self, X_train, X_test, y_train, y_test):
         self.logger.info(f"Running classification experiment '{self.name}'")
 
         # --- 1. Vectorizer support -----------------------
-        vectorizer_name = getattr(self, "vectorizer_name", None)
-        vectorizer_field = getattr(self, "vectorizer_field", None)
-        vectorizer_params = getattr(self, "vectorizer_params", {})
-        vectorizer_params['column'] = vectorizer_field
 
-        if vectorizer_name:
-            from vectorizers.factory import VectorizerFactory
 
-            self.logger.info(f"Using vectorizer '{vectorizer_name}' on field '{vectorizer_field}'")
+        if self.vectorizer_name:
+            self.logger.info(f"Using vectorizer '{self.vectorizer_name}' on field '{self.vectorizer_field}'")
+            self.vectorizer_params['column'] = self.vectorizer_field
             vectorizer = VectorizerFactory.get_vectorizer(
-                vectorizer_name,
-                **vectorizer_params
+                self.vectorizer_name,
+                **self.vectorizer_params
             )
+            X_train = vectorizer.fit_transform(X_train.fillna("")) # Fit on training set
+            X_test = vectorizer.transform(X_test.fillna("")) # Transform on test set
 
-            # Fit on training set
-            #X_train_vec = vectorizer.fit_transform(X_train[vectorizer_field])
-            X_train_vec = vectorizer.fit_transform(X_train.fillna(""))
-
-            # Transform on test set
-            #X_test_vec = vectorizer.transform(X_test[vectorizer_field])
-            X_test_vec = vectorizer.transform(X_test.fillna(""))
-
-            # Replace input matrices
-            X_train = X_train_vec
-            X_test = X_test_vec
 
         with mlflow.start_run(run_name=self.name):
             mlflow.log_param("model", self.model_name)
             mlflow.log_param("evaluator", self.evaluator_name)
+            mlflow.log_param("description", self.description)
             mlflow.log_params(self.model_params)
 
-            self.model.fit(X_train, y_train)
-            y_pred = self.model.predict(X_test)
-            self.results = self.evaluator.evaluate(y_test, y_pred)
+            # --- 2. Cross-validation support -----------------------
+            mlflow.log_param("cv_enabled", self.cv_enabled)
+            mlflow.log_param("cv_folds", self.cv_folds)
+            mlflow.log_param("cv_stratified", self.cv_stratified)
 
-            for metric_name, value in self.results.items():
-                mlflow.log_metric(metric_name, value)
+            if self.cv_enabled:
+                self.results = self._run_cross_validation(X_train, y_train)
 
-            try:
-                mlflow.sklearn.log_model(self.model, artifact_path="model")
-            except Exception as e:
-                self.logger.warning(f"Could not log model to MLflow: {e}")
+                # --- Train final model on full training set ---
+                self.logger.info("Training final model on full training set")
+                final_model = ModelFactory.get_model(self.model_name, **self.model_params)
+                final_model.fit(X_train, y_train)
 
-            if self.save_path:
-                self.save_results()
+                # Infer signature for logging
+                signature = infer_signature(X_train, final_model.predict(X_train))
 
-        self.logger.info(f"Experiment '{self.name}' complete.")
+                # Log final model
+                try:
+                    mlflow.sklearn.log_model(final_model,
+                                             name="model",
+                                             signature=signature,
+                                             registered_model_name=self.model_name)
+                    self.logger.info("Final model logged to MLflow successfully.")
+                except Exception as e:
+                    self.logger.warning(f"Could not log model to MLflow: {e}")
+
+                # --- Evaluate on test set if provided ---
+                if X_test is not None and y_test is not None:
+                    test_metrics = self._run_test_evaluation(final_model, X_test, y_test)
+                    self.results.update(test_metrics)
+
+                # Save results locally
+                if self.save_path:
+                    self.save_results()
+
+            return self.results
+
+
+    def _run_test_evaluation(self, model, X_test, y_test):
+        self.logger.info("Running test set evaluation")
+        y_pred = model.predict(X_test)
+        test_metrics = self.evaluator.evaluate(y_test, y_pred)
+        for k, v in test_metrics.items():
+            mlflow.log_metric(f"test_{k}", v)
+        self.logger.info(f"Test set metrics: {test_metrics}")
+        return test_metrics
+
+
+    def _run_cross_validation(self, X, y):
+        self.logger.info(f"Running {self.cv_folds}-fold cross-validation "
+                         f"(stratified={self.cv_stratified})")
+
+        # Create folds
+        if self.cv_stratified:
+            self.logger.info(f"Using StratifiedKFold for cross-validation with {self.cv_folds} folds, shuffle={self.cv_shuffle}, and random_state={self.cv_random_state}")
+            splitter = StratifiedKFold(n_splits=self.cv_folds, shuffle=self.cv_shuffle, random_state=self.cv_random_state)
+        else:
+            self.logger.info(
+                f"Using KFold for cross-validation with {self.cv_folds} folds, shuffle={self.cv_shuffle}, and random_state={self.cv_random_state}")
+            splitter = KFold(n_splits=self.cv_folds, shuffle=self.cv_shuffle, random_state=self.cv_random_state)
+
+        fold_metrics = {metric: [] for metric in self.metrics}
+        fold_index = 1
+        X = X.to_numpy() if hasattr(X, "to_numpy") else X
+        y = y.to_numpy() if hasattr(y, "to_numpy") else y
+
+        for train_idx, val_idx in splitter.split(X, y):
+            self.logger.info(f"Fold {fold_index}/{self.cv_folds}")
+
+            X_train_fold, X_val_fold = X[train_idx], X[val_idx]
+            y_train_fold, y_val_fold = y[train_idx], y[val_idx]
+
+            # Recreate a fresh model each fold
+            model = ModelFactory.get_model(self.model_name, **self.model_params)
+            model.fit(X_train_fold, y_train_fold)
+
+            y_pred = model.predict(X_val_fold)
+            current_res = self.evaluator.evaluate(y_val_fold, y_pred)
+
+            # Store metrics
+            for m in self.metrics:
+                fold_metrics[m].append(current_res[m])
+                mlflow.log_metric(f"fold_{fold_index}_{m}", current_res[m])
+
+            fold_index += 1
+
+        # Compute average CV metrics
+        averaged_metrics = {m: float(sum(vals) / len(vals)) for m, vals in fold_metrics.items()}
+        std_metrics = {f"{m}_std": float(np.std(vals)) for m, vals in fold_metrics.items()}
+
+        # Log averaged metrics to MLflow
+        for m, avg in averaged_metrics.items():
+            mlflow.log_metric(f"cv_mean_{m}", avg)
+        # log std metrics to MLflow
+        for m_std, std in std_metrics.items():
+            mlflow.log_metric(f'cv_{m_std}', std)
+
+
+        self.results = {**averaged_metrics, **std_metrics}
+        self.logger.info(f"Cross-validation results: {self.results}")
+
         return self.results
 
     def save_results(self):
@@ -109,8 +205,7 @@ class ClassificationExperiment(Experiment):
                     "metrics": self.results,
                     "params": self.model_params,
                     "timestamp": timestamp,
-                },
-                f,
-                indent=4,
+                }, f, indent=4,
             )
         self.logger.info(f"Saved results locally to {file_path}")
+

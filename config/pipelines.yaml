@@ -56,15 +56,21 @@ pipelines:
       experiment_type: "classification"
       model_name: "naive_bayes"
       evaluator_name: "classification"
-      metrics: ["accuracy", "f1", "precision", "recall"]
+      metrics: ["accuracy", "f1_score", "precision", "recall"]
       mlflow_experiment: "Naive Bayes Experiments"
 
       experiments:
         # ------------------------------------------------------------
         # 1. Naive Bayes + TF-IDF
         # ------------------------------------------------------------
-        - run_name: "nb_tfidf"
+        - run_name: "Naive Bayes TF-IDF"
           params:
+            description: "Naive Bayes experiments with TF-IDF vectorization technique on Roblox game descriptions."
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
             vectorizer:
               vectorizer_name: "tfidf"
               vectorizer_field: "Description"
@@ -73,32 +79,32 @@ pipelines:
                 ngram_range: [1, 2]
                 stop_words: "english"
 
-        # ------------------------------------------------------------
-        # 2. Naive Bayes + Word2Vec
-        # ------------------------------------------------------------
-        - run_name: "nb_word2vec"
-          params:
-            vectorizer:
-              vectorizer_name: "word2vec"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                vector_size: 300
-                window: 5
-                min_count: 2
+#        # ------------------------------------------------------------
+#        # 2. Naive Bayes + Word2Vec
+#        # ------------------------------------------------------------
+#        - run_name: "nb_word2vec"
+#          params:
+#            vectorizer:
+#              vectorizer_name: "word2vec"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                vector_size: 300
+#                window: 5
+#                min_count: 2
 
-        # ------------------------------------------------------------
-        # 3. Naive Bayes + BERT embeddings
-        # ------------------------------------------------------------
-        - run_name: "nb_bert"
-          params:
-            vectorizer:
-              vectorizer_name: "bert"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                model_name: "sentence-transformers/all-mpnet-base-v2"
+#        # ------------------------------------------------------------
+#        # 3. Naive Bayes + BERT embeddings
+#        # ------------------------------------------------------------
+#        - run_name: "nb_bert"
+#          params:
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
 
-        # ------------------------------------------------------------
-        # 4. Default experiment (no vectorizer)
-        # ------------------------------------------------------------
-        - name: "nb_default"
-          params: {}
+#        # ------------------------------------------------------------
+#        # 4. Default experiment (no vectorizer)
+#        # ------------------------------------------------------------
+#        - run_name: "nb_default"
+#          params: {}

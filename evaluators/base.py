@@ -22,3 +22,13 @@ class Evaluator(ABC):
         Evaluate the model predictions against true values.
         """
         pass
+
+    def evaluate_cv(self, cv_scores: dict, prefix: str = '') -> dict:
+        """
+        Optional: evaluation of cross-validation results.
+        Default implementation logs and returns the scores unchanged.
+
+        This method is NOT abstract, so it won't break existing evaluators.
+        """
+        self.logger.info(f"Evaluating cross-validation results for {self.name}")
+        return {f"{prefix}{k}": v for k, v in cv_scores.items()}
