@@ -84,32 +84,265 @@ pipelines:
                   figsize: [ 8, 6 ]
                   cmap: "Blues"
 
-#        # ------------------------------------------------------------
-#        # 2. Naive Bayes + Word2Vec
-#        # ------------------------------------------------------------
-#        - run_name: "nb_word2vec"
-#          params:
-#            vectorizer:
-#              vectorizer_name: "word2vec"
-#              vectorizer_field: "Description"
-#              vectorizer_params:
-#                vector_size: 300
-#                window: 5
-#                min_count: 2
+  - name: knn
+    type: pipelines.experiment_pipeline.ExperimentPipeline
+    params:
+      experiment_type: "classification"
+      model_name: "knn"
+      evaluator_name: "classification"
+      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
+      mlflow_experiment: "KNN Experiments"
+      experiments:
+        # ------------------------------------------------------------
+        # 1. KNN + TF-IDF
+        # ------------------------------------------------------------
+        - run_name: "KNN TF-IDF"
+          params:
+            n_neighbors: 5
+            weights: "uniform"
+            description: "KNN experiments with TF-IDF vectorization technique on Roblox game descriptions."
+            save_path: "output/knn_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+          # ------------------------------------------------------------
+          # 1. KNN + Word2Vec
+          # ------------------------------------------------------------
+        - run_name: "KNN Word2Vec"
+          params:
+            n_neighbors: 5
+            weights: "uniform"
+            description: "KNN experiments with Word2Vec vectorization technique on Roblox game descriptions."
+            save_path: "output/knn_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            vectorizer:
+              vectorizer_name: "word2vec"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                vector_size: 300
+                window: 5
+                min_count: 2
+              visualisations:
+                - name: confusion_matrix
+                  kwargs:
+                    figsize: [ 8, 6 ]
+                    cmap: "Blues"
+        # ------------------------------------------------------------
+        # 3. KNN + BERT
+        # ------------------------------------------------------------
+        - run_name: "KNN BERT"
+          params:
+            n_neighbors: 5
+            weights: "uniform"
+            description: "KNN experiments with BERT embeddings on Roblox game descriptions."
+            save_path: "output/knn_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            vectorizer:
+              vectorizer_name: "bert"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                model_name: "sentence-transformers/all-mpnet-base-v2"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
 
-#        # ------------------------------------------------------------
-#        # 3. Naive Bayes + BERT embeddings
-#        # ------------------------------------------------------------
-#        - run_name: "nb_bert"
-#          params:
-#            vectorizer:
-#              vectorizer_name: "bert"
-#              vectorizer_field: "Description"
-#              vectorizer_params:
-#                model_name: "sentence-transformers/all-mpnet-base-v2"
+  - name: xgboost
+    type: pipelines.experiment_pipeline.ExperimentPipeline
+    params:
+      experiment_type: "classification"
+      model_name: "xgboost"
+      evaluator_name: "classification"
+      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
+      mlflow_experiment: "XGBoost Experiments"
+      experiments:
+        # ------------------------------------------------------------
+        # 1. XGBoost + TF-IDF
+        # ------------------------------------------------------------
+        - run_name: "XGBoost TF-IDF"
+          params:
+            description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
+            save_path: "output/xgboost_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params: {}   # default XGBoost hyperparameters
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [1, 2]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
 
-#        # ------------------------------------------------------------
-#        # 4. Default experiment (no vectorizer)
-#        # ------------------------------------------------------------
-#        - run_name: "nb_default"
-#          params: {}
+        # ------------------------------------------------------------
+        # 2. XGBoost + Word2Vec
+        # ------------------------------------------------------------
+        - run_name: "XGBoost Word2Vec"
+          params:
+            description: "XGBoost experiments with Word2Vec vectorization technique on Roblox game descriptions."
+            save_path: "output/xgboost_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params: {}   # defaults
+            vectorizer:
+              vectorizer_name: "word2vec"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                vector_size: 300
+                window: 5
+                min_count: 2
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
+
+        # ------------------------------------------------------------
+        # 3. XGBoost + BERT
+        # ------------------------------------------------------------
+        - run_name: "XGBoost BERT"
+          params:
+            description: "XGBoost experiments with BERT embeddings on Roblox game descriptions."
+            save_path: "output/xgboost_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params: {}   # defaults
+            vectorizer:
+              vectorizer_name: "bert"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                model_name: "sentence-transformers/all-mpnet-base-v2"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
+  - name: svm
+    type: pipelines.experiment_pipeline.ExperimentPipeline
+    params:
+      experiment_type: "classification"
+      model_name: "svm"
+      evaluator_name: "classification"
+      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
+      mlflow_experiment: "SVM Experiments"
+      experiments:
+        # ------------------------------------------------------------
+        # 1. SVM + TF-IDF
+        # ------------------------------------------------------------
+        - run_name: "SVM TF-IDF"
+          params:
+            description: "SVM experiments with TF-IDF vectorization technique on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"  # LinearSVC default
+              C: 1.0
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [1, 2]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
+
+        # ------------------------------------------------------------
+        # 2. SVM + Word2Vec
+        # ------------------------------------------------------------
+        - run_name: "SVM Word2Vec"
+          params:
+            description: "SVM experiments with Word2Vec embeddings on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"
+              C: 1.0
+              # scale_features: true  # optional flag if your pipeline scales dense vectors
+            vectorizer:
+              vectorizer_name: "word2vec"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                vector_size: 300
+                window: 5
+                min_count: 2
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
+
+        # ------------------------------------------------------------
+        # 3. SVM + BERT
+        # ------------------------------------------------------------
+        - run_name: "SVM BERT"
+          params:
+            description: "SVM experiments with BERT embeddings on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"
+              C: 1.0
+              # scale_features: true
+            vectorizer:
+              vectorizer_name: "bert"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                model_name: "sentence-transformers/all-mpnet-base-v2"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
