@@ -21,5 +21,5 @@ class VisualisationFactory:
             cls.logger.warning(f"Visualisation '{name}' not found in registry")
             return None
 
-        cls.logger.info(f"Instantiating visualisation '{name}' with kwargs: {kwargs}")
+        cls.logger.info(f"Instantiating visualisation '{name}'")
         return viz_cls(title=name, **kwargs)
