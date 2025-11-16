@@ -34,6 +34,7 @@ class ConfusionMatrixChart(Visualisation):
             labels=None,  # leave as None if y_true/y_pred already have all classes
             display_labels=display_labels,  # <--- this is what shows on axes
             ax=ax,
+            xticks_rotation=45,
             cmap=self.kwargs.get('cmap', 'Blues'),
             normalize=self.kwargs.get('normalize', None)
         )

@@ -193,7 +193,7 @@ class ClassificationExperiment(Experiment):
             fold_index += 1
             # Generate and log visualisations
             self.logger.info(f"Generating visualisations for fold {fold_index - 1}")
-            self._generate_visualisations(y_val_fold, y_pred)
+            self._generate_visualisations(y_val_fold, y_pred, fold=fold_index - 1)
 
         # Compute average CV metrics
         averaged_metrics = {m: float(sum(vals) / len(vals)) for m, vals in fold_metrics.items()}
@@ -228,7 +228,7 @@ class ClassificationExperiment(Experiment):
             )
         self.logger.info(f"Saved results locally to {file_path}")
 
-    def _generate_visualisations(self, y_true, y_pred):
+    def _generate_visualisations(self, y_true, y_pred, fold=0):
 
         if not self.visualisations:
             self.logger.info("No visualisations configured, skipping.")
@@ -237,12 +237,15 @@ class ClassificationExperiment(Experiment):
         self.logger.info("Generating visualisations")
         self.logger.info(f'Target encoder available: {self.target_encoder is not None}')
         for viz_cfg in self.visualisations:
+            title_suffix = f"_fold_{fold}" if fold > 0 else ""
+
             viz_name = viz_cfg.get("name")
+            self.logger.info(f'Visualisation to create: {viz_name}')
             viz_kwargs = viz_cfg.get("kwargs", {})
             viz_kwargs.update({
                 "y_true": y_true,
                 "y_pred": y_pred,
-                "target_encoder": self.target_encoder
+                "target_encoder": self.target_encoder,
             })
             try:
                 viz = VisualisationFactory.get_visualisation(viz_name, **viz_kwargs)
@@ -252,9 +255,9 @@ class ClassificationExperiment(Experiment):
                     # Save locally
                     if self.save_path:
                         os.makedirs(self.save_path, exist_ok=True)
-                        filepath = os.path.join(self.save_path, f"{self.name}_{viz_name}.png")
+                        filepath = os.path.join(self.save_path, f"{self.name}_{viz_name}{title_suffix}.png")
                         viz.save(fig, filepath)
-                        self.logger.info(f"Saved visualisation '{viz_name}' to {filepath}")
+                        self.logger.info(f"Saved visualisation '{viz_name}{title_suffix}' to {filepath}")
                     # Log to MLflow
                         try:
                             mlflow.log_artifact(filepath)
