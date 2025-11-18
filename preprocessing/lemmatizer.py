@@ -20,6 +20,7 @@ class Lemmatizer(Preprocessor):
 
     def __init__(self, model: str = "en_core_web_sm"):
         self.logger = get_logger(self.__class__.__name__)
+        self.logger.info(f"Initializing Lemmatizer with model='{model}'")
         self.model = model
         self.nlp = None
         if spacy is None:
@@ -35,9 +36,11 @@ class Lemmatizer(Preprocessor):
         return self
 
     def transform(self, X: Iterable[str]) -> List[str]:
+        self.logger.info("Starting Lemmatizer transformation")
         if self.nlp is None:
             return list(X)
         out = []
         for doc in self.nlp.pipe(X, disable=["ner", "parser"]):
             out.append(" ".join(tok.lemma_ for tok in doc))
+        self.logger.info("Completed Lemmatizer transformation")
         return out

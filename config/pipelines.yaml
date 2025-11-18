@@ -104,16 +104,18 @@ pipelines:
                   figsize: [ 8, 6 ]
                   cmap: "Blues"
         # ------------------------------------------------------------
-        # 2. Naive Bayes + TF-IDF with Stemming
+        # 2. Naive Bayes + TF-IDF with Porter Stemming
         # ------------------------------------------------------------
-        - run_name: "Naive Bayes TF-IDF (with Stemming)"
+        - run_name: "Naive Bayes TF-IDF (with Porter Stemming)"
           text_field: "Description"
           preprocessing:
+            - name: lowercase
             - name: stemmer
               params:
                 language: "english"
+                algorithm: "porter"
           params:
-            description: "Naive Bayes experiments with TF-IDF vectorization technique on Roblox game descriptions."
+            description: "Naive Bayes experiments with TF-IDF vectorization technique with Porter Stemming on Roblox game descriptions."
             save_path: "output/naive_bayes_results"
             cv_enabled: true
             cv_stratified: true
@@ -133,7 +135,67 @@ pipelines:
                   figsize: [ 8, 6 ]
                   cmap: "Blues"
 
-
+        # ------------------------------------------------------------
+        # 3. Naive Bayes + TF-IDF with Snowball Stemming
+        # -----------------------------------------------------------
+        - run_name: "Naive Bayes TF-IDF (with Snowball Stemming)"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: stemmer
+              params:
+                language: "english"
+                algorithm: "snowball"
+          params:
+            description: "Naive Bayes experiments with TF-IDF vectorization technique and Snowball Stemming on Roblox game descriptions."
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+        # ------------------------------------------------------------
+        # 4. Naive Bayes + TF-IDF with Lemmatization
+        # ------------------------------------------------------------
+        - run_name: "Naive Bayes TF-IDF (with Stemming)"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: lemmatizer
+              params:
+                model: "en_core_web_sm"
+          params:
+            description: "Naive Bayes experiments with TF-IDF vectorization technique with Lemmatization on Roblox game descriptions."
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
 
 
   - name: knn

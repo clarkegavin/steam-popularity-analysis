@@ -97,8 +97,8 @@ class Stemmer(Preprocessor):
             # Log first few examples to check
             if i < 5:  # log first 5 rows only
                 try:
-                    self.logger.info(f"Original: {s}")
-                    self.logger.info(f"Stemmed : {stemmed_doc}")
+                    self.logger.info(f"Original: {s.encode('utf-8', errors='ignore')}")
+                    self.logger.info(f"Stemmed : {stemmed_doc.encode('utf-8', errors='ignore')}")
                 except Exception:
                     pass
 
