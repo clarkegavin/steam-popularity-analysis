@@ -44,3 +44,6 @@ class Lemmatizer(Preprocessor):
             out.append(" ".join(tok.lemma_ for tok in doc))
         self.logger.info("Completed Lemmatizer transformation")
         return out
+
+    def get_params(self) -> dict:
+        return {"model": self.model}

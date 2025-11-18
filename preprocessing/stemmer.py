@@ -103,3 +103,6 @@ class Stemmer(Preprocessor):
                     pass
 
         return out
+
+    def get_params(self):
+        return {"stemmer_type": self.algorithm, "language": self.language}

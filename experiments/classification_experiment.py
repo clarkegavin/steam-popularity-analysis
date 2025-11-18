@@ -114,6 +114,14 @@ class ClassificationExperiment(Experiment):
             mlflow.log_param("cv_folds", self.cv_folds)
             mlflow.log_param("cv_stratified", self.cv_stratified)
 
+            # preprocessing support
+            # preprocessing_params = self.extra_params
+            # if hasattr(self.extra_params.get("preprocessing", {}), "get_params"):
+            #     self.logger.info("Logging preprocessing parameters to MLflow")
+            #     preprocessing_params = self.extra_params["preprocessing"].get_params()
+            #     for k, v in preprocessing_params.items():
+            #         mlflow.log_param(f"preprocessing_{k}", v)
+
             if self.cv_enabled:
                 self.results = self._run_cross_validation(X_train, y_train)
 

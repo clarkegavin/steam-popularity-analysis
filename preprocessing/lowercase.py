@@ -15,6 +15,7 @@ class Lowercase(Preprocessor):
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
         self.logger.info("Initialized Lowercase preprocessor")
+        self.lower_case = True
 
     def fit(self, X: Iterable[str]):
         # stateless
@@ -33,3 +34,5 @@ class Lowercase(Preprocessor):
         self.logger.info("Completed Lowercase transformation")
         return out
 
+    def get_params(self) -> dict:
+        return {'lower_case': self.lower_case}
