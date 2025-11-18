@@ -3,6 +3,8 @@ from typing import Dict, Any, Optional, List
 from .base import Pipeline
 from logs.logger import get_logger
 from experiments.factory import ExperimentFactory
+from preprocessing.factory import PreprocessorFactory
+from preprocessing.sequential import SequentialPreprocessor
 
 class ExperimentPipeline(Pipeline):
     """
@@ -37,6 +39,7 @@ class ExperimentPipeline(Pipeline):
         self.logger.info(f"Running experiments for model '{self.model_name}'")
         mlflow_experiment_name = self.mlflow_experiment or f"{self.model_name}_experiments"
         self.logger.info(f"Target encoder provided: {target_encoder is not None}")
+
         for i, exp_cfg in enumerate(self.experiments, start=1):
             run_name = exp_cfg.get("run_name", f"{self.model_name}_run{i}")
             self.logger.info(f"Starting experiment {i} ({run_name}) with params {exp_cfg.get('params', {})}")
@@ -51,6 +54,9 @@ class ExperimentPipeline(Pipeline):
                 **exp_cfg.get("params", {})
             }
 
+            # Apply per-experiment preprocessing if specified
+            X_train, X_test = self._preprocessing(exp_cfg, X_train, X_test)
+
             self.logger.info(f'Experiment parameters: {exp_params}')
             experiment = ExperimentFactory.get_experiment(self.experiment_type, **exp_params)
             self.logger.info(f"Created experiment instance: {experiment}")
@@ -59,3 +65,29 @@ class ExperimentPipeline(Pipeline):
                 experiment.run(X_train, X_test, y_train, y_test)
 
         self.logger.info(f"All experiments for '{self.model_name}' complete.")
+
+    def _preprocessing(self, exp_cfg, X_train, X_test):
+        pre_cfgs = exp_cfg.get("preprocessing", [])
+        if pre_cfgs:
+            self.logger.info(f"Applying per-experiment preprocessing: {pre_cfgs}")
+            steps = []
+            for pre_cfg in pre_cfgs:
+                name = pre_cfg["name"]
+                params = pre_cfg.get("params", {})
+                # if text_field not in params, use experiment-level
+                # if "text_field" not in params and "text_field" in exp_cfg:
+                #     params["text_field"] = exp_cfg["text_field"]
+                steps.append(PreprocessorFactory.create(name, **params))
+
+            # Wrap them in a simple sequential preprocessor
+            self.logger.info(f"Creating SequentialPreprocessor with steps: {steps}")
+            preprocessor = SequentialPreprocessor(steps)
+            text_field = exp_cfg.get("text_field")  # column name
+            self.logger.info(f"Applying preprocessing to field: {text_field}")
+            X_train[text_field] = preprocessor.fit_transform(X_train[text_field])
+            X_test[text_field] = preprocessor.transform(X_test[text_field])
+
+        return X_train, X_test
+
+
+

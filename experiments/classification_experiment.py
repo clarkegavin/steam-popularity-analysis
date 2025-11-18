@@ -13,70 +13,6 @@ from vectorizers.factory import VectorizerFactory
 from mlflow.models import infer_signature
 from visualisations.factory import VisualisationFactory
 
-# class ClassificationExperiment(Experiment):
-#     def __init__(
-#         self,
-#         name: str,
-#         model_name: str,
-#         evaluator_name: str,
-#         metrics: List[str],
-#         save_path: Optional[str] = None,
-#         model_params: Optional[Dict] = None,
-#         evaluator_params: Optional[Dict] = None,
-#         mlflow_tracking: bool = True,
-#         mlflow_experiment: Optional[str] = None,
-#         vectorizer: Optional[Dict] = None,
-#         cv_enabled: bool = False,
-#         cv_folds: int = 5,
-#         cv_stratified: bool = True,
-#         description: Optional[str] = None,
-#         cv_shuffle: Optional[bool] = True,
-#         cv_random_state: Optional[int] = 42,
-#         visualisations: Optional[List[Dict]] = None,
-#         target_encoder: Optional[Any] = None,
-#     ):
-#
-#         super().__init__(name, mlflow_tracking, mlflow_experiment)
-#         self.model_name = model_name
-#         self.evaluator_name = evaluator_name
-#         self.description  = description
-#         self.metrics = metrics
-#         self.save_path = save_path
-#         self.logger.info(f'Save path for results: {self.save_path}')
-#         self.model_params = model_params or {}
-#         self.evaluator_params = evaluator_params or {}
-#         # Initialize logger
-#         self.logger = get_logger(f"ClassificationExperiment:{name}")
-#         self.logger.info('Initializing classification experiment')
-#         self.logger.info(f'Classification model name: {model_name}')
-#         self.logger.info(f'Classification model params: {self.model_params}')
-#         # Initialize model
-#         self.model = ModelFactory.get_model(model_name, **self.model_params)
-#         self.logger.info(f'Classification model: {self.model}')
-#         # Initialize evaluator
-#         self.logger.info(f'Evaluator params: {self.evaluator_params}')
-#         self.evaluator = EvaluatorFactory.get_evaluator(name=evaluator_name,  **self.evaluator_params)
-#         # Cross-fold validation support
-#         self.cv_enabled = cv_enabled
-#         self.cv_folds = cv_folds
-#         self.cv_stratified = cv_stratified
-#         self.cv_shuffle = cv_shuffle
-#         self.cv_random_state = cv_random_state
-#         # Target encoder
-#         self.target_encoder = target_encoder
-#         self.logger.info(f'Target encoder provided: {self.target_encoder is not None}')
-#
-#
-#         # Vectorizer support
-#         self.vectorizer = vectorizer or {}
-#         self.vectorizer_name = self.vectorizer.get("vectorizer_name")
-#         self.vectorizer_field = self.vectorizer.get("vectorizer_field")
-#         self.vectorizer_params = self.vectorizer.get("vectorizer_params", {})
-#         # Visualisations
-#         self.visualisations = visualisations or []
-#         self.logger.info(f'Visualisations configured: {self.visualisations}')
-#
-#         self.results = {}
 
 class ClassificationExperiment(Experiment):
     def __init__(
@@ -94,7 +30,7 @@ class ClassificationExperiment(Experiment):
         target_encoder: Optional[Any] = None,
         vectorizer: Optional[Dict] = None,
         visualisations: Optional[List[Dict]] = None,
-        **kwargs     # ← THE FLEXIBILITY FIX
+        **kwargs
     ):
 
         super().__init__(name, mlflow_tracking, mlflow_experiment)
@@ -116,6 +52,7 @@ class ClassificationExperiment(Experiment):
         # Everything not explicitly defined is inside kwargs
         # Example: n_neighbors, weights, cv_enabled, vectorizer override etc.
         self.extra_params = kwargs
+
 
         # Vectorizer
         self.vectorizer = vectorizer or {}
@@ -152,7 +89,7 @@ class ClassificationExperiment(Experiment):
     def run(self, X_train, X_test, y_train, y_test):
         self.logger.info(f"Running classification experiment '{self.name}'")
 
-        # --- 1. Vectorizer support -----------------------
+               # --- 1. Vectorizer support -----------------------
 
 
         if self.vectorizer_name:

@@ -7,6 +7,7 @@ from .feature_encoder_pipeline import FeatureEncoderPipeline
 from .experiment_pipeline import ExperimentPipeline
 from .filter_pipeline import FilterPipeline
 from .eda_pipeline import EDAPipeline
+from .preprocessing_pipeline import PreprocessingPipeline
 
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "ExperimentPipeline",
     "FilterPipeline",
     "EDAPipeline",
+    "PreprocessingPipeline",
 ]
