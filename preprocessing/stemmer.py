@@ -94,13 +94,13 @@ class Stemmer(Preprocessor):
             stemmed_doc = " ".join(stemmed_tokens)
             out.append(stemmed_doc)
 
-            # Log first few examples to check
-            if i < 5:  # log first 5 rows only
-                try:
-                    self.logger.info(f"Original: {s.encode('utf-8', errors='ignore')}")
-                    self.logger.info(f"Stemmed : {stemmed_doc.encode('utf-8', errors='ignore')}")
-                except Exception:
-                    pass
+            # # Log first few examples to check
+            # if i < 5:  # log first 5 rows only
+            #     try:
+            #         self.logger.info(f"Original: {s.encode('utf-8', errors='ignore')}")
+            #         self.logger.info(f"Stemmed : {stemmed_doc.encode('utf-8', errors='ignore')}")
+            #     except Exception:
+            #         pass
 
         return out
 

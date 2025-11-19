@@ -44,6 +44,8 @@ class ExperimentPipeline(Pipeline):
             run_name = exp_cfg.get("run_name", f"{self.model_name}_run{i}")
             self.logger.info(f"Starting experiment {i} ({run_name}) with params {exp_cfg.get('params', {})}")
 
+            X_train, X_test, preprocessing_metadata  = self._preprocessing(exp_cfg, X_train, X_test)
+
             exp_params = {
                 "name": run_name,
                 "model_name": self.model_name,
@@ -51,11 +53,9 @@ class ExperimentPipeline(Pipeline):
                 "metrics": self.metrics,
                 "mlflow_experiment": mlflow_experiment_name,
                 "target_encoder": target_encoder,
+                "preprocessing_metadata": preprocessing_metadata,
                 **exp_cfg.get("params", {})
             }
-
-            # Apply per-experiment preprocessing if specified
-            X_train, X_test = self._preprocessing(exp_cfg, X_train, X_test)
 
             self.logger.info(f'Experiment parameters: {exp_params}')
             experiment = ExperimentFactory.get_experiment(self.experiment_type, **exp_params)
@@ -67,6 +67,7 @@ class ExperimentPipeline(Pipeline):
         self.logger.info(f"All experiments for '{self.model_name}' complete.")
 
     def _preprocessing(self, exp_cfg, X_train, X_test):
+        preprocessing_metadata = []
         pre_cfgs = exp_cfg.get("preprocessing", [])
         if pre_cfgs:
             self.logger.info(f"Applying per-experiment preprocessing: {pre_cfgs}")
@@ -78,6 +79,14 @@ class ExperimentPipeline(Pipeline):
                 # if "text_field" not in params and "text_field" in exp_cfg:
                 #     params["text_field"] = exp_cfg["text_field"]
                 steps.append(PreprocessorFactory.create(name, **params))
+                self.logger.info(f"Added preprocessor step: {name} with params: {params}")
+                preprocessing_metadata.append(
+                    {
+                        "name": name,
+                        "params": params
+                    }
+                )
+                self.logger.info(f"Preprocessing metadata updated: {preprocessing_metadata}")
 
             # Wrap them in a simple sequential preprocessor
             self.logger.info(f"Creating SequentialPreprocessor with steps: {steps}")
@@ -87,7 +96,7 @@ class ExperimentPipeline(Pipeline):
             X_train[text_field] = preprocessor.fit_transform(X_train[text_field])
             X_test[text_field] = preprocessor.transform(X_test[text_field])
 
-        return X_train, X_test
+        return X_train, X_test, preprocessing_metadata
 
 
 
