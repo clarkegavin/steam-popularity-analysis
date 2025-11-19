@@ -169,7 +169,7 @@ pipelines:
         # ------------------------------------------------------------
         # 4. Naive Bayes + TF-IDF with Lemmatization
         # ------------------------------------------------------------
-        - run_name: "Naive Bayes TF-IDF (with Stemming)"
+        - run_name: "Naive Bayes TF-IDF (with Lemmatization)"
           text_field: "Description"
           preprocessing:
             - name: lowercase
@@ -196,7 +196,40 @@ pipelines:
                 kwargs:
                   figsize: [ 8, 6 ]
                   cmap: "Blues"
-
+        # ------------------------------------------------------------
+        # 5. Naive Bayes + TF-IDF with Stopword Removal
+        # ------------------------------------------------------------
+        - run_name: "Naive Bayes TF-IDF (with Stopword Removal)"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: stopword_remover
+              params:
+                model: "english"
+                lower: true
+            - name: emoji_remover
+              params:
+                use_emoji_lib: true
+          params:
+            description: "Naive Bayes experiments with TF-IDF vectorization technique with Stopword Removal on Roblox game descriptions."
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
 
   - name: knn
     type: pipelines.experiment_pipeline.ExperimentPipeline

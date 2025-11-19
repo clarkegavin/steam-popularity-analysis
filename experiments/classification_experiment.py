@@ -30,6 +30,7 @@ class ClassificationExperiment(Experiment):
         target_encoder: Optional[Any] = None,
         vectorizer: Optional[Dict] = None,
         visualisations: Optional[List[Dict]] = None,
+        preprocessing_metadata: Optional[Dict] = None,
         **kwargs
     ):
 
@@ -82,6 +83,8 @@ class ClassificationExperiment(Experiment):
         self.model = ModelFactory.get_model(self.model_name, **self.model_params)
         self.evaluator = EvaluatorFactory.get_evaluator(name=evaluator_name, **(evaluator_params or {}))
 
+        # preprocessing metadata
+        self.preprocessing_metadata = preprocessing_metadata or []
         # Results store
         self.results = {}
         self.logger.info("ClassificationExperiment initialised successfully.")
@@ -108,6 +111,14 @@ class ClassificationExperiment(Experiment):
             mlflow.log_param("evaluator", self.evaluator_name)
             mlflow.log_param("description", self.description)
             mlflow.log_params(self.model_params)
+            if self.preprocessing_metadata:
+                #mlflow.log_param("preprocessing_metadata", json.dumps(self.preprocessing_metadata))
+                self.logger.info(f"Logging preprocessing metadata: {self.preprocessing_metadata}")
+                for step in self.preprocessing_metadata:
+                    name = step["name"]
+                    params = step["params"]
+                    for k, v in params.items():
+                        mlflow.log_param(f"pre_{name}_{k}", v)
 
             # --- 2. Cross-validation support -----------------------
             mlflow.log_param("cv_enabled", self.cv_enabled)
