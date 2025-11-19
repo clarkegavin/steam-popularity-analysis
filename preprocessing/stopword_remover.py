@@ -120,8 +120,8 @@ class StopwordRemover(Preprocessor):
             if i < 3:
                 # log small samples
                 try:
-                    self.logger.info(f"Original: {s}")
-                    self.logger.info(f"Filtered: {out_doc}")
+                    self.logger.info(f"Original: {s.encode('utf-8', errors='ignore')}")
+                    self.logger.info(f"Filtered: {out_doc.encode('utf-8', errors='ignore')}")
                 except Exception:
                     pass
 

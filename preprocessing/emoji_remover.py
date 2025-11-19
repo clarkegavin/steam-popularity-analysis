@@ -93,8 +93,8 @@ class EmojiRemover(Preprocessor):
 
             if i < 3:
                 try:
-                    self.logger.info(f"Original: {doc}")
-                    self.logger.info(f"Cleaned : {s}")
+                    self.logger.info(f"Original: {doc.encode('utf-8', errors='ignore')}")
+                    self.logger.info(f"Cleaned : {s.encode('utf-8', errors='ignore')}")
                 except Exception:
                     pass
 

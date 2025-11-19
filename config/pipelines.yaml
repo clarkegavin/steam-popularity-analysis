@@ -205,7 +205,7 @@ pipelines:
             - name: lowercase
             - name: stopword_remover
               params:
-                model: "english"
+                language: "english"
                 lower: true
             - name: emoji_remover
               params:
