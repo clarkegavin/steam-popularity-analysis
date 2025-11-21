@@ -13,8 +13,8 @@ pipelines:
     extractor_type: roblox
     params:
       output_csv: "output/roblox_data.csv"
-      extractor_params:
-        sample_size: 1000
+      #extractor_params:
+        #sample_size: 1000
 
   - name: filter_features
     type: pipelines.filter_pipeline.FilterPipeline
@@ -38,6 +38,18 @@ pipelines:
       target: "Genre"
       text_field: "Description"
 
+  - name: preprocess_text
+    type: pipelines.preprocessing_pipeline.PreprocessingPipeline
+    params:
+      text_field: "Description"
+      #preprocessors: []
+      preprocessors:
+        - name: filter_rows
+          params:
+            field: "Genre"
+            values: ["All Genres"]
+            operator: "equals"
+
   - name: split_data
     type: pipelines.data_splitter_pipeline.DataSplitterPipeline
     params:
@@ -45,11 +57,7 @@ pipelines:
       test_size: 0.2
       random_state: 42
 
-  - name: preprocess_text
-    type: pipelines.preprocessing_pipeline.PreprocessingPipeline
-    params:
-      text_field: "Description"
-      preprocessors: []
+
 
 
   - name: encode_target
