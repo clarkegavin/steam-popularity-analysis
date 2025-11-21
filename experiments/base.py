@@ -21,7 +21,7 @@ class Experiment(ABC):
         """Start MLflow run if tracking is enabled."""
         if self.mlflow_tracking:
             mlflow.set_experiment(self.mlflow_experiment or "default_experiment")
-            mlflow.start_run(run_name=self.name, nested=True)
+            mlflow.start_run(run_name=self.name, nested=False)
             self._mlflow_active = True
             self.logger.info(f"Started MLflow run for experiment: {self.name}")
         return self

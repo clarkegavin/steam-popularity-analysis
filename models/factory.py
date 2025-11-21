@@ -1,5 +1,6 @@
 #models/factory.py
 from logs.logger import get_logger
+import traceback
 
 class ModelFactory:
     """
@@ -18,6 +19,7 @@ class ModelFactory:
     def get_model(cls, name: str, **kwargs):
         model = cls._registry.get(name)
         cls.logger.info(f"Retrieving model class for name: {name}")
+        # cls.logger.info("ModelFactory call stack:\n" + "".join(traceback.format_stack(limit=10)))
         if not model:
             cls.logger.warning(f"Model '{name}' not found in registry")
         cls.logger.info(f"Instantiating model '{name}' with kwargs: {kwargs}")
