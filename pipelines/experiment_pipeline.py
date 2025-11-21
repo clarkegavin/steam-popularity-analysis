@@ -44,7 +44,10 @@ class ExperimentPipeline(Pipeline):
             run_name = exp_cfg.get("run_name", f"{self.model_name}_run{i}")
             self.logger.info(f"Starting experiment {i} ({run_name}) with params {exp_cfg.get('params', {})}")
 
-            X_train, X_test, preprocessing_metadata  = self._preprocessing(exp_cfg, X_train, X_test)
+            X_train_exp = X_train.copy()
+            X_test_exp = X_test.copy()
+
+            X_train_exp, X_test_exp, preprocessing_metadata  = self._preprocessing(exp_cfg, X_train_exp, X_test_exp)
 
             exp_params = {
                 "name": run_name,
@@ -62,7 +65,7 @@ class ExperimentPipeline(Pipeline):
             self.logger.info(f"Created experiment instance: {experiment}")
             if experiment:
                 self.logger.info(f"Executing experiment '{run_name}'")
-                experiment.run(X_train, X_test, y_train, y_test)
+                experiment.run(X_train_exp, X_test_exp, y_train, y_test)
 
         self.logger.info(f"All experiments for '{self.model_name}' complete.")
 

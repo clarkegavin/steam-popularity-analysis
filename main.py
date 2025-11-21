@@ -13,6 +13,9 @@ def main():
     logger = get_logger("Main")
     logger.info(f"Loaded {len(pipelines)} pipelines from {yaml_path}")
     logger.info("Pipelines order:")
+
+
+
     for i, pipeline in enumerate(pipelines):
         logger.info(f"  {i+1}. {pipeline.__class__.__name__}")
 

@@ -13,8 +13,8 @@ pipelines:
     extractor_type: roblox
     params:
       output_csv: "output/roblox_data.csv"
-      #extractor_params:
-        #sample_size: 1000
+      extractor_params:
+        sample_size: 1000
 
   - name: filter_features
     type: pipelines.filter_pipeline.FilterPipeline
