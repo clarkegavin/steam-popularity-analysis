@@ -33,6 +33,13 @@ pipelines:
             field: "Genre"
             values: [ "All" ]
             operator: "equals"
+            case_sensitive: false
+        - name: filter_rows
+          params:
+            field: "Description"
+            values: [null, ""]
+            operator: "in"
+            case_sensitive: false
 
 
   - name: filter_features

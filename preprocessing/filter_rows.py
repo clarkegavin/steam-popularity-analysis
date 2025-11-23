@@ -150,11 +150,11 @@ class FilterRows(Preprocessor):
 
             mask = None
 
-            if self.operator == "equals":
+            if self.operator == "equals" or self.operator == "in":
                 # values = [v if self.case_sensitive or not isinstance(v, str) else v.lower() for v in self.values]
                 # mask = ser.isin(values)
                 # Normalise dataframe values
-                self.logger.info(f"Operator was 'equals'; normalising values for comparison")
+                self.logger.info(f"Operator was {self.operator}; normalising values for comparison")
                 ser_norm = ser.astype(str).str.strip()
                 if not self.case_sensitive:
                     ser_norm = ser_norm.str.lower()
@@ -168,11 +168,11 @@ class FilterRows(Preprocessor):
                 mask = ser_norm.isin(values)
 
                 # Debug info (optional but very useful)
-                self.logger.info(f"FilterRows - Normalised unique values sample: {ser_norm.unique()[:10]}")
-                self.logger.info(f"FilterRows - Looking for values: {values}")
-            elif self.operator == "in":
-                values = [v if self.case_sensitive or not isinstance(v, str) else v.lower() for v in self.values]
-                mask = ser.isin(values)
+                # self.logger.info(f"FilterRows - Normalised unique values sample: {ser_norm.unique()[:10]}")
+                # self.logger.info(f"FilterRows - Looking for values: {values}")
+            # elif self.operator == "in":
+            #     values = [v if self.case_sensitive or not isinstance(v, str) else v.lower() for v in self.values]
+            #     mask = ser.isin(values)
             elif self.operator == "contains":
                 # build OR mask for each value
                 mask = pd.Series(False, index=X.index)
@@ -197,7 +197,12 @@ class FilterRows(Preprocessor):
             else:
                 out_df = X[~mask]
 
-            self.logger.info(f"Filtered DataFrame from {len(X)} to {len(out_df)} rows")
+            #log the number of rows removed
+            removed = len(X) - len(out_df)
+            self.logger.info(
+                f"FilterRows on field '{self.field}' using operator '{self.operator}': removed {removed} rows, remaining {len(out_df)}"
+            )
+            #self.logger.info(f"Filtered DataFrame from {len(X)} to {len(out_df)} rows")
             return out_df
 
         # fallback: iterate over items
