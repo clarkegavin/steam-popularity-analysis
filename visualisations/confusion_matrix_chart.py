@@ -21,10 +21,33 @@ class ConfusionMatrixChart(Visualisation):
 
 
         if hasattr(self, 'target_encoder') and self.target_encoder:
+            # self.logger.info('Decoding labels using target encoder')
+            # #display_labels = self.target_encoder.classes_
+            # all_labels = self.target_encoder.classes_
+            # present_labels = sorted(list(set(self.y_true) | set(self.y_pred)))
+            # # Only keep labels that exist in encoder
+            # display_labels = [lbl for lbl in all_labels if lbl in present_labels]
+            # self.logger.info(f'Decoded labels: {display_labels}')
+            # # log if any labels are missing
+            # missing_labels = set(present_labels) - set(display_labels)
+            # if missing_labels:
+            #     self.logger.warning(f'Some labels are missing in target encoder: {missing_labels}')
             self.logger.info('Decoding labels using target encoder')
-            display_labels = self.target_encoder.classes_
+            y_true_decoded = self.target_encoder.inverse_transform(self.y_true)
+            y_pred_decoded = self.target_encoder.inverse_transform(self.y_pred)
+
+            all_labels = list(self.target_encoder.classes_)
+            present_labels = sorted(list(set(y_true_decoded) | set(y_pred_decoded)))
+            display_labels = [lbl for lbl in all_labels if lbl in present_labels]
+
             self.logger.info(f'Decoded labels: {display_labels}')
-            
+            missing_labels = set(present_labels) - set(display_labels)
+            if missing_labels:
+                self.logger.warning(f'Some labels are missing in target encoder: {missing_labels}')
+
+            # update y_true and y_pred for plotting
+            self.y_true = y_true_decoded
+            self.y_pred = y_pred_decoded
 
         fig, ax = plt.subplots(figsize=self.kwargs.get('figsize', (10, 6)))
         disp = ConfusionMatrixDisplay.from_predictions(
