@@ -52,12 +52,29 @@ class PipelineFactory:
 
                 # Determine if class has from_config
                 if hasattr(klass, "from_config") and callable(getattr(klass, "from_config")):
-                    pipeline_instance = klass.from_config(entry)
+                    # pipeline_instance = klass.from_config(entry)
+                    instance_kwargs = {}
+
+                    # check if from_config accepts global_config
+                    import inspect
+                    sig = inspect.signature(klass.from_config)
+                    if "global_config" in sig.parameters:
+                        instance_kwargs["global_config"] = config
+
+                    pipeline_instance = klass.from_config(entry, **instance_kwargs)
                     logger.info(f"Used from_config() to create pipeline '{entry.get('name')}'")
                 else:
                     # Pass only 'params' dict to constructor
                     params: Dict[str, Any] = entry.get("params", {})
-                    pipeline_instance = klass(**params)
+                    #pipeline_instance = klass(**params)
+                    pipeline_class = klass
+                    if pipeline_class.__name__ == "ExperimentPipeline":
+                        # Special handling for ExperimentPipeline to include global_config for logging to mlflow
+                        logger.info(f"Creating ExperimentPipeline with global_config: {config}")
+                        pipeline_instance = pipeline_class(**params, global_config=config)
+                    else:
+                        pipeline_instance = pipeline_class(**params)
+
                     logger.info(f"Used __init__() to create pipeline '{entry.get('name')}'")
 
                 pipelines.append(pipeline_instance)

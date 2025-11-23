@@ -3,7 +3,10 @@ from typing import List, Optional, Dict
 from logs.logger import get_logger
 import pandas as pd
 
-from pipelines import TargetFeaturePipeline, DataSplitterPipeline, FeatureEncoderPipeline, FilterPipeline, ExperimentPipeline
+from pipelines import TargetFeaturePipeline, DataSplitterPipeline, FeatureEncoderPipeline, FilterPipeline, \
+    ExperimentPipeline, DataExtractorPipeline
+
+
 # from pipelines.experiment_pipeline import ExperimentPipeline
 
 
@@ -17,6 +20,8 @@ class PipelineOrchestrator:
         self.pipelines = pipelines
         self.max_retries = max_retries
         self.parallel = parallel
+
+
 
     def run_pipeline(self, pipeline, data: Optional[pd.DataFrame] = None, extra: Optional[Dict] = None):
         """Run a single pipeline with retry logic."""
@@ -90,12 +95,13 @@ class PipelineOrchestrator:
                     "X_test": X_test,
                     "y_train": y_train,
                     "y_test": y_test,
-                    "target_encoder": target_encoder
+                    "target_encoder": target_encoder,
+                    #"global_config": self.global_config
                 })
             else:
                 # Other pipelines that operate on the full dataset
                 self.logger.info(f"Running general pipeline: {pipeline.__class__.__name__}")
-                if current_data is None:
+                if current_data is None or pipeline.__class__ == DataExtractorPipeline:
                     self.logger.error(f"No data available for pipeline {pipeline.__class__.__name__}")
                 else:
                     self.logger.info(f"Current data shape before {pipeline.__class__.__name__}: {current_data.shape}")

@@ -23,7 +23,7 @@ class ConfusionMatrixChart(Visualisation):
         if hasattr(self, 'target_encoder') and self.target_encoder:
             self.logger.info('Decoding labels using target encoder')
             display_labels = self.target_encoder.classes_
-            #self.logger.info(f'Decoded labels: {display_labels}')
+            self.logger.info(f'Decoded labels: {display_labels}')
             
 
         fig, ax = plt.subplots(figsize=self.kwargs.get('figsize', (10, 6)))
