@@ -28,12 +28,12 @@ pipelines:
             keep: "first"
             case_sensitive: false
             dropna: true
-        - name: filter_rows
-          params:
-            field: "Genre"
-            values: [ "All" ]
-            operator: "equals"
-            case_sensitive: false
+#        - name: filter_rows
+#          params:
+#            field: "Genre"
+#            values: [ "All" ]
+#            operator: "equals"
+#            case_sensitive: false
         - name: filter_rows
           params:
             field: "Description"
