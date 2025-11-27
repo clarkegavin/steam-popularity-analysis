@@ -101,10 +101,14 @@ class PipelineOrchestrator:
             else:
                 # Other pipelines that operate on the full dataset
                 self.logger.info(f"Running general pipeline: {pipeline.__class__.__name__}")
-                if current_data is None or pipeline.__class__ == DataExtractorPipeline:
-                    self.logger.error(f"No data available for pipeline {pipeline.__class__.__name__}")
+
+                if current_data is None:
+                    if pipeline.__class__ != DataExtractorPipeline:
+                        self.logger.error(f"No data available for pipeline {pipeline.__class__.__name__}")
                 else:
-                    self.logger.info(f"Current data shape before {pipeline.__class__.__name__}: {current_data.shape}")
+                    self.logger.info(
+                        f"Current data shape before {pipeline.__class__.__name__}: {current_data.shape}"
+                    )
 
                 current_data = self.run_pipeline(pipeline, data=current_data)
                 #self.logger.info(f"Data shape after {pipeline.__class__.__name__}: {current_data.shape}")

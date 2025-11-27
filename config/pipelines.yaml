@@ -40,6 +40,10 @@ pipelines:
             values: [null, ""]
             operator: "in"
             case_sensitive: false
+        - name: merge_features
+          params:
+            columns: ["Description", "Title"]
+            merge_to: "Description"
 #        - name: remove_urls
 #          params:
 #            field: "Description"
@@ -814,7 +818,7 @@ pipelines:
         # ------------------------------------------------------------
         # 1. KNN + TF-IDF
         # ------------------------------------------------------------
-        - run_name: "KNN TF-IDF"
+        - run_name: "1a. KNN TF-IDF"
           params:
             n_neighbors: 5
             weights: "uniform"
@@ -840,7 +844,7 @@ pipelines:
           # ------------------------------------------------------------
           # 1. KNN + Word2Vec
           # ------------------------------------------------------------
-        - run_name: "KNN Word2Vec"
+        - run_name: "1b. KNN Word2Vec"
           params:
             n_neighbors: 5
             weights: "uniform"
@@ -869,7 +873,7 @@ pipelines:
         # ------------------------------------------------------------
         # 3. KNN + BERT
         # ------------------------------------------------------------
-        - run_name: "KNN BERT"
+        - run_name: "1b. KNN BERT"
           params:
             n_neighbors: 5
             weights: "uniform"
@@ -903,7 +907,7 @@ pipelines:
         # ------------------------------------------------------------
         # 1. XGBoost + TF-IDF
         # ------------------------------------------------------------
-        - run_name: "XGBoost TF-IDF"
+        - run_name: "1a. XGBoost TF-IDF"
           params:
             description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
             save_path: "output/xgboost_results"
@@ -929,7 +933,7 @@ pipelines:
         # ------------------------------------------------------------
         # 2. XGBoost + Word2Vec
         # ------------------------------------------------------------
-        - run_name: "XGBoost Word2Vec"
+        - run_name: "1b. XGBoost Word2Vec"
           params:
             description: "XGBoost experiments with Word2Vec vectorization technique on Roblox game descriptions."
             save_path: "output/xgboost_results"
@@ -955,7 +959,7 @@ pipelines:
         # ------------------------------------------------------------
         # 3. XGBoost + BERT
         # ------------------------------------------------------------
-        - run_name: "XGBoost BERT"
+        - run_name: "1c. XGBoost BERT"
           params:
             description: "XGBoost experiments with BERT embeddings on Roblox game descriptions."
             save_path: "output/xgboost_results"
@@ -987,7 +991,7 @@ pipelines:
         # ------------------------------------------------------------
         # 1. SVM + TF-IDF
         # ------------------------------------------------------------
-        - run_name: "SVM TF-IDF"
+        - run_name: "1a. SVM TF-IDF"
           params:
             description: "SVM experiments with TF-IDF vectorization technique on Roblox game descriptions."
             save_path: "output/svm_results"
@@ -1015,7 +1019,7 @@ pipelines:
         # ------------------------------------------------------------
         # 2. SVM + Word2Vec
         # ------------------------------------------------------------
-        - run_name: "SVM Word2Vec"
+        - run_name: "1b. SVM Word2Vec"
           params:
             description: "SVM experiments with Word2Vec embeddings on Roblox game descriptions."
             save_path: "output/svm_results"
@@ -1044,7 +1048,7 @@ pipelines:
         # ------------------------------------------------------------
         # 3. SVM + BERT
         # ------------------------------------------------------------
-        - run_name: "SVM BERT"
+        - run_name: "1c. SVM BERT"
           params:
             description: "SVM experiments with BERT embeddings on Roblox game descriptions."
             save_path: "output/svm_results"

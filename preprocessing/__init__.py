@@ -14,6 +14,7 @@ from .remove_urls import RemoveURLs
 from .remove_repeated_characters import RemoveRepeatedCharacters
 from .remove_punctuation_noise import RemovePunctuationNoise
 from .remove_whitespace import RemoveWhitespace
+from .merge_features import MergeFeatures
 
 # Register built-in preprocessors
 PreprocessorFactory.register("stem", Stemmer)
@@ -40,5 +41,8 @@ PreprocessorFactory.register("remove_punctuation_noise", RemovePunctuationNoise)
 PreprocessorFactory.register("punctuation_noise", RemovePunctuationNoise)
 PreprocessorFactory.register("remove_whitespace", RemoveWhitespace)
 PreprocessorFactory.register("whitespace", RemoveWhitespace)
+PreprocessorFactory.register("merge_features", MergeFeatures)
+PreprocessorFactory.register("merge", MergeFeatures)
 
-__all__ = ["Preprocessor", "PreprocessorFactory", "Stemmer", "Lemmatizer", "Lowercase", "StopwordRemover", "EmojiRemover", "FilterRows", "MaskGenreWords", "RemoveDuplicates", "RemoveURLs", "RemoveRepeatedCharacters", "RemovePunctuationNoise", "RemoveWhitespace"]
+
+__all__ = ["Preprocessor", "PreprocessorFactory", "Stemmer", "Lemmatizer", "Lowercase", "StopwordRemover", "EmojiRemover", "FilterRows", "MaskGenreWords", "RemoveDuplicates", "RemoveURLs", "RemoveRepeatedCharacters", "RemovePunctuationNoise", "RemoveWhitespace", "MergeFeatures"]
