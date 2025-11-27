@@ -28,12 +28,12 @@ pipelines:
             keep: "first"
             case_sensitive: false
             dropna: true
-#        - name: filter_rows
-#          params:
-#            field: "Genre"
-#            values: [ "All" ]
-#            operator: "equals"
-#            case_sensitive: false
+        - name: filter_rows
+          params:
+            field: "Genre"
+            values: [ "All" ]
+            operator: "equals"
+            case_sensitive: false
         - name: filter_rows
           params:
             field: "Description"
@@ -149,6 +149,20 @@ pipelines:
                 max_features: 5000
                 ngram_range: [1, 2]
                 stop_words: "english"
+            sampler:
+              name: "composite"
+              params:
+                steps:
+#                  - name: "under_sampler"
+#                    params:
+#                      random_state: 42
+#                      sampling_strategy:
+#                        All: 10000
+                  - name: "smote"
+                    params:
+                      random_state: 42
+                      sampling_strategy: "auto"
+                      k_neighbors: 5
             visualisations:
               - name: confusion_matrix
                 kwargs:
