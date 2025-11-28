@@ -12,6 +12,7 @@ import numpy as np
 from vectorizers.factory import VectorizerFactory
 from mlflow.models import infer_signature
 from visualisations.factory import VisualisationFactory
+from samplers.factory import SamplerFactory
 
 
 class ClassificationExperiment(Experiment):
@@ -31,6 +32,7 @@ class ClassificationExperiment(Experiment):
         vectorizer: Optional[Dict] = None,
         visualisations: Optional[List[Dict]] = None,
         preprocessing_metadata: Optional[Dict] = None,
+        sampler: Optional[Dict] = None,
         **kwargs
     ):
 
@@ -62,6 +64,14 @@ class ClassificationExperiment(Experiment):
         self.vectorizer_params = self.vectorizer.get("vectorizer_params", {})
 
         self.visualisations = visualisations or []
+
+        # Sampler
+        self.sampler_config = sampler or {}
+        self.sampler_name = self.sampler_config.get("name")
+        self.sampler_params = self.sampler_config.get("params", {})
+        self.sampler = None
+        # if self.sampler_name:
+        #     self.sampler = SamplerFactory.get_sampler(self.sampler_name, **self.sampler_params)
 
         # Model parameters: merge YAML model_params + extra params that belong to the model
         self.model_params = (model_params or {}).copy()
@@ -105,39 +115,59 @@ class ClassificationExperiment(Experiment):
                 X_train = vectorizer.fit_transform(X_train.fillna(""))  # Fit on training set
                 X_test = vectorizer.transform(X_test.fillna(""))  # Transform on test set
 
+
             self._log_mlflow_params()
+
+            if self.sampler_name:
+                self._map_sampler_strategy_to_numeric()
+
+                self.logger.info(
+                    f"Instantiating sampler '{self.sampler_name}' with params {self.sampler_params}"
+                )
+                self.sampler = SamplerFactory.get_sampler(
+                    self.sampler_name, **self.sampler_params
+                )
 
             if self.cv_enabled:
                 self.results = self._run_cross_validation(X_train, y_train)
 
-                # --- Train final model on full training set ---
-                self.logger.info("Training final model on full training set")
-                final_model = ModelFactory.get_model(self.model_name, **self.model_params)
-                final_model.fit(X_train, y_train)
+            # --- Apply sampler to full training set before final training ---
+            # if self.sampler is not None:
+                # self.logger.info(f"Applying sampler '{self.sampler_name}' to full training set")
+                # X_train, y_train = self.sampler.fit_resample(X_train, y_train)
 
-                # Infer signature for logging
-                signature = infer_signature(X_train, final_model.predict(X_train))
+            if self.sampler is not None:
+                self.logger.info(f"Applying sampler '{self.sampler_name}' to full training set")
+                X_train, y_train = self.sampler.fit_resample(X_train, y_train)
 
-                # Log final model
-                try:
-                    mlflow.sklearn.log_model(final_model,
-                                             name="model",
-                                             signature=signature,
-                                             registered_model_name=self.model_name)
-                    self.logger.info("Final model logged to MLflow successfully.")
-                except Exception as e:
-                    self.logger.warning(f"Could not log model to MLflow: {e}")
+            # --- Train final model on full training set ---
+            self.logger.info("Training final model on full training set")
+            final_model = ModelFactory.get_model(self.model_name, **self.model_params)
+            final_model.fit(X_train, y_train)
 
-                # --- Evaluate on test set if provided ---
-                if X_test is not None and y_test is not None:
-                    test_metrics = self._run_test_evaluation(final_model, X_test, y_test)
-                    self.results.update(test_metrics)
+            # Infer signature for logging
+            signature = infer_signature(X_train, final_model.predict(X_train))
 
-                # Save results locally
-                if self.save_path:
-                    self.save_results()
+            # Log final model
+            try:
+                mlflow.sklearn.log_model(final_model,
+                                         name="model",
+                                         signature=signature,
+                                         registered_model_name=self.model_name)
+                self.logger.info("Final model logged to MLflow successfully.")
+            except Exception as e:
+                self.logger.warning(f"Could not log model to MLflow: {e}")
 
-            return self.results
+            # --- Evaluate on test set if provided ---
+            if X_test is not None and y_test is not None:
+                test_metrics = self._run_test_evaluation(final_model, X_test, y_test)
+                self.results.update(test_metrics)
+
+            # Save results locally
+            if self.save_path:
+                self.save_results()
+
+        return self.results
 
 
     def _run_test_evaluation(self, model, X_test, y_test):
@@ -178,6 +208,11 @@ class ClassificationExperiment(Experiment):
 
             X_train_fold, X_val_fold = X[train_idx], X[val_idx]
             y_train_fold, y_val_fold = y[train_idx], y[val_idx]
+
+            # --- Apply sampler inside fold ---
+            if self.sampler is not None:
+                self.logger.info(f"Applying sampler '{self.sampler_name}' to training fold")
+                X_train_fold, y_train_fold = self.sampler.fit_resample(X_train_fold, y_train_fold)
 
             # Recreate a fresh model each fold
             model = ModelFactory.get_model(self.model_name, **self.model_params)
@@ -292,6 +327,8 @@ class ClassificationExperiment(Experiment):
         mlflow.log_param("cv_shuffle", self.cv_shuffle)
         mlflow.log_param("cv_random_state", self.cv_random_state)
 
+
+
         # --- Preprocessing metadata ---
         if self.preprocessing_metadata:
             # Global preprocessing
@@ -300,6 +337,17 @@ class ClassificationExperiment(Experiment):
                 params = step.get("params", {})
                 for k, v in params.items():
                     mlflow.log_param(f"global_pre_{name}_{k}", v)
+
+            # --- Data cleanup steps ---
+            for step in self.preprocessing_metadata.get("data_cleanup", []):
+                name = step.get("name", "unknown")
+                params = step.get("params", {})
+
+                for k, v in params.items():
+                    # Safely stringify complex values
+                    if isinstance(v, (list, dict)):
+                        v = json.dumps(v)
+                    mlflow.log_param(f"cleanup_{name}_{k}", v)
 
             # Experiment preprocessing
             for step in self.preprocessing_metadata.get("experiment_preprocessing", []):
@@ -324,3 +372,55 @@ class ClassificationExperiment(Experiment):
                     mlflow.log_param(f"viz_{viz_name}", json.dumps(viz_kwargs))
 
         self.logger.info("All experiment parameters and preprocessing metadata logged to MLflow.")
+
+    def _map_sampler_strategy_to_numeric(self):
+        """
+        Converts YAML string-based sampling_strategy labels (e.g. 'All')
+        into their numeric-encoded equivalents using target_encoder.
+        """
+
+        if not self.sampler_params or not self.target_encoder:
+            self.logger.info("No sampler params or target_encoder available – skipping mapping.")
+            return
+
+        # Case 1: Direct strategy on the sampler
+        self._convert_strategy_dict(self.sampler_params)
+
+        # Case 2: Composite sampler steps
+        if "steps" in self.sampler_params:
+            for step in self.sampler_params["steps"]:
+                if "params" in step:
+                    self._convert_strategy_dict(step["params"])
+
+    def _convert_strategy_dict(self, params: dict):
+        """Convert sampling_strategy labels to numeric values in-place."""
+
+        orig_strategy = params.get("sampling_strategy")
+
+        if not orig_strategy or not isinstance(orig_strategy, dict):
+            return
+
+        self.logger.info(f"Original sampler strategy: {orig_strategy}")
+
+        numeric_strategy = {}
+
+        # Get known class labels from encoder for validation
+        valid_labels = set(self.target_encoder.classes_)
+
+        for label_str, n_samples in orig_strategy.items():
+
+            if label_str not in valid_labels:
+                self.logger.warning(
+                    f"Label '{label_str}' not found in target encoder classes: {valid_labels}"
+                )
+                continue
+
+            numeric_code = int(self.target_encoder.transform([label_str])[0])
+            numeric_strategy[numeric_code] = n_samples
+
+            self.logger.info(
+                f"Mapped sampler label '{label_str}' → {numeric_code}"
+            )
+
+        params["sampling_strategy"] = numeric_strategy
+        self.logger.info(f"Updated sampler strategy: {numeric_strategy}")

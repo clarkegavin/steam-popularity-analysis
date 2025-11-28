@@ -71,64 +71,7 @@ class ExperimentPipeline(Pipeline):
 
         self.logger.info(f"All experiments for '{self.model_name}' complete.")
 
-    # def _preprocessing(self, exp_cfg, X_train, X_test):
-    #     preprocessing_metadata = []
-    #
-    #     # Global preprocessing steps - log only (they have already been applied)
-    #     global_pre_cfgs = []
-    #     self.logger.info(f"Global config keys: {list(self.global_config.keys())}")
-    #     for p in self.global_config.get("pipelines", []):
-    #         self.logger.info(f"Checking global pipeline config: {p.get('name')}")
-    #         if p.get("name") == "preprocess_text":
-    #             global_pre_cfgs = p.get("params", {}).get("preprocessors", [])
-    #             self.logger.info(f"Global preprocessing configurations found: {global_pre_cfgs}")
-    #             break
-    #
-    #     # --- Collect experiment configs (log + apply) ---
-    #     exp_pre_cfgs = exp_cfg.get("preprocessing", [])
-    #
-    #     # pre_cfgs = [*global_pre_cfgs, *exp_pre_cfgs]
-    #     # Log both
-    #     self.logger.info(f"[LOG ONLY] Global preprocessing configs: {global_pre_cfgs}")
-    #     self.logger.info(f"[APPLY] Experiment preprocessing configs: {exp_pre_cfgs}")
-    #
-    #     # --- Store metadata for global (no execution) ---
-    #     for pre_cfg in global_pre_cfgs:
-    #         preprocessing_metadata.append({
-    #             "name": pre_cfg["name"],
-    #             "params": pre_cfg.get("params", {}),
-    #             "source": "global"
-    #         })
-    #
-    #     #pre_cfgs = exp_cfg.get("preprocessing", [])
-    #     if exp_pre_cfgs:
-    #         self.logger.info(f"Applying per-experiment preprocessing: {exp_pre_cfgs}")
-    #         steps = []
-    #         for pre_cfg in exp_pre_cfgs:
-    #             name = pre_cfg["name"]
-    #             params = pre_cfg.get("params", {})
-    #             # if text_field not in params, use experiment-level
-    #             # if "text_field" not in params and "text_field" in exp_cfg:
-    #             #     params["text_field"] = exp_cfg["text_field"]
-    #             steps.append(PreprocessorFactory.create(name, **params))
-    #             self.logger.info(f"Added preprocessor step: {name} with params: {params}")
-    #             preprocessing_metadata.append(
-    #                 {
-    #                     "name": name,
-    #                     "params": params
-    #                 }
-    #             )
-    #             self.logger.info(f"Preprocessing metadata updated: {preprocessing_metadata}")
-    #
-    #         # Wrap them in a simple sequential preprocessor
-    #         self.logger.info(f"Creating SequentialPreprocessor with steps: {steps}")
-    #         preprocessor = SequentialPreprocessor(steps)
-    #         text_field = exp_cfg.get("text_field")  # column name
-    #         self.logger.info(f"Applying preprocessing to field: {text_field}")
-    #         X_train[text_field] = preprocessor.fit_transform(X_train[text_field])
-    #         X_test[text_field] = preprocessor.transform(X_test[text_field])
-    #
-    #     return X_train, X_test, preprocessing_metadata
+
     def _preprocessing(self, exp_cfg, X_train, X_test):
         """
         Applies only experiment preprocessing, returns updated data and full metadata.
