@@ -27,3 +27,6 @@ class Word2VecVectorizer(Vectorizer):
             return np.mean(vectors, axis=0) if vectors else np.zeros(self.vector_size)
 
         return np.vstack([embed(t) for t in X[self.column]])
+
+    def get_feature_names(self):
+        return [f"w2v_dim_{i}" for i in range(self.vector_size)]

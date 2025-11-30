@@ -38,6 +38,7 @@ class RemovePunctuationNoise(Preprocessor):
         return self
 
     def transform(self, X):
+        self.logger.info("Transforming data with RemovePunctuationNoise")
         # Now supports DataFrame, Series, and iterables
         if isinstance(X, pd.DataFrame):
             return self.apply(X)

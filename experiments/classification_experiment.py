@@ -252,17 +252,20 @@ class ClassificationExperiment(Experiment):
         os.makedirs(self.save_path, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_path = os.path.join(self.save_path, f"{self.name}_{timestamp}.json")
-        with open(file_path, "w") as f:
-            json.dump(
-                {
-                    "experiments": self.name,
-                    "model": self.model_name,
-                    "metrics": self.results,
-                    "params": self.model_params,
-                    "timestamp": timestamp,
-                }, f, indent=4,
-            )
-        self.logger.info(f"Saved results locally to {file_path}")
+        try:
+            with open(file_path, "w") as f:
+                json.dump(
+                    {
+                        "experiments": self.name,
+                        "model": self.model_name,
+                        "metrics": self.results,
+                        "params": self.model_params,
+                        "timestamp": timestamp,
+                    }, f, indent=4,
+                )
+                self.logger.info(f"Saved results locally to {file_path}")
+        except Exception as e:
+            self.logger.warning(f"Could not save experiment {self.name} results to {file_path}: {e}")
 
     def _generate_visualisations(self, y_true, y_pred, fold=0):
 
@@ -305,22 +308,26 @@ class ClassificationExperiment(Experiment):
     def     _log_mlflow_params(self):
         """Log all parameters and preprocessing metadata to MLflow."""
         # --- Basic experiment info ---
+        self.logger.debug("Logging experiment parameters to MLflow")
         mlflow.log_param("model", self.model_name)
         mlflow.log_param("evaluator", self.evaluator_name)
         mlflow.log_param("description", self.description)
 
         # --- Model params ---
         if self.model_params:
+            self.logger.debug(f"Logging model parameters: {self.model_params}")
             mlflow.log_params(self.model_params)
 
         # --- Vectorizer params ---
         if self.vectorizer_name:
+            self.logger.debug(f"Logging vectorizer parameters: {self.vectorizer_name}, {self.vectorizer_params}")
             mlflow.log_param("vectorizer_name", self.vectorizer_name)
             mlflow.log_param("vectorizer_field", self.vectorizer_field)
             for k, v in self.vectorizer_params.items():
                 mlflow.log_param(f"vectorizer_{k}", v)
 
         # --- Cross-validation params ---
+        self.logger.debug("Logging cross-validation parameters")
         mlflow.log_param("cv_enabled", self.cv_enabled)
         mlflow.log_param("cv_folds", self.cv_folds)
         mlflow.log_param("cv_stratified", self.cv_stratified)
@@ -332,6 +339,7 @@ class ClassificationExperiment(Experiment):
         # --- Preprocessing metadata ---
         if self.preprocessing_metadata:
             # Global preprocessing
+            self.logger.debug("Logging preprocessing metadata to MLflow")
             for step in self.preprocessing_metadata.get("global_preprocessing", []):
                 name = step["name"]
                 params = step.get("params", {})
@@ -339,17 +347,20 @@ class ClassificationExperiment(Experiment):
                     mlflow.log_param(f"global_pre_{name}_{k}", v)
 
             # --- Data cleanup steps ---
+            self.logger.debug("Logging data cleanup steps to MLflow")
             for step in self.preprocessing_metadata.get("data_cleanup", []):
                 name = step.get("name", "unknown")
                 params = step.get("params", {})
 
                 for k, v in params.items():
+                    self.logger.info(f"Logging cleanup param: {name}_{k} = {v}")
                     # Safely stringify complex values
                     if isinstance(v, (list, dict)):
                         v = json.dumps(v)
                     mlflow.log_param(f"cleanup_{name}_{k}", v)
 
             # Experiment preprocessing
+            self.logger.debug("Logging experiment-specific preprocessing metadata to MLflow")
             for step in self.preprocessing_metadata.get("experiment_preprocessing", []):
                 name = step["name"]
                 params = step.get("params", {})
@@ -357,15 +368,18 @@ class ClassificationExperiment(Experiment):
                     mlflow.log_param(f"exp_pre_{name}_{k}", v)
 
             # Roblox extraction
+            self.logger.debug("Logging Roblox extraction metadata to MLflow")
             for k, v in self.preprocessing_metadata.get("roblox_extraction", {}).items():
                 mlflow.log_param(f"roblox_{k}", v)
 
             # Data split
+            self.logger.debug("Logging data split metadata to MLflow")
             for k, v in self.preprocessing_metadata.get("split_data", {}).items():
                 mlflow.log_param(f"split_{k}", v)
 
             # Visualisations
             if self.visualisations:
+                self.logger.debug("Logging visualisation metadata to MLflow")
                 for viz in self.visualisations:
                     viz_name = viz.get("name")
                     viz_kwargs = viz.get("kwargs", {})

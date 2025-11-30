@@ -2,6 +2,7 @@
 from typing import Iterable, List, Optional, Set, Any
 from .base import Preprocessor
 from logs.logger import get_logger
+import pandas as pd
 
 # dynamic imports to avoid hard dependency at import time
 try:
@@ -52,11 +53,18 @@ class StopwordRemover(Preprocessor):
         "like", "likes", "favorite", "favorites", "fav",
         "follow", "join", "visit", "check", "share",
         "welcome", "enjoy", "thanks", "thank",
-        "please", "plz", "pls"
+        "please", "plz", "pls", "blox", "roblox", "robux", "join", "fun", "welcome",
+        "good luck", "favorite", "best",
     }
 
-    def __init__(self, language: str = "english", stopwords: Optional[Iterable[str]] = None, lower: bool = True):
+    def __init__(self, field: str, language: str = "english",
+                 stopwords: Optional[Iterable[str]] = None, lower: bool = True):
+
+        if not field:
+            raise ValueError("'field' parameter is required for StopwordRemover")
+
         self.logger = get_logger(self.__class__.__name__)
+        self.field = field
         self.language = language
         self.lower = bool(lower)
         self.logger.info(f"Initializing StopwordRemover language={language} lower={self.lower}")
@@ -75,62 +83,112 @@ class StopwordRemover(Preprocessor):
             if _nltk_stopwords is not None:
                 try:
                     #self.stopwords = set(_nltk_stopwords.words(self.language))
-                    base_sw = set(_nltk_stopwords.words(self.language))
+                    #base_sw = set(_nltk_stopwords.words(self.language))
+                    base_sw = set(_nltk_stopwords.words(self.language)) if _nltk_stopwords else set()
                     self.stopwords = base_sw.union(self.ROBLOX_STOPWORDS)
-
                     self.logger.info(f"Loaded {len(self.stopwords)} stopwords for language '{self.language}' from NLTK")
                 except Exception:
                     self.logger.warning(f"NLTK stopwords for '{self.language}' not available; using default set")
-                    self.stopwords = set(self.DEFAULT_STOPWORDS)
+                    self.stopwords = set(self.DEFAULT_STOPWORDS).union(self.ROBLOX_STOPWORDS)
             else:
                 self.logger.warning("NLTK stopwords not available; using small built-in default set")
-                self.stopwords = set(self.DEFAULT_STOPWORDS)
+                self.stopwords = set(self.DEFAULT_STOPWORDS).union(self.ROBLOX_STOPWORDS)
 
         # choose tokenizer
         self._tokenize = _word_tokenize if _word_tokenize is not None else None
+
+        self.logger.info(
+            f"Initialized StopwordRemover(field={field}, language={language}, lower={self.lower})"
+        )
 
     def fit(self, X: Iterable[str]):
         # stateless
         return self
 
-    def transform(self, X: Iterable[str]) -> List[str]:
-        self.logger.info("Applying StopwordRemover transformation")
-        out: List[str] = []
-        for i, doc in enumerate(X):
-            s = "" if doc is None else str(doc)
-            if self.lower:
-                try:
-                    s = s.lower()
-                except Exception:
-                    pass
+    def _clean_text(self, text: str) -> str:
+        """Internal utility to remove stopwords from one string."""
+        if text is None:
+            return ""
 
-            # tokenize
-            try:
-                tokens = self._tokenize(s) if self._tokenize is not None else s.split()
-            except Exception:
-                tokens = s.split()
+        s = str(text)
+        if self.lower:
+            s = s.lower()
 
-            # filter stopwords
-            try:
-                filtered = [t for t in tokens if t not in self.stopwords]
-            except Exception:
-                # in case tokens are not hashable etc.
-                filtered = [t for t in tokens if t not in set(self.stopwords)]
+        # tokenize
+        try:
+            tokens = self._tokenize(s) if self._tokenize else s.split()
+        except Exception:
+            tokens = s.split()
 
-            out_doc = " ".join(filtered)
-            out.append(out_doc)
+        filtered = [t for t in tokens if t not in self.stopwords]
+        return " ".join(filtered)
 
-            if i < 3:
-                # log small samples
-                try:
-                    self.logger.info(f"Original: {s.encode('utf-8', errors='ignore')}")
-                    self.logger.info(f"Filtered: {out_doc.encode('utf-8', errors='ignore')}")
-                except Exception:
-                    pass
+    # def transform(self, X: Iterable[str]) -> List[str]:
+    #     self.logger.info("Applying StopwordRemover transformation")
+    #     out: List[str] = []
+    #     for i, doc in enumerate(X):
+    #         s = "" if doc is None else str(doc)
+    #         if self.lower:
+    #             try:
+    #                 s = s.lower()
+    #             except Exception:
+    #                 pass
+    #
+    #         # tokenize
+    #         try:
+    #             tokens = self._tokenize(s) if self._tokenize is not None else s.split()
+    #         except Exception:
+    #             tokens = s.split()
+    #
+    #         # filter stopwords
+    #         try:
+    #             filtered = [t for t in tokens if t not in self.stopwords]
+    #         except Exception:
+    #             # in case tokens are not hashable etc.
+    #             filtered = [t for t in tokens if t not in set(self.stopwords)]
+    #
+    #         out_doc = " ".join(filtered)
+    #         out.append(out_doc)
+    #
+    #         if i < 3:
+    #             # log small samples
+    #             try:
+    #                 self.logger.info(f"Original: {s.encode('utf-8', errors='ignore')}")
+    #                 self.logger.info(f"Filtered: {out_doc.encode('utf-8', errors='ignore')}")
+    #             except Exception:
+    #                 pass
+    #
+    #     self.logger.info("Completed StopwordRemover transformation")
+    #     return out
 
-        self.logger.info("Completed StopwordRemover transformation")
+    def transform(self, X: Iterable[Any]) -> Any:
+        self.logger.info(f"Applying StopwordRemover on field '{self.field}'")
+
+        # pandas.DataFrame path (main)
+        if pd is not None and isinstance(X, pd.DataFrame):
+            df = X.copy()
+
+            if self.field not in df.columns:
+                self.logger.warning(
+                    f"Field '{self.field}' not present in DataFrame; returning original DataFrame"
+                )
+                return df
+
+            df[self.field] = df[self.field].apply(self._clean_text)
+
+            self.logger.info("Completed StopwordRemover on DataFrame")
+            return df
+
+        # terable path (fallback)
+        out = [self._clean_text(item) for item in X]
+
+        self.logger.info("Completed StopwordRemover on iterable")
         return out
 
     def get_params(self) -> dict:
-        return {"language": self.language, "lower": self.lower, "stopwords_count": len(self.stopwords)}
-
+        return {
+            "field": self.field,
+            "language": self.language,
+            "lower": self.lower,
+            "stopwords_count": len(self.stopwords),
+        }

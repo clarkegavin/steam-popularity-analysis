@@ -1,6 +1,7 @@
 #visualisations/base.py
 from abc import ABC, abstractmethod
 from logs.logger import get_logger
+import os
 
 class Visualisation(ABC):
     """
@@ -23,6 +24,8 @@ class Visualisation(ABC):
         """
         Save the visualisation to a file.
         """
+        # create directory if it doesn't exist
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
         self.logger.info(f'Saving visualisation to {filepath}')
         fig.savefig(filepath, dpi=dpi, bbox_inches='tight')
         self.logger.info(f'Visualisation saved to {filepath}')

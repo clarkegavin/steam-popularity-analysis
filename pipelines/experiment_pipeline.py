@@ -49,8 +49,9 @@ class ExperimentPipeline(Pipeline):
             X_train_exp = X_train.copy()
             X_test_exp = X_test.copy()
 
+            self.logger.info("Applying experiment-specific preprocessing")
             X_train_exp, X_test_exp, preprocessing_metadata  = self._preprocessing(exp_cfg, X_train_exp, X_test_exp)
-
+            self.logger.info("Experiment-specific preprocessing complete")
             exp_params = {
                 "name": run_name,
                 "model_name": self.model_name,
@@ -84,11 +85,13 @@ class ExperimentPipeline(Pipeline):
 
             self.logger.info(f"Applying per-experiment preprocessing steps: {steps}")
             preprocessor = SequentialPreprocessor(steps)
-            text_field = exp_cfg.get("text_field")
+            self.logger.info(f"Preprocessing steps created: {preprocessor}")
 
+            text_field = exp_cfg.get("text_field")
+            self.logger.info(f"Preprocessing text field: {text_field}")
             X_train[text_field] = preprocessor.fit_transform(X_train[text_field])
             X_test[text_field] = preprocessor.transform(X_test[text_field])
-
+            self.logger.info("Preprocessing applied to training and testing data.")
         self.logger.info(f"Full preprocessing metadata: {preprocessing_metadata}")
         return X_train, X_test, preprocessing_metadata
 

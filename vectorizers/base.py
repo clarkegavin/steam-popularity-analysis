@@ -11,6 +11,11 @@ class Vectorizer(ABC):
     def transform(self, X):
         pass
 
+    @abstractmethod
+    def get_feature_names(self):
+        pass
+
     def fit_transform(self, X):
         self.fit(X)
         return self.transform(X)
+
