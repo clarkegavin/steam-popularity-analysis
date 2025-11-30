@@ -33,10 +33,20 @@ class PreprocessingPipeline(Pipeline):
 
         for pre_cfg in self.preprocessors:
             name = pre_cfg["name"]
+            self.logger.info(f"Preprocessor step: {name} with config: {pre_cfg}")
             params = pre_cfg.get("params", {})
             self.logger.info(f"Applying preprocessor: {name}")
             pre = PreprocessorFactory.create(name, **params)
             texts = pre.fit_transform(texts)
+
+            # Check if 'roblox' still exists after stopword_remover
+            if name == "stopword_remover":
+                self.logger.info("Checking for 'roblox' presence after stopword removal")
+                still_present = [t for t in texts if "roblox" in t.lower()]
+                self.logger.info(f"'roblox' still present in {len(still_present)} texts after stopword removal")
+                # Optionally print some examples
+                for sample in still_present[:5]:
+                    self.logger.info(f"Sample text: {sample}")
 
         X = X.copy()
         self.logger.info(f"Completed text preprocessing on field: {self.text_field}")

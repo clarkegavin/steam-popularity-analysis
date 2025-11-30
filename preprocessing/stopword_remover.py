@@ -3,6 +3,8 @@ from typing import Iterable, List, Optional, Set, Any
 from .base import Preprocessor
 from logs.logger import get_logger
 import pandas as pd
+import string
+import re
 
 # dynamic imports to avoid hard dependency at import time
 try:
@@ -49,12 +51,11 @@ class StopwordRemover(Preprocessor):
 
     ROBLOX_STOPWORDS: Set[str] = {
         "game", "play", "playing", "plays", "fun", "awesome", "cool", "best", "epic",
-        "new", "update", "updates", "updated", "soon",
-        "like", "likes", "favorite", "favorites", "fav",
-        "follow", "join", "visit", "check", "share",
-        "welcome", "enjoy", "thanks", "thank",
-        "please", "plz", "pls", "blox", "roblox", "robux", "join", "fun", "welcome",
-        "good luck", "favorite", "best",
+        "new", "update", "updates", "updated", "soon", "like", "likes", "favorite",
+        "favorites", "fav", "follow", "join", "visit", "check", "share", "welcome",
+        "enjoy", "thanks", "thank", "please", "plz", "pls", "blox", "roblox", "robux",
+        "join", "fun", "welcome", "good luck", "favorite", "best", "group", "unlock",
+        "will", "free"
     }
 
     def __init__(self, field: str, language: str = "english",
@@ -97,6 +98,7 @@ class StopwordRemover(Preprocessor):
         # choose tokenizer
         self._tokenize = _word_tokenize if _word_tokenize is not None else None
 
+        self.logger.info(f"Stopwords: {sorted(list(self.stopwords))}")
         self.logger.info(
             f"Initialized StopwordRemover(field={field}, language={language}, lower={self.lower})"
         )
@@ -107,59 +109,48 @@ class StopwordRemover(Preprocessor):
 
     def _clean_text(self, text: str) -> str:
         """Internal utility to remove stopwords from one string."""
+        # if text is None:
+        #     return ""
+        #
+        # s = str(text)
+        # if self.lower:
+        #     s = s.lower()
+        #
+        # # Use NLTK tokenizer if available, else fallback
+        # try:
+        #     tokens = self._tokenize(s) if self._tokenize else s.split()
+        # except Exception:
+        #     tokens = s.split()
+        #
+        # # Strip punctuation and filter stopwords
+        # cleaned_tokens = []
+        # for t in tokens:
+        #     # remove surrounding punctuation
+        #     t_clean = t.strip(string.punctuation)
+        #     # remove extra repeated punctuation inside word
+        #     t_clean = re.sub(r'[!?.,]{2,}', '', t_clean)
+        #     if t_clean and t_clean not in self.stopwords:
+        #         cleaned_tokens.append(t_clean)
+        #
+        # return " ".join(cleaned_tokens)
         if text is None:
             return ""
 
+            # Convert to string and lowercase if needed
         s = str(text)
         if self.lower:
             s = s.lower()
 
-        # tokenize
-        try:
-            tokens = self._tokenize(s) if self._tokenize else s.split()
-        except Exception:
-            tokens = s.split()
+        # Remove punctuation
+        s = s.translate(str.maketrans("", "", string.punctuation))
 
+        # Tokenize (simple whitespace split is enough after punctuation removed)
+        tokens = s.split()
+
+        # Remove stopwords
         filtered = [t for t in tokens if t not in self.stopwords]
-        return " ".join(filtered)
 
-    # def transform(self, X: Iterable[str]) -> List[str]:
-    #     self.logger.info("Applying StopwordRemover transformation")
-    #     out: List[str] = []
-    #     for i, doc in enumerate(X):
-    #         s = "" if doc is None else str(doc)
-    #         if self.lower:
-    #             try:
-    #                 s = s.lower()
-    #             except Exception:
-    #                 pass
-    #
-    #         # tokenize
-    #         try:
-    #             tokens = self._tokenize(s) if self._tokenize is not None else s.split()
-    #         except Exception:
-    #             tokens = s.split()
-    #
-    #         # filter stopwords
-    #         try:
-    #             filtered = [t for t in tokens if t not in self.stopwords]
-    #         except Exception:
-    #             # in case tokens are not hashable etc.
-    #             filtered = [t for t in tokens if t not in set(self.stopwords)]
-    #
-    #         out_doc = " ".join(filtered)
-    #         out.append(out_doc)
-    #
-    #         if i < 3:
-    #             # log small samples
-    #             try:
-    #                 self.logger.info(f"Original: {s.encode('utf-8', errors='ignore')}")
-    #                 self.logger.info(f"Filtered: {out_doc.encode('utf-8', errors='ignore')}")
-    #             except Exception:
-    #                 pass
-    #
-    #     self.logger.info("Completed StopwordRemover transformation")
-    #     return out
+        return " ".join(filtered)
 
     def transform(self, X: Iterable[Any]) -> Any:
         self.logger.info(f"Applying StopwordRemover on field '{self.field}'")

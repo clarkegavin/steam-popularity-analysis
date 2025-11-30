@@ -86,6 +86,8 @@ pipelines:
         - name: class_balance
         - name: wordcloud_global
         - name: wordcloud_by_class
+        - name: describe_info
+
 #        - name: duplicate_check
     #dataset:
       target: "Genre"
@@ -161,10 +163,376 @@ pipelines:
     params:
       target_column: "Genre"
 
+  - name: naive_bayes
+    type: pipelines.experiment_pipeline.ExperimentPipeline
+    params:
+      experiment_type: "classification"
+      model_name: "naive_bayes"
+      evaluator_name: "classification"
+      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
+      mlflow_experiment: "Naive Bayes Experiments"
+      experiments:
 
-    #------------------------------------------------------------
-    # Experiment Pipelines
-    #------------------------------------------------------------
+        # ------------------------------------------------------------
+        # 1a. Baseline: no preprocessing
+        # ------------------------------------------------------------
+        - run_name: "1a. NB + TF-IDF baseline"
+          params:
+            description: "Baseline: Naive Bayes + TF-IDF with word n-grams, no preprocessing"
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        # ------------------------------------------------------------
+        # 1b. Add lowercase
+        # ------------------------------------------------------------
+        - run_name: "1b. NB + lowercase"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+          params:
+            description: "Naive Bayes + TF-IDF with lowercase preprocessing added"
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        # ------------------------------------------------------------
+        # 1c. Add remove_repeated_characters
+        # ------------------------------------------------------------
+        - run_name: "1c. NB + repeated char removal"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+          params:
+            description: "Naive Bayes + TF-IDF with lowercase and repeated character removal"
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        # ------------------------------------------------------------
+        # 1d. Add remove_urls
+        # ------------------------------------------------------------
+        - run_name: "1d. NB + remove URLs"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+          params:
+            description: "Naive Bayes + TF-IDF with lowercase, repeated character removal, and URL removal"
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        # ------------------------------------------------------------
+        # 1e. Add remove_whitespace
+        # ------------------------------------------------------------
+        - run_name: "1e. NB + remove whitespace"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+            - name: remove_whitespace
+              params:
+                field: "Description"
+                pattern: '\\s+'
+          params:
+            description: "Naive Bayes + TF-IDF with lowercase, repeated character removal, URL removal, and whitespace cleanup"
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        # ------------------------------------------------------------
+        # 1f. Add remove_punctuation_noise
+        # ------------------------------------------------------------
+        - run_name: "1f. NB + remove punctuation noise"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+            - name: remove_whitespace
+              params:
+                field: "Description"
+                pattern: '\\s+'
+            - name: remove_punctuation_noise
+              params:
+                field: "Description"
+                pattern: '([!?.,])\\1+'
+          params:
+            description: "Naive Bayes + TF-IDF with lowercase, repeated character removal, URL removal, whitespace cleanup, and punctuation noise removal"
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        # ------------------------------------------------------------
+        # 1g. Add stopword_remover
+        # ------------------------------------------------------------
+        - run_name: "1g. NB + stopword remover"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+            - name: remove_whitespace
+              params:
+                field: "Description"
+                pattern: '\\s+'
+            - name: remove_punctuation_noise
+              params:
+                field: "Description"
+                pattern: '([!?.,])\\1+'
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+          params:
+            description: "Naive Bayes + TF-IDF with all above preprocessing and stopword removal"
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        # ------------------------------------------------------------
+        # 1h. Add stemmer (porter and snowball variants)
+        # ------------------------------------------------------------
+        - run_name: "1h. NB + stemmer (porter)"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+            - name: remove_whitespace
+              params:
+                field: "Description"
+                pattern: '\\s+'
+            - name: remove_punctuation_noise
+              params:
+                field: "Description"
+                pattern: '([!?.,])\\1+'
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+            - name: stemmer
+              params:
+                language: "english"
+                algorithm: "porter"
+          params:
+            description: "Naive Bayes + TF-IDF with all preprocessing plus Porter stemmer"
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        - run_name: "1i. NB + stemmer (snowball)"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+            - name: remove_whitespace
+              params:
+                field: "Description"
+                pattern: '\\s+'
+            - name: remove_punctuation_noise
+              params:
+                field: "Description"
+                pattern: '([!?.,])\\1+'
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+            - name: stemmer
+              params:
+                language: "english"
+                algorithm: "snowball"
+          params:
+            description: "Naive Bayes + TF-IDF with all preprocessing plus Snowball stemmer"
+            save_path: "output/naive_bayes_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 43
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+#    #------------------------------------------------------------
+#    # Experiment Pipelines
+#    #------------------------------------------------------------
 #  - name: naive_bayes
 #    type: pipelines.experiment_pipeline.ExperimentPipeline
 #    params:
@@ -180,6 +548,46 @@ pipelines:
 #        - run_name: "1a. Naive Bayes + TF-IDF with word n-grams baseline"
 #          params:
 #            description: "1a. Naive Bayes + TF-IDF with word n-grams baseline"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [1, 2]
+#                stop_words: "english"
+##            sampler:
+##              name: "composite"
+##              params:
+##                steps:
+###                  - name: "under_sampler"
+###                    params:
+###                      random_state: 42
+###                      sampling_strategy:
+###                        All: 10000
+##                  - name: "smote"
+##                    params:
+##                      random_state: 42
+##                      sampling_strategy: "auto"
+##                      k_neighbors: 5
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 1aa. Naive Bayes + TF-IDF with word n-grams baseline
+#        # ------------------------------------------------------------
+#        - run_name: "1aa. Naive Bayes + TF-IDF with word n-grams baseline"
+#          params:
+#            alpha: 0.0001 # laplace smoothing
+#            description: "1aa. Naive Bayes + TF-IDF with word n-grams baseline"
 #            save_path: "output/naive_bayes_results"
 #            cv_enabled: true
 #            cv_stratified: true
@@ -239,6 +647,11 @@ pipelines:
 #            - name: emoji_remover
 #              params:
 #                use_emoji_lib: true
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
 #          params:
 #            description: "1b. Naive Bayes + TF-IDF with character n-grams and data cleansing"
 #            save_path: "output/naive_bayes_results"
@@ -863,824 +1276,824 @@ pipelines:
 #                kwargs:
 #                  figsize: [ 8, 6 ]
 #                  cmap: "Blues"
-
-  #------------------------------------------------------------
-  # Experiment Pipeline for KNN
-  #------------------------------------------------------------
-
-  - name: knn
-    type: pipelines.experiment_pipeline.ExperimentPipeline
-    params:
-      experiment_type: "classification"
-      model_name: "knn"
-      evaluator_name: "classification"
-      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
-      mlflow_experiment: "KNN Experiments"
-      experiments:
-        # ------------------------------------------------------------
-        # 1. KNN + TF-IDF
-        # ------------------------------------------------------------
-        - run_name: "1a. KNN TF-IDF"
-          params:
-            n_neighbors: 5
-            weights: "uniform"
-            description: "KNN experiments with TF-IDF vectorization technique on Roblox game descriptions."
-            save_path: "output/knn_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 10000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
-
-        # ------------------------------------------------------------
-        # 1. KNN + TF-IDF
-        # ------------------------------------------------------------
-        - run_name: "1b. KNN TF-IDF"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            n_neighbors: 5
-            weights: "uniform"
-            description: "1b. KNN TF-IDF with data cleansing and smote on Roblox game descriptions."
-            save_path: "output/knn_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 10000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-#            sampler:
-#              name: "composite"
+#
+#  #------------------------------------------------------------
+#  # Experiment Pipeline for KNN
+#  #------------------------------------------------------------
+#
+#  - name: knn
+#    type: pipelines.experiment_pipeline.ExperimentPipeline
+#    params:
+#      experiment_type: "classification"
+#      model_name: "knn"
+#      evaluator_name: "classification"
+#      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
+#      mlflow_experiment: "KNN Experiments"
+#      experiments:
+#        # ------------------------------------------------------------
+#        # 1. KNN + TF-IDF
+#        # ------------------------------------------------------------
+#        - run_name: "1a. KNN TF-IDF"
+#          params:
+#            n_neighbors: 5
+#            weights: "uniform"
+#            description: "KNN experiments with TF-IDF vectorization technique on Roblox game descriptions."
+#            save_path: "output/knn_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 1. KNN + TF-IDF
+#        # ------------------------------------------------------------
+#        - run_name: "1b. KNN TF-IDF"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
 #              params:
-#                steps:
-#                  - name: "smote"
-#                    params:
-#                      random_state: 42
-#                      sampling_strategy: "auto"
-#                      k_neighbors: 5
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
-
-          # ------------------------------------------------------------
-          # 1. KNN + Word2Vec
-          # ------------------------------------------------------------
-        - run_name: "1c. KNN Word2Vec"
-          params:
-            n_neighbors: 5
-            weights: "uniform"
-            description: "KNN experiments with Word2Vec vectorization technique on Roblox game descriptions."
-            save_path: "output/knn_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            vectorizer:
-              vectorizer_name: "word2vec"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                vector_size: 100
-                window: 3
-                min_count: 2
-                sg: 1
-                workers: 4
-                epochs: 25
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
-
-          # ------------------------------------------------------------
-          # 1. KNN + Word2Vec
-          # ------------------------------------------------------------
-        - run_name: "1d. KNN Word2Vec"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            n_neighbors: 5
-            weights: "uniform"
-            description: "1d. KNN Word2Vec with data cleansing and smote."
-            save_path: "output/knn_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            vectorizer:
-              vectorizer_name: "word2vec"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                vector_size: 100
-                window: 3
-                min_count: 2
-                sg: 1
-                workers: 4
-                epochs: 25
-            sampler:
-              name: "composite"
-              params:
-                steps:
-                  - name: "smote"
-                    params:
-                      random_state: 42
-                      sampling_strategy: "auto"
-                      k_neighbors: 5
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
-
-        # ------------------------------------------------------------
-        # 3. KNN + BERT
-        # ------------------------------------------------------------
-        - run_name: "1c. KNN BERT"
-          params:
-            n_neighbors: 5
-            weights: "uniform"
-            description: "KNN experiments with BERT embeddings on Roblox game descriptions."
-            save_path: "output/knn_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            vectorizer:
-              vectorizer_name: "bert"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                model_name: "sentence-transformers/all-mpnet-base-v2"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
-#            sampler:
-#              name: "composite"
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
 #              params:
-#                steps:
-##                  - name: "under_sampler"
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            n_neighbors: 5
+#            weights: "uniform"
+#            description: "1b. KNN TF-IDF with data cleansing and smote on Roblox game descriptions."
+#            save_path: "output/knn_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+##            sampler:
+##              name: "composite"
+##              params:
+##                steps:
+##                  - name: "smote"
 ##                    params:
 ##                      random_state: 42
-##                      sampling_strategy:
-##                        All: 10000
+##                      sampling_strategy: "auto"
+##                      k_neighbors: 5
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#          # ------------------------------------------------------------
+#          # 1. KNN + Word2Vec
+#          # ------------------------------------------------------------
+#        - run_name: "1c. KNN Word2Vec"
+#          params:
+#            n_neighbors: 5
+#            weights: "uniform"
+#            description: "KNN experiments with Word2Vec vectorization technique on Roblox game descriptions."
+#            save_path: "output/knn_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            vectorizer:
+#              vectorizer_name: "word2vec"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                vector_size: 100
+#                window: 3
+#                min_count: 2
+#                sg: 1
+#                workers: 4
+#                epochs: 25
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#          # ------------------------------------------------------------
+#          # 1. KNN + Word2Vec
+#          # ------------------------------------------------------------
+#        - run_name: "1d. KNN Word2Vec"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            n_neighbors: 5
+#            weights: "uniform"
+#            description: "1d. KNN Word2Vec with data cleansing and smote."
+#            save_path: "output/knn_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            vectorizer:
+#              vectorizer_name: "word2vec"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                vector_size: 100
+#                window: 3
+#                min_count: 2
+#                sg: 1
+#                workers: 4
+#                epochs: 25
+#            sampler:
+#              name: "composite"
+#              params:
+#                steps:
 #                  - name: "smote"
 #                    params:
 #                      random_state: 42
 #                      sampling_strategy: "auto"
 #                      k_neighbors: 5
-
-        # ------------------------------------------------------------
-        # 3. KNN + BERT
-        # ------------------------------------------------------------
-        - run_name: "1e. KNN BERT"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            n_neighbors: 5
-            weights: "uniform"
-            description: "1e. KNN BERT with data cleansing and smote on Roblox game descriptions."
-            save_path: "output/knn_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            vectorizer:
-              vectorizer_name: "bert"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                model_name: "sentence-transformers/all-mpnet-base-v2"
-            sampler:
-              name: "composite"
-              params:
-                steps:
-                  - name: "smote"
-                    params:
-                      random_state: 42
-                      sampling_strategy: "auto"
-                      k_neighbors: 5
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
-
-
-  - name: xgboost
-    type: pipelines.experiment_pipeline.ExperimentPipeline
-    params:
-      experiment_type: "classification"
-      model_name: "xgboost"
-      evaluator_name: "classification"
-      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
-      mlflow_experiment: "XGBoost Experiments"
-      experiments:
-        # ------------------------------------------------------------
-        # 1. XGBoost + TF-IDF
-        # ------------------------------------------------------------
-        - run_name: "1a. XGBoost TF-IDF"
-          params:
-            description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
-            save_path: "output/xgboost_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params: {}   # default XGBoost hyperparameters
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 10000
-                ngram_range: [1, 2]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-
-        # ------------------------------------------------------------
-        # 1. XGBoost + TF-IDF
-        # ------------------------------------------------------------
-        - run_name: "1b. XGBoost TF-IDF"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            description: "1b. XGBoost TF-IDF with data cleansing and smote on Roblox game descriptions."
-            save_path: "output/xgboost_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params: {}   # default XGBoost hyperparameters
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 10000
-                ngram_range: [1, 2]
-                stop_words: "english"
-            sampler:
-              name: "composite"
-              params:
-                steps:
-                  - name: "smote"
-                    params:
-                      random_state: 42
-                      sampling_strategy: "auto"
-                      k_neighbors: 5
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-
-        # ------------------------------------------------------------
-        # 2. XGBoost + Word2Vec
-        # ------------------------------------------------------------
-        - run_name: "1c. XGBoost Word2Vec"
-          params:
-            description: "XGBoost experiments with Word2Vec vectorization technique on Roblox game descriptions."
-            save_path: "output/xgboost_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params: {}   # defaults
-            vectorizer:
-              vectorizer_name: "word2vec"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                vector_size: 300
-                window: 5
-                min_count: 2
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-
-        # ------------------------------------------------------------
-        # 2. XGBoost + Word2Vec
-        # ------------------------------------------------------------
-        - run_name: "1d. XGBoost Word2Vec"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            description: "1d. XGBoost Word2Vec with data cleansing and smote on Roblox game descriptions."
-            save_path: "output/xgboost_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params: {}   # defaults
-            vectorizer:
-              vectorizer_name: "word2vec"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                vector_size: 300
-                window: 5
-                min_count: 2
-            sampler:
-              name: "composite"
-              params:
-                steps:
-                  - name: "smote"
-                    params:
-                      random_state: 42
-                      sampling_strategy: "auto"
-                      k_neighbors: 5
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-
-        # ------------------------------------------------------------
-        # 3. XGBoost + BERT
-        # ------------------------------------------------------------
-
-        - run_name: "1e. XGBoost BERT"
-          text_field: "Description"
-          params:
-            description: "XGBoost experiments with BERT embeddings on Roblox game descriptions including data cleansing preprocessing and smote."
-            save_path: "output/xgboost_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params: {}   # defaults
-            vectorizer:
-              vectorizer_name: "bert"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                model_name: "sentence-transformers/all-mpnet-base-v2"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-
-
-        - run_name: "1f. XGBoost BERT"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            description: "1f. XGBoost BERT with data cleansing and smote on Roblox game descriptions."
-            save_path: "output/xgboost_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params: {}   # defaults
-            vectorizer:
-              vectorizer_name: "bert"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                model_name: "sentence-transformers/all-mpnet-base-v2"
-              sampler:
-                name: "composite"
-                params:
-                  steps:
-                    - name: "smote"
-                      params:
-                        random_state: 42
-                        sampling_strategy: "auto"
-                        k_neighbors: 5
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-
-
-  - name: svm
-    type: pipelines.experiment_pipeline.ExperimentPipeline
-    params:
-      experiment_type: "classification"
-      model_name: "svm"
-      evaluator_name: "classification"
-      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
-      mlflow_experiment: "SVM Experiments"
-      experiments:
-        # ------------------------------------------------------------
-        # 1. SVM + TF-IDF
-        # ------------------------------------------------------------
-        - run_name: "1a. SVM TF-IDF"
-          params:
-            description: "SVM experiments with TF-IDF vectorization technique on Roblox game descriptions."
-            save_path: "output/svm_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params:
-              kernel: "linear"  # LinearSVC default
-              C: 1.0
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [1, 2]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-
-        - run_name: "1b. SVM TF-IDF"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            description: "1b. SVM TF-IDF with data cleansing and smote on Roblox game descriptions."
-            save_path: "output/svm_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params:
-              kernel: "linear"  # LinearSVC default
-              C: 1.0
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [1, 2]
-                stop_words: "english"
-            sampler:
-              name: "composite"
-              params:
-                steps:
-                  - name: "smote"
-                    params:
-                      random_state: 42
-                      sampling_strategy: "auto"
-                      k_neighbors: 5
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-
-        # ------------------------------------------------------------
-        # 2. SVM + Word2Vec
-        # ------------------------------------------------------------
-        - run_name: "1c. SVM Word2Vec"
-          params:
-            description: "SVM experiments with Word2Vec embeddings on Roblox game descriptions."
-            save_path: "output/svm_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params:
-              kernel: "linear"
-              C: 1.0
-              # scale_features: true  # optional flag if your pipeline scales dense vectors
-            vectorizer:
-              vectorizer_name: "word2vec"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                vector_size: 300
-                window: 5
-                min_count: 2
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-
-        - run_name: "1d. SVM Word2Vec"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            description: "1d. SVM Word2Vec with data cleansing and smote on Roblox game descriptions."
-            save_path: "output/svm_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params:
-              kernel: "linear"
-              C: 1.0
-              # scale_features: true  # optional flag if your pipeline scales dense vectors
-            vectorizer:
-              vectorizer_name: "word2vec"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                vector_size: 300
-                window: 5
-                min_count: 2
-            sampler:
-              name: "composite"
-              params:
-                steps:
-                  - name: "smote"
-                    params:
-                      random_state: 42
-                      sampling_strategy: "auto"
-                      k_neighbors: 5
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-        # ------------------------------------------------------------
-        # 3. SVM + BERT
-        # ------------------------------------------------------------
-        - run_name: "1e. SVM BERT"
-          params:
-            description: "SVM experiments with BERT embeddings on Roblox game descriptions."
-            save_path: "output/svm_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params:
-              kernel: "linear"
-              C: 1.0
-              # scale_features: true
-            vectorizer:
-              vectorizer_name: "bert"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                model_name: "sentence-transformers/all-mpnet-base-v2"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
-
-        # ------------------------------------------------------------
-        # 3. SVM + BERT
-        # ------------------------------------------------------------
-        - run_name: "1f. SVM BERT"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            description: "1f. SVM BERT with data cleansing and smote on Roblox game descriptions."
-            save_path: "output/svm_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params:
-              kernel: "linear"
-              C: 1.0
-              # scale_features: true
-            vectorizer:
-              vectorizer_name: "bert"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                model_name: "sentence-transformers/all-mpnet-base-v2"
-            sampler:
-              name: "composite"
-              params:
-                steps:
-                  - name: "smote"
-                    params:
-                      random_state: 42
-                      sampling_strategy: "auto"
-                      k_neighbors: 5
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 3. KNN + BERT
+#        # ------------------------------------------------------------
+#        - run_name: "1c. KNN BERT"
+#          params:
+#            n_neighbors: 5
+#            weights: "uniform"
+#            description: "KNN experiments with BERT embeddings on Roblox game descriptions."
+#            save_path: "output/knn_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+##            sampler:
+##              name: "composite"
+##              params:
+##                steps:
+###                  - name: "under_sampler"
+###                    params:
+###                      random_state: 42
+###                      sampling_strategy:
+###                        All: 10000
+##                  - name: "smote"
+##                    params:
+##                      random_state: 42
+##                      sampling_strategy: "auto"
+##                      k_neighbors: 5
+#
+#        # ------------------------------------------------------------
+#        # 3. KNN + BERT
+#        # ------------------------------------------------------------
+#        - run_name: "1e. KNN BERT"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            n_neighbors: 5
+#            weights: "uniform"
+#            description: "1e. KNN BERT with data cleansing and smote on Roblox game descriptions."
+#            save_path: "output/knn_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
+#            sampler:
+#              name: "composite"
+#              params:
+#                steps:
+#                  - name: "smote"
+#                    params:
+#                      random_state: 42
+#                      sampling_strategy: "auto"
+#                      k_neighbors: 5
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#
+#  - name: xgboost
+#    type: pipelines.experiment_pipeline.ExperimentPipeline
+#    params:
+#      experiment_type: "classification"
+#      model_name: "xgboost"
+#      evaluator_name: "classification"
+#      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
+#      mlflow_experiment: "XGBoost Experiments"
+#      experiments:
+#        # ------------------------------------------------------------
+#        # 1. XGBoost + TF-IDF
+#        # ------------------------------------------------------------
+#        - run_name: "1a. XGBoost TF-IDF"
+#          params:
+#            description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params: {}   # default XGBoost hyperparameters
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [1, 2]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 1. XGBoost + TF-IDF
+#        # ------------------------------------------------------------
+#        - run_name: "1b. XGBoost TF-IDF"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "1b. XGBoost TF-IDF with data cleansing and smote on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params: {}   # default XGBoost hyperparameters
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [1, 2]
+#                stop_words: "english"
+#            sampler:
+#              name: "composite"
+#              params:
+#                steps:
+#                  - name: "smote"
+#                    params:
+#                      random_state: 42
+#                      sampling_strategy: "auto"
+#                      k_neighbors: 5
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 2. XGBoost + Word2Vec
+#        # ------------------------------------------------------------
+#        - run_name: "1c. XGBoost Word2Vec"
+#          params:
+#            description: "XGBoost experiments with Word2Vec vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params: {}   # defaults
+#            vectorizer:
+#              vectorizer_name: "word2vec"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                vector_size: 300
+#                window: 5
+#                min_count: 2
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 2. XGBoost + Word2Vec
+#        # ------------------------------------------------------------
+#        - run_name: "1d. XGBoost Word2Vec"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "1d. XGBoost Word2Vec with data cleansing and smote on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params: {}   # defaults
+#            vectorizer:
+#              vectorizer_name: "word2vec"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                vector_size: 300
+#                window: 5
+#                min_count: 2
+#            sampler:
+#              name: "composite"
+#              params:
+#                steps:
+#                  - name: "smote"
+#                    params:
+#                      random_state: 42
+#                      sampling_strategy: "auto"
+#                      k_neighbors: 5
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 3. XGBoost + BERT
+#        # ------------------------------------------------------------
+#
+#        - run_name: "1e. XGBoost BERT"
+#          text_field: "Description"
+#          params:
+#            description: "XGBoost experiments with BERT embeddings on Roblox game descriptions including data cleansing preprocessing and smote."
+#            save_path: "output/xgboost_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params: {}   # defaults
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#
+#        - run_name: "1f. XGBoost BERT"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "1f. XGBoost BERT with data cleansing and smote on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params: {}   # defaults
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
+#              sampler:
+#                name: "composite"
+#                params:
+#                  steps:
+#                    - name: "smote"
+#                      params:
+#                        random_state: 42
+#                        sampling_strategy: "auto"
+#                        k_neighbors: 5
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#
+#  - name: svm
+#    type: pipelines.experiment_pipeline.ExperimentPipeline
+#    params:
+#      experiment_type: "classification"
+#      model_name: "svm"
+#      evaluator_name: "classification"
+#      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
+#      mlflow_experiment: "SVM Experiments"
+#      experiments:
+#        # ------------------------------------------------------------
+#        # 1. SVM + TF-IDF
+#        # ------------------------------------------------------------
+#        - run_name: "1a. SVM TF-IDF"
+#          params:
+#            description: "SVM experiments with TF-IDF vectorization technique on Roblox game descriptions."
+#            save_path: "output/svm_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:
+#              kernel: "linear"  # LinearSVC default
+#              C: 1.0
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [1, 2]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        - run_name: "1b. SVM TF-IDF"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "1b. SVM TF-IDF with data cleansing and smote on Roblox game descriptions."
+#            save_path: "output/svm_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:
+#              kernel: "linear"  # LinearSVC default
+#              C: 1.0
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [1, 2]
+#                stop_words: "english"
+#            sampler:
+#              name: "composite"
+#              params:
+#                steps:
+#                  - name: "smote"
+#                    params:
+#                      random_state: 42
+#                      sampling_strategy: "auto"
+#                      k_neighbors: 5
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 2. SVM + Word2Vec
+#        # ------------------------------------------------------------
+#        - run_name: "1c. SVM Word2Vec"
+#          params:
+#            description: "SVM experiments with Word2Vec embeddings on Roblox game descriptions."
+#            save_path: "output/svm_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:
+#              kernel: "linear"
+#              C: 1.0
+#              # scale_features: true  # optional flag if your pipeline scales dense vectors
+#            vectorizer:
+#              vectorizer_name: "word2vec"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                vector_size: 300
+#                window: 5
+#                min_count: 2
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        - run_name: "1d. SVM Word2Vec"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "1d. SVM Word2Vec with data cleansing and smote on Roblox game descriptions."
+#            save_path: "output/svm_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:
+#              kernel: "linear"
+#              C: 1.0
+#              # scale_features: true  # optional flag if your pipeline scales dense vectors
+#            vectorizer:
+#              vectorizer_name: "word2vec"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                vector_size: 300
+#                window: 5
+#                min_count: 2
+#            sampler:
+#              name: "composite"
+#              params:
+#                steps:
+#                  - name: "smote"
+#                    params:
+#                      random_state: 42
+#                      sampling_strategy: "auto"
+#                      k_neighbors: 5
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#        # ------------------------------------------------------------
+#        # 3. SVM + BERT
+#        # ------------------------------------------------------------
+#        - run_name: "1e. SVM BERT"
+#          params:
+#            description: "SVM experiments with BERT embeddings on Roblox game descriptions."
+#            save_path: "output/svm_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:
+#              kernel: "linear"
+#              C: 1.0
+#              # scale_features: true
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 3. SVM + BERT
+#        # ------------------------------------------------------------
+#        - run_name: "1f. SVM BERT"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "1f. SVM BERT with data cleansing and smote on Roblox game descriptions."
+#            save_path: "output/svm_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:
+#              kernel: "linear"
+#              C: 1.0
+#              # scale_features: true
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
+#            sampler:
+#              name: "composite"
+#              params:
+#                steps:
+#                  - name: "smote"
+#                    params:
+#                      random_state: 42
+#                      sampling_strategy: "auto"
+#                      k_neighbors: 5
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"

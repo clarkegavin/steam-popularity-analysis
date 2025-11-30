@@ -15,6 +15,7 @@ from .remove_repeated_characters import RemoveRepeatedCharacters
 from .remove_punctuation_noise import RemovePunctuationNoise
 from .remove_whitespace import RemoveWhitespace
 from .merge_features import MergeFeatures
+import nltk
 
 # Register built-in preprocessors
 PreprocessorFactory.register("stem", Stemmer)
@@ -44,5 +45,15 @@ PreprocessorFactory.register("whitespace", RemoveWhitespace)
 PreprocessorFactory.register("merge_features", MergeFeatures)
 PreprocessorFactory.register("merge", MergeFeatures)
 
+# List of required resources
+REQUIRED_NLTK_RESOURCES = ["punkt", "stopwords"]
+
+for res in REQUIRED_NLTK_RESOURCES:
+    try:
+        # Check if resource exists
+        nltk.data.find(f"tokenizers/{res}" if res == "punkt" else f"corpora/{res}")
+    except LookupError:
+        # Download silently if missing
+        nltk.download(res, quiet=True)
 
 __all__ = ["Preprocessor", "PreprocessorFactory", "Stemmer", "Lemmatizer", "Lowercase", "StopwordRemover", "EmojiRemover", "FilterRows", "MaskGenreWords", "RemoveDuplicates", "RemoveURLs", "RemoveRepeatedCharacters", "RemovePunctuationNoise", "RemoveWhitespace", "MergeFeatures"]

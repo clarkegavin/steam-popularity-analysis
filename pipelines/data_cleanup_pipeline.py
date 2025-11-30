@@ -64,6 +64,28 @@ class DataCleanupPipeline(Pipeline):
                 self.logger.info(f"Applying cleanup step: {step.__class__.__name__}")
                 step.fit(df)
                 df = step.transform(df)
+
+                # --------------------------
+                # Special check for StopwordRemover on 'Description' field
+
+                # if step.__class__.__name__ == "StopwordRemover":
+                #     still_present = df['Description'].str.contains('roblox', case=False, na=False).sum()
+                #     self.logger.info(f"'roblox' still present in {still_present} rows after StopwordRemover")
+                #     # Or randomly sample 10 rows
+                #     # Filter rows where roblox still appears (case-insensitive)
+                #     roblox_rows = df[df['Description'].str.contains('roblox', case=False, na=False)]
+                #
+                #     # Sample from THAT subset only
+                #     if not roblox_rows.empty:
+                #         sample_texts = roblox_rows['Description'].sample(
+                #             min(5, len(roblox_rows)),
+                #             random_state=42
+                #         ).tolist()
+                #         for i, t in enumerate(sample_texts, 1):
+                #             self.logger.info(f"{i}: {t}")
+                #     else:
+                #         self.logger.info("No rows contain 'roblox' after StopwordRemover.")
+
                 # ensure df stays a DataFrame where reasonable
                 if hasattr(df, "reset_index"):
                     try:
