@@ -13,6 +13,7 @@ from vectorizers.factory import VectorizerFactory
 from mlflow.models import infer_signature
 from visualisations.factory import VisualisationFactory
 from samplers.factory import SamplerFactory
+from collections import Counter
 
 
 class ClassificationExperiment(Experiment):
@@ -28,6 +29,7 @@ class ClassificationExperiment(Experiment):
         mlflow_tracking: bool = True,
         mlflow_experiment: Optional[str] = None,
         description: Optional[str] = None,
+        calculate_sample_weights: bool = False,
         target_encoder: Optional[Any] = None,
         vectorizer: Optional[Dict] = None,
         visualisations: Optional[List[Dict]] = None,
@@ -47,6 +49,7 @@ class ClassificationExperiment(Experiment):
         self.model_name = model_name
         self.metrics = metrics
         self.description = description
+        self.calculate_sample_weights = calculate_sample_weights
         self.evaluator_name = evaluator_name
         self.save_path = save_path
         self.target_encoder = target_encoder
@@ -128,6 +131,8 @@ class ClassificationExperiment(Experiment):
                     self.sampler_name, **self.sampler_params
                 )
 
+
+
             if self.cv_enabled:
                 self.results = self._run_cross_validation(X_train, y_train)
 
@@ -141,9 +146,20 @@ class ClassificationExperiment(Experiment):
                 X_train, y_train = self.sampler.fit_resample(X_train, y_train)
 
             # --- Train final model on full training set ---
+
             self.logger.info("Training final model on full training set")
             final_model = ModelFactory.get_model(self.model_name, **self.model_params)
-            final_model.fit(X_train, y_train)
+            #final_model.fit(X_train, y_train)
+
+            # compute sample weights for xgboost if needed
+            if self.calculate_sample_weights:  # will only work for some models, but is only currently controlled through the yaml configuration
+                self.logger.info("Computing sample weights for full training set")
+                sample_weights = self._compute_sample_weights(y_train)
+                self.logger.info(f"Sample weights computed: {sample_weights}")
+                final_model.fit(X_train, y_train, sample_weight=sample_weights)
+            else:
+                self.logger.info("Training final model on full training set")
+                final_model.fit(X_train, y_train)
 
             # Infer signature for logging
             signature = infer_signature(X_train, final_model.predict(X_train))
@@ -216,7 +232,24 @@ class ClassificationExperiment(Experiment):
 
             # Recreate a fresh model each fold
             model = ModelFactory.get_model(self.model_name, **self.model_params)
-            model.fit(X_train_fold, y_train_fold)
+
+            # refactor this later to make it safer - we should check if the model supports sample weights using hasattr or similar
+            # Compute sample weights for this fold
+            if self.calculate_sample_weights:
+                fold_weights = self._compute_sample_weights(y_train_fold)
+                fit_kwargs = {}
+                if fold_weights is not None:
+                    fit_kwargs['sample_weight'] = fold_weights
+                self.logger.info(f"Fitting model with sample weights for fold {fold_index}")
+                model.fit(X_train_fold, y_train_fold, **fit_kwargs)
+            else:
+                self.logger.info(f"Fitting model without sample weights for fold {fold_index}")
+                model.fit(X_train_fold, y_train_fold)
+
+
+
+            #model.fit(X_train_fold, y_train_fold)
+            #model.fit(X_train_fold, y_train_fold, **fit_kwargs)
 
             y_pred = model.predict(X_val_fold)
             current_res = self.evaluator.evaluate(y_val_fold, y_pred)
@@ -438,3 +471,19 @@ class ClassificationExperiment(Experiment):
 
         params["sampling_strategy"] = numeric_strategy
         self.logger.info(f"Updated sampler strategy: {numeric_strategy}")
+
+    def _compute_sample_weights(self, y):
+        counter = Counter(y)
+        classes = list(counter.keys())
+        counts = np.array(list(counter.values()))
+
+        total_samples = len(y)
+        num_classes = len(classes)
+
+        class_weights = {
+            c: total_samples / (num_classes * count)
+            for c, count in counter.items()
+        }
+
+        sample_weights = np.array([class_weights[label] for label in y])
+        return sample_weights

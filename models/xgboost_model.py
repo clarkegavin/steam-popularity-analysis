@@ -18,3 +18,11 @@ class XGBoostClassificationModel(Model):
         self.model = XGBClassifier(**self.params)
         self.logger.info(f"Built XGBoost model with params: {self.params}")
         return self
+
+    # Override fit to pass additional parameters if needed
+    def fit(self, X, y, **kwargs):
+        if self.model is None:
+            self.build()
+        # Pass all kwargs (like sample_weight) to XGBClassifier
+        self.model.fit(X, y, **kwargs)
+        return self

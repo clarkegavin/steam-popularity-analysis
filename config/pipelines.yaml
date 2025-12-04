@@ -78,20 +78,19 @@ pipelines:
               'Date_Created', 'Last_Updated', 'Server_Size', 'Title',
               'Creator', 'gameID', 'Category', 'URL' ]
 
-  - name: eda
-    type: pipelines.eda_pipeline.EDAPipeline
-    params:
-      save_path: "output/eda"
-      steps:
-        - name: class_balance
-        - name: wordcloud_global
-        - name: wordcloud_by_class
-        - name: describe_info
-
+#  - name: eda
+#    type: pipelines.eda_pipeline.EDAPipeline
+#    params:
+#      save_path: "output/eda"
+#      steps:
+#        - name: class_balance
+#        - name: wordcloud_global
+#        - name: wordcloud_by_class
+#        - name: describe_info
 #        - name: duplicate_check
-    #dataset:
-      target: "Genre"
-      text_field: "Description"
+#    dataset:
+#      target: "Genre"
+#      text_field: "Description"
 
 #------------------------------------------------------------
 # Clustering
@@ -162,373 +161,786 @@ pipelines:
     type: pipelines.target_feature_pipeline.TargetFeaturePipeline
     params:
       target_column: "Genre"
+#
+##
+#  - name: naive_bayes
+#    type: pipelines.experiment_pipeline.ExperimentPipeline
+#    params:
+#      experiment_type: "classification"
+#      model_name: "naive_bayes"
+#      evaluator_name: "classification"
+#      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
+#      mlflow_experiment: "Naive Bayes Experiments"
+#      experiments:
+#
+##         ------------------------------------------------------------
+##         1a. Baseline: no preprocessing
+##         ------------------------------------------------------------
+#        - run_name: "1a. NB + TF-IDF baseline"
+#          text_field:   "Description"
+#          params:
+#            description: "Baseline: Naive Bayes + TF-IDF with word n-grams, no preprocessing"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 1b. Add lowercase
+#        # ------------------------------------------------------------
+#        - run_name: "1b. NB + lowercase"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#          params:
+#            description: "Naive Bayes + TF-IDF with lowercase preprocessing added"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 1c. Add remove_repeated_characters
+#        # ------------------------------------------------------------
+#        - run_name: "1c. NB + repeated char removal"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#          params:
+#            description: "Naive Bayes + TF-IDF with lowercase and repeated character removal"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 1d. Add remove_urls
+#        # ------------------------------------------------------------
+#        - run_name: "1d. NB + remove URLs"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#          params:
+#            description: "Naive Bayes + TF-IDF with lowercase, repeated character removal, and URL removal"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 1e. Add remove_whitespace
+#        # ------------------------------------------------------------
+#        - run_name: "1e. NB + remove whitespace"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#          params:
+#            description: "Naive Bayes + TF-IDF with lowercase, repeated character removal, URL removal, and whitespace cleanup"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 1f. Add remove_punctuation_noise
+#        # ------------------------------------------------------------
+#        - run_name: "1f. NB + remove punctuation noise"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#          params:
+#            description: "Naive Bayes + TF-IDF with lowercase, repeated character removal, URL removal, whitespace cleanup, and punctuation noise removal"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 1g. Add stopword_remover
+#        # ------------------------------------------------------------
+#        - run_name: "1g. NB + stopword remover"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "Naive Bayes + TF-IDF with all above preprocessing and stopword removal"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        # ------------------------------------------------------------
+#        # 1h. Add stemmer (porter and snowball variants)
+#        # ------------------------------------------------------------
+#        - run_name: "1h. NB + stemmer (porter)"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#            - name: stemmer
+#              params:
+#                language: "english"
+#                algorithm: "porter"
+#          params:
+#            description: "Naive Bayes + TF-IDF with all preprocessing plus Porter stemmer"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#        - run_name: "1i. NB + stemmer (snowball)"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#            - name: stemmer
+#              params:
+#                language: "english"
+#                algorithm: "snowball"
+#          params:
+#            description: "Naive Bayes + TF-IDF with all preprocessing plus Snowball stemmer"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 5000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
 
-  - name: naive_bayes
-    type: pipelines.experiment_pipeline.ExperimentPipeline
-    params:
-      experiment_type: "classification"
-      model_name: "naive_bayes"
-      evaluator_name: "classification"
-      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
-      mlflow_experiment: "Naive Bayes Experiments"
-      experiments:
+#        - run_name: "1j. NB +  emoji remover)"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                field: "Description"
+#                language: "english"
+#                lower: true
+#            - name: emoji_remover
+#              params:
+#                use_emoji_lib: true
+#          params:
+#            description: "1j. Naive Bayes + TF-IDF with all preprocessing plus emoji remover"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 4, 6 ]
+#                analyzer: 'char_wb'
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#
+#        - run_name: "1k. NB +  Lemmatization)"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                field: "Description"
+#                language: "english"
+#                lower: true
+#            - name: emoji_remover
+#              params:
+#                use_emoji_lib: true
+#            - name: lemmatizer
+#              params:
+#                model: "en_core_web_sm"
+#          params:
+#            description: "1j. NNaive Bayes + TF-IDF with all preprocessing plus Lemmatization"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 4, 6 ]
+#                analyzer: 'char_wb'
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
 
-        # ------------------------------------------------------------
-        # 1a. Baseline: no preprocessing
-        # ------------------------------------------------------------
-        - run_name: "1a. NB + TF-IDF baseline"
-          params:
-            description: "Baseline: Naive Bayes + TF-IDF with word n-grams, no preprocessing"
-            save_path: "output/naive_bayes_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 43
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
 
-        # ------------------------------------------------------------
-        # 1b. Add lowercase
-        # ------------------------------------------------------------
-        - run_name: "1b. NB + lowercase"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-          params:
-            description: "Naive Bayes + TF-IDF with lowercase preprocessing added"
-            save_path: "output/naive_bayes_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 43
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
+#
+#        - run_name: "1l. NB +  remove repeated characters only"
+#          text_field: "Description"
+#          preprocessing:
+##            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+##            - name: remove_urls
+##              params:
+##                field: "Description"
+##                pattern: 'https?://\S+|www\.\S+'
+##            - name: remove_whitespace
+##              params:
+##                field: "Description"
+##                pattern: '\\s+'
+##            - name: remove_punctuation_noise
+##              params:
+##                field: "Description"
+##                pattern: '([!?.,])\\1+'
+##            - name: stopword_remover
+##              params:
+##                field: "Description"
+##                language: "english"
+##                lower: true
+##            - name: emoji_remover
+##              params:
+##                use_emoji_lib: true
+#          params:
+#            description: "1l. NB +  remove repeated characters only"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 4, 6 ]
+#                analyzer: 'char_wb'
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
 
-        # ------------------------------------------------------------
-        # 1c. Add remove_repeated_characters
-        # ------------------------------------------------------------
-        - run_name: "1c. NB + repeated char removal"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-          params:
-            description: "Naive Bayes + TF-IDF with lowercase and repeated character removal"
-            save_path: "output/naive_bayes_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 43
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
 
-        # ------------------------------------------------------------
-        # 1d. Add remove_urls
-        # ------------------------------------------------------------
-        - run_name: "1d. NB + remove URLs"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-          params:
-            description: "Naive Bayes + TF-IDF with lowercase, repeated character removal, and URL removal"
-            save_path: "output/naive_bayes_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 43
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
+#        - run_name: "1m. NB +  remove urls only"
+#          text_field: "Description"
+#          preprocessing:
+##            - name: lowercase
+##            - name: remove_repeated_characters
+##              params:
+##                field: "Description"
+##                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+##            - name: remove_whitespace
+##              params:
+##                field: "Description"
+##                pattern: '\\s+'
+##            - name: remove_punctuation_noise
+##              params:
+##                field: "Description"
+##                pattern: '([!?.,])\\1+'
+##            - name: stopword_remover
+##              params:
+##                field: "Description"
+##                language: "english"
+##                lower: true
+##            - name: emoji_remover
+##              params:
+##                use_emoji_lib: true
+#          params:
+#            description: "1m. NB +  remove urls only"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 4, 6 ]
+#                analyzer: 'char_wb'
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
 
-        # ------------------------------------------------------------
-        # 1e. Add remove_whitespace
-        # ------------------------------------------------------------
-        - run_name: "1e. NB + remove whitespace"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-          params:
-            description: "Naive Bayes + TF-IDF with lowercase, repeated character removal, URL removal, and whitespace cleanup"
-            save_path: "output/naive_bayes_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 43
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
+#
+#        - run_name: "1n. NB + remove whitespace only"
+#          text_field: "Description"
+#          preprocessing:
+##            - name: lowercase
+##            - name: remove_repeated_characters
+##              params:
+##                field: "Description"
+##                pattern: "(.)\\1{2,}"
+##            - name: remove_urls
+##              params:
+##                field: "Description"
+##                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+##            - name: remove_punctuation_noise
+##              params:
+##                field: "Description"
+##                pattern: '([!?.,])\\1+'
+##            - name: stopword_remover
+##              params:
+##                field: "Description"
+##                language: "english"
+##                lower: true
+##            - name: emoji_remover
+##              params:
+##                use_emoji_lib: true
+#          params:
+#            description: "1n. NB + remove whitespace only"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 4, 6 ]
+#                analyzer: 'char_wb'
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
 
-        # ------------------------------------------------------------
-        # 1f. Add remove_punctuation_noise
-        # ------------------------------------------------------------
-        - run_name: "1f. NB + remove punctuation noise"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-          params:
-            description: "Naive Bayes + TF-IDF with lowercase, repeated character removal, URL removal, whitespace cleanup, and punctuation noise removal"
-            save_path: "output/naive_bayes_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 43
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
+#
+#        - run_name: "1o. NB +  remove punct noise only"
+#          text_field: "Description"
+#          preprocessing:
+##            - name: lowercase
+##            - name: remove_repeated_characters
+##              params:
+##                field: "Description"
+##                pattern: "(.)\\1{2,}"
+##            - name: remove_urls
+##              params:
+##                field: "Description"
+##                pattern: 'https?://\S+|www\.\S+'
+##            - name: remove_whitespace
+##              params:
+##                field: "Description"
+##                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+##            - name: stopword_remover
+##              params:
+##                field: "Description"
+##                language: "english"
+##                lower: true
+##            - name: emoji_remover
+##              params:
+##                use_emoji_lib: true
+#          params:
+#            description: "1o. NB +  remove punct noise only"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 4, 6 ]
+#                analyzer: 'char_wb'
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+#
+#
+#        - run_name: "1p. NB +  stopword remover only"
+#          text_field: "Description"
+#          preprocessing:
+##            - name: lowercase
+##            - name: remove_repeated_characters
+##              params:
+##                field: "Description"
+##                pattern: "(.)\\1{2,}"
+##            - name: remove_urls
+##              params:
+##                field: "Description"
+##                pattern: 'https?://\S+|www\.\S+'
+##            - name: remove_whitespace
+##              params:
+##                field: "Description"
+##                pattern: '\\s+'
+##            - name: remove_punctuation_noise
+##              params:
+##                field: "Description"
+##                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                field: "Description"
+#                language: "english"
+#                lower: true
+##            - name: emoji_remover
+##              params:
+##                use_emoji_lib: true
+#          params:
+#            description: "1p. NB +  stopword remover only"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 4, 6 ]
+#                analyzer: 'char_wb'
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
 
-        # ------------------------------------------------------------
-        # 1g. Add stopword_remover
-        # ------------------------------------------------------------
-        - run_name: "1g. NB + stopword remover"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            description: "Naive Bayes + TF-IDF with all above preprocessing and stopword removal"
-            save_path: "output/naive_bayes_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 43
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
-
-        # ------------------------------------------------------------
-        # 1h. Add stemmer (porter and snowball variants)
-        # ------------------------------------------------------------
-        - run_name: "1h. NB + stemmer (porter)"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-            - name: stemmer
-              params:
-                language: "english"
-                algorithm: "porter"
-          params:
-            description: "Naive Bayes + TF-IDF with all preprocessing plus Porter stemmer"
-            save_path: "output/naive_bayes_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 43
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
-
-        - run_name: "1i. NB + stemmer (snowball)"
-          text_field: "Description"
-          preprocessing:
-            - name: lowercase
-            - name: remove_repeated_characters
-              params:
-                field: "Description"
-                pattern: "(.)\\1{2,}"
-            - name: remove_urls
-              params:
-                field: "Description"
-                pattern: 'https?://\S+|www\.\S+'
-            - name: remove_whitespace
-              params:
-                field: "Description"
-                pattern: '\\s+'
-            - name: remove_punctuation_noise
-              params:
-                field: "Description"
-                pattern: '([!?.,])\\1+'
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-            - name: stemmer
-              params:
-                language: "english"
-                algorithm: "snowball"
-          params:
-            description: "Naive Bayes + TF-IDF with all preprocessing plus Snowball stemmer"
-            save_path: "output/naive_bayes_results"
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 43
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 5000
-                ngram_range: [ 1, 2 ]
-                stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [ 8, 6 ]
-                  cmap: "Blues"
+#
+#        - run_name: "1q. NB +  emoji remover ony"
+#          text_field: "Description"
+#          preprocessing:
+##            - name: lowercase
+##            - name: remove_repeated_characters
+##              params:
+##                field: "Description"
+##                pattern: "(.)\\1{2,}"
+##            - name: remove_urls
+##              params:
+##                field: "Description"
+##                pattern: 'https?://\S+|www\.\S+'
+##            - name: remove_whitespace
+##              params:
+##                field: "Description"
+##                pattern: '\\s+'
+##            - name: remove_punctuation_noise
+##              params:
+##                field: "Description"
+##                pattern: '([!?.,])\\1+'
+##            - name: stopword_remover
+##              params:
+##                field: "Description"
+##                language: "english"
+##                lower: true
+#            - name: emoji_remover
+#              params:
+#                use_emoji_lib: true
+#          params:
+#            description: "1q. NB +  emoji remover ony"
+#            save_path: "output/naive_bayes_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 43
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 4, 6 ]
+#                analyzer: 'char_wb'
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
 
 #    #------------------------------------------------------------
 #    # Experiment Pipelines
@@ -1277,10 +1689,10 @@ pipelines:
 #                  figsize: [ 8, 6 ]
 #                  cmap: "Blues"
 #
-#  #------------------------------------------------------------
-#  # Experiment Pipeline for KNN
-#  #------------------------------------------------------------
-#
+  #------------------------------------------------------------
+  # Experiment Pipeline for KNN
+  #------------------------------------------------------------
+
 #  - name: knn
 #    type: pipelines.experiment_pipeline.ExperimentPipeline
 #    params:
@@ -1291,11 +1703,11 @@ pipelines:
 #      mlflow_experiment: "KNN Experiments"
 #      experiments:
 #        # ------------------------------------------------------------
-#        # 1. KNN + TF-IDF
-#        # ------------------------------------------------------------
-#        - run_name: "1a. KNN TF-IDF"
+        # 1. KNN + TF-IDF
+        # ------------------------------------------------------------
+#        - run_name: "1a. KNN TF-IDF baseline word grams"
 #          params:
-#            n_neighbors: 5
+#            n_neighbors: 7
 #            weights: "uniform"
 #            description: "KNN experiments with TF-IDF vectorization technique on Roblox game descriptions."
 #            save_path: "output/knn_results"
@@ -1317,6 +1729,84 @@ pipelines:
 #                  figsize: [ 8, 6 ]
 #                  cmap: "Blues"
 #
+#
+#        - run_name: "1b. KNN TF-IDF baseline character ngrams"
+#          params:
+#            n_neighbors: 7
+#            weights: "uniform"
+#            description: "KNN experiments with TF-IDF vectorization technique on Roblox game descriptions."
+#            save_path: "output/knn_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 4, 6 ]
+#                analyzer: 'char_wb'
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
+
+#        - run_name: "1c. KNN TF-IDF baseline word grams"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                field: "Description"
+#                language: "english"
+#                lower: true
+#            - name: emoji_remover
+#              params:
+#                use_emoji_lib: true
+#            - name: lemmatizer
+#              params:
+#                model: "en_core_web_sm"
+#          params:
+#            n_neighbors: 7
+#            weights: "uniform"
+#            description: "KNN experiments with TF-IDF vectorization technique on Roblox game descriptions."
+#            save_path: "output/knn_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [ 1, 2 ]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [ 8, 6 ]
+#                  cmap: "Blues"
 #        # ------------------------------------------------------------
 #        # 1. KNN + TF-IDF
 #        # ------------------------------------------------------------
@@ -1568,18 +2058,18 @@ pipelines:
 #                  cmap: "Blues"
 #
 #
-#  - name: xgboost
-#    type: pipelines.experiment_pipeline.ExperimentPipeline
-#    params:
-#      experiment_type: "classification"
-#      model_name: "xgboost"
-#      evaluator_name: "classification"
-#      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
-#      mlflow_experiment: "XGBoost Experiments"
-#      experiments:
-#        # ------------------------------------------------------------
-#        # 1. XGBoost + TF-IDF
-#        # ------------------------------------------------------------
+  - name: xgboost
+    type: pipelines.experiment_pipeline.ExperimentPipeline
+    params:
+      experiment_type: "classification"
+      model_name: "xgboost"
+      evaluator_name: "classification"
+      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
+      mlflow_experiment: "XGBoost Experiments"
+      experiments:
+        # ------------------------------------------------------------
+        # 1. XGBoost + TF-IDF
+        # ------------------------------------------------------------
 #        - run_name: "1a. XGBoost TF-IDF"
 #          params:
 #            description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
@@ -1589,7 +2079,9 @@ pipelines:
 #            cv_folds: 5
 #            cv_shuffle: true
 #            cv_random_state: 42
-#            model_params: {}   # default XGBoost hyperparameters
+#            model_params:    # default XGBoost hyperparameters
+#              eta: 0.1
+#              max_depth: 6
 #            vectorizer:
 #              vectorizer_name: "tfidf"
 #              vectorizer_field: "Description"
@@ -1603,6 +2095,315 @@ pipelines:
 #                  figsize: [8, 6]
 #                  cmap: "Blues"
 #
+#        - run_name: "1b. XGBoost TF-IDF"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#            - name: emoji_remover
+#              params:
+#                use_emoji_lib: true
+#          params:
+#            description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:    # default XGBoost hyperparameters
+#              eta: 0.1
+#              max_depth: 6
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [1, 2]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        - run_name: "1c. XGBoost TF-IDF"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#            - name: emoji_remover
+#              params:
+#                use_emoji_lib: true
+#          params:
+#            description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:    # default XGBoost hyperparameters
+#              # device: 'cuda'
+#              learning_rate: 0.1
+#              max_depth: 6
+#              min_child_weight : 2
+#              gamma: 0.3
+#              scale_pos_weight: 3 # for imbalanced classes
+#              max_delta_step: 1 # stabilise rare classes
+#              reg_lambda: 2 # regulatisation
+#              n_estimators: 1000
+##              early_stopping_rounds: 50
+##              eval_metric: "mlogloss"
+#              colsample_bytree: 0.7
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [1, 2]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        - run_name: "1c. XGBoost TF-IDF"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#            - name: emoji_remover
+#              params:
+#                use_emoji_lib: true
+#          params:
+#            description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            calculate_sample_weights: true
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:    # default XGBoost hyperparameters
+#              # device: 'cuda'
+#              learning_rate: 0.1
+#              max_depth: 6
+#              min_child_weight : 2
+#              gamma: 0.3
+#              scale_pos_weight: 3 # for imbalanced classes
+#              max_delta_step: 1 # stabilise rare classes
+#              reg_lambda: 2 # regulatisation
+#              n_estimators: 1000
+##              early_stopping_rounds: 50
+##              eval_metric: "mlogloss"
+#              colsample_bytree: 0.7
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [1, 2]
+#                stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+
+        - run_name: "1d. XGBoost TF-IDF stopword only"
+          text_field: "Description"
+          preprocessing:
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+          params:
+            description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
+            save_path: "output/xgboost_results"
+            calculate_sample_weights: true
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:    # default XGBoost hyperparameters
+              # device: 'cuda'
+              learning_rate: 0.1
+              max_depth: 8
+              min_child_weight : 2
+              gamma: 0.3
+              scale_pos_weight: 5 # for imbalanced classes
+              max_delta_step: 2 # stabilise rare classes
+              reg_lambda: 2 # regulatisation
+              n_estimators: 1000
+#              early_stopping_rounds: 50
+#              eval_metric: "mlogloss"
+              colsample_bytree: 0.7
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 10000
+                ngram_range: [1, 2]
+                #stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
+
+
+        - run_name: "1e. XGBoost Word2Vec stopword only"
+          text_field: "Description"
+          preprocessing:
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+          params:
+            description: "XGBoost experiments with Word2Vec vectorization technique on Roblox game descriptions."
+            save_path: "output/xgboost_results"
+            calculate_sample_weights: true
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:    # default XGBoost hyperparameters
+              # device: 'cuda'
+              learning_rate: 0.1
+              max_depth: 8
+              min_child_weight : 2
+              gamma: 0.3
+              scale_pos_weight: 5 # for imbalanced classes
+              max_delta_step: 2 # stabilise rare classes
+              reg_lambda: 2 # regulatisation
+              n_estimators: 1000
+#              early_stopping_rounds: 50
+#              eval_metric: "mlogloss"
+              colsample_bytree: 0.7
+            vectorizer:
+              vectorizer_name: "word2vec"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                vector_size: 300
+                window: 5
+                min_count: 2
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
+
+        - run_name: "1f. XGBoost BERT stopword only"
+          text_field: "Description"
+          preprocessing:
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+          params:
+            description: "XGBoost experiments with BERT vectorization technique on Roblox game descriptions."
+            save_path: "output/xgboost_results"
+            calculate_sample_weights: true
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:    # default XGBoost hyperparameters
+              # device: 'cuda'
+              learning_rate: 0.1
+              max_depth: 8
+              min_child_weight : 2
+              gamma: 0.3
+              scale_pos_weight: 5 # for imbalanced classes
+              max_delta_step: 2 # stabilise rare classes
+              reg_lambda: 2 # regulatisation
+              n_estimators: 1000
+#              early_stopping_rounds: 50
+#              eval_metric: "mlogloss"
+              colsample_bytree: 0.7
+            reducer:
+               name: "umap"
+               params:
+                  n_components: 100
+            vectorizer:
+              vectorizer_name: "bert"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                model_name: "sentence-transformers/all-mpnet-base-v2"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
+
 #        # ------------------------------------------------------------
 #        # 1. XGBoost + TF-IDF
 #        # ------------------------------------------------------------
@@ -1639,7 +2440,23 @@ pipelines:
 #            cv_folds: 5
 #            cv_shuffle: true
 #            cv_random_state: 42
-#            model_params: {}   # default XGBoost hyperparameters
+#            model_params:
+##              objective: "multi:softprob"
+##              eval_metric: "mlogloss"
+##              seed: 42
+##              n_jobs: -1
+##              verbosity: 1
+##              n_estimators: 500
+##              learning_rate: 0.05
+##              max_depth: 6
+##              min_child_weight: 1
+##              subsample: 0.8
+##              colsample_bytree: 0.8
+##              gamma: 0
+##              reg_alpha: 0.0
+##              reg_lambda: 1.0
+##              tree_method: "hist"
+##              early_stopping_rounds: 50
 #            vectorizer:
 #              vectorizer_name: "tfidf"
 #              vectorizer_field: "Description"
@@ -1674,7 +2491,23 @@ pipelines:
 #            cv_folds: 5
 #            cv_shuffle: true
 #            cv_random_state: 42
-#            model_params: {}   # defaults
+#            model_params:    # defaults
+##              objective: "multi:softprob"
+##              eval_metric: "mlogloss"
+##              seed: 42
+##              n_jobs: -1
+##              verbosity: 1
+##              n_estimators: 500
+##              learning_rate: 0.05
+##              max_depth: 6
+##              min_child_weight: 1
+##              subsample: 0.8
+##              colsample_bytree: 0.8
+##              gamma: 0
+##              reg_alpha: 0.0
+##              reg_lambda: 1.0
+##              tree_method: "hist"
+##              early_stopping_rounds: 50
 #            vectorizer:
 #              vectorizer_name: "word2vec"
 #              vectorizer_field: "Description"
@@ -1725,6 +2558,22 @@ pipelines:
 #            cv_shuffle: true
 #            cv_random_state: 42
 #            model_params: {}   # defaults
+##              objective: "multi:softprob"
+##              eval_metric: "mlogloss"
+##              seed: 42
+##              n_jobs: -1
+##              verbosity: 1
+##              n_estimators: 500
+##              learning_rate: 0.05
+##              max_depth: 6
+##              min_child_weight: 1
+##              subsample: 0.8
+##              colsample_bytree: 0.8
+##              gamma: 0
+##              reg_alpha: 0.0
+##              reg_lambda: 1.0
+##              tree_method: "hist"
+##              early_stopping_rounds: 50
 #            vectorizer:
 #              vectorizer_name: "word2vec"
 #              vectorizer_field: "Description"
@@ -1761,7 +2610,23 @@ pipelines:
 #            cv_folds: 5
 #            cv_shuffle: true
 #            cv_random_state: 42
-#            model_params: {}   # defaults
+#            model_params: {}
+##              objective: "multi:softprob"
+##              eval_metric: "mlogloss"
+##              seed: 42
+##              n_jobs: -1
+##              verbosity: 1
+##              n_estimators: 500
+##              learning_rate: 0.05
+##              max_depth: 6
+##              min_child_weight: 1
+##              subsample: 0.8
+##              colsample_bytree: 0.8
+##              gamma: 0
+##              reg_alpha: 0.0
+##              reg_lambda: 1.0
+##              tree_method: "hist"
+##              early_stopping_rounds: 50
 #            vectorizer:
 #              vectorizer_name: "bert"
 #              vectorizer_field: "Description"
@@ -1804,10 +2669,26 @@ pipelines:
 #            save_path: "output/xgboost_results"
 #            cv_enabled: true
 #            cv_stratified: true
-#            cv_folds: 5
+#            cv_folds: 5\
 #            cv_shuffle: true
 #            cv_random_state: 42
-#            model_params: {}   # defaults
+#            model_params: {}
+##              objective: "multi:softprob"
+##              eval_metric: "mlogloss"
+##              seed: 42
+##              n_jobs: -1
+##              verbosity: 1
+##              n_estimators: 500
+##              learning_rate: 0.05
+##              max_depth: 6
+##              min_child_weight: 1
+##              subsample: 0.8
+##              colsample_bytree: 0.8
+##              gamma: 0
+##              reg_alpha: 0.0
+##              reg_lambda: 1.0
+##              tree_method: "hist"
+##              early_stopping_rounds: 50
 #            vectorizer:
 #              vectorizer_name: "bert"
 #              vectorizer_field: "Description"
@@ -1838,12 +2719,13 @@ pipelines:
 #      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
 #      mlflow_experiment: "SVM Experiments"
 #      experiments:
+#
 #        # ------------------------------------------------------------
 #        # 1. SVM + TF-IDF
 #        # ------------------------------------------------------------
 #        - run_name: "1a. SVM TF-IDF"
 #          params:
-#            description: "SVM experiments with TF-IDF vectorization technique on Roblox game descriptions."
+#            description: "SVM experiments with TF-IDF vectorization on Roblox game descriptions."
 #            save_path: "output/svm_results"
 #            cv_enabled: true
 #            cv_stratified: true
@@ -1851,19 +2733,21 @@ pipelines:
 #            cv_shuffle: true
 #            cv_random_state: 42
 #            model_params:
-#              kernel: "linear"  # LinearSVC default
+#              kernel: "linear"
 #              C: 1.0
+#              class_weight: "balanced"  # handle class imbalance
+#              max_iter: 10000           # prevent convergence issues
 #            vectorizer:
 #              vectorizer_name: "tfidf"
 #              vectorizer_field: "Description"
 #              vectorizer_params:
 #                max_features: 5000
-#                ngram_range: [1, 2]
+#                ngram_range: [ 1, 2 ]
 #                stop_words: "english"
 #            visualisations:
 #              - name: confusion_matrix
 #                kwargs:
-#                  figsize: [8, 6]
+#                  figsize: [ 8, 6 ]
 #                  cmap: "Blues"
 #
 #        - run_name: "1b. SVM TF-IDF"
@@ -1892,7 +2776,7 @@ pipelines:
 #                lower: true
 #                field: "Description"
 #          params:
-#            description: "1b. SVM TF-IDF with data cleansing and smote on Roblox game descriptions."
+#            description: "1b. SVM TF-IDF with preprocessing and SMOTE on Roblox game descriptions."
 #            save_path: "output/svm_results"
 #            cv_enabled: true
 #            cv_stratified: true
@@ -1900,14 +2784,16 @@ pipelines:
 #            cv_shuffle: true
 #            cv_random_state: 42
 #            model_params:
-#              kernel: "linear"  # LinearSVC default
+#              kernel: "linear"
 #              C: 1.0
+#              class_weight: "balanced"
+#              max_iter: 10000
 #            vectorizer:
 #              vectorizer_name: "tfidf"
 #              vectorizer_field: "Description"
 #              vectorizer_params:
 #                max_features: 5000
-#                ngram_range: [1, 2]
+#                ngram_range: [ 1, 2 ]
 #                stop_words: "english"
 #            sampler:
 #              name: "composite"
@@ -1921,7 +2807,7 @@ pipelines:
 #            visualisations:
 #              - name: confusion_matrix
 #                kwargs:
-#                  figsize: [8, 6]
+#                  figsize: [ 8, 6 ]
 #                  cmap: "Blues"
 #
 #        # ------------------------------------------------------------
@@ -1937,9 +2823,12 @@ pipelines:
 #            cv_shuffle: true
 #            cv_random_state: 42
 #            model_params:
-#              kernel: "linear"
+#              kernel: "rbf"            # RBF works better for dense embeddings
 #              C: 1.0
-#              # scale_features: true  # optional flag if your pipeline scales dense vectors
+#              gamma: "scale"
+#              class_weight: "balanced"
+#              max_iter: 10000
+##              scale_features: true      # flag to scale dense embeddings
 #            vectorizer:
 #              vectorizer_name: "word2vec"
 #              vectorizer_field: "Description"
@@ -1950,7 +2839,7 @@ pipelines:
 #            visualisations:
 #              - name: confusion_matrix
 #                kwargs:
-#                  figsize: [8, 6]
+#                  figsize: [ 8, 6 ]
 #                  cmap: "Blues"
 #
 #        - run_name: "1d. SVM Word2Vec"
@@ -1979,7 +2868,7 @@ pipelines:
 #                lower: true
 #                field: "Description"
 #          params:
-#            description: "1d. SVM Word2Vec with data cleansing and smote on Roblox game descriptions."
+#            description: "1d. SVM Word2Vec with preprocessing and SMOTE on Roblox game descriptions."
 #            save_path: "output/svm_results"
 #            cv_enabled: true
 #            cv_stratified: true
@@ -1987,9 +2876,12 @@ pipelines:
 #            cv_shuffle: true
 #            cv_random_state: 42
 #            model_params:
-#              kernel: "linear"
+#              kernel: "rbf"
 #              C: 1.0
-#              # scale_features: true  # optional flag if your pipeline scales dense vectors
+#              gamma: "scale"
+#              class_weight: "balanced"
+#              max_iter: 10000
+##              scale_features: true
 #            vectorizer:
 #              vectorizer_name: "word2vec"
 #              vectorizer_field: "Description"
@@ -2009,39 +2901,13 @@ pipelines:
 #            visualisations:
 #              - name: confusion_matrix
 #                kwargs:
-#                  figsize: [8, 6]
-#                  cmap: "Blues"
-#        # ------------------------------------------------------------
-#        # 3. SVM + BERT
-#        # ------------------------------------------------------------
-#        - run_name: "1e. SVM BERT"
-#          params:
-#            description: "SVM experiments with BERT embeddings on Roblox game descriptions."
-#            save_path: "output/svm_results"
-#            cv_enabled: true
-#            cv_stratified: true
-#            cv_folds: 5
-#            cv_shuffle: true
-#            cv_random_state: 42
-#            model_params:
-#              kernel: "linear"
-#              C: 1.0
-#              # scale_features: true
-#            vectorizer:
-#              vectorizer_name: "bert"
-#              vectorizer_field: "Description"
-#              vectorizer_params:
-#                model_name: "sentence-transformers/all-mpnet-base-v2"
-#            visualisations:
-#              - name: confusion_matrix
-#                kwargs:
-#                  figsize: [8, 6]
+#                  figsize: [ 8, 6 ]
 #                  cmap: "Blues"
 #
 #        # ------------------------------------------------------------
 #        # 3. SVM + BERT
 #        # ------------------------------------------------------------
-#        - run_name: "1f. SVM BERT"
+#        - run_name: "1e. SVM BERT"
 #          text_field: "Description"
 #          preprocessing:
 #            - name: lowercase
@@ -2067,7 +2933,7 @@ pipelines:
 #                lower: true
 #                field: "Description"
 #          params:
-#            description: "1f. SVM BERT with data cleansing and smote on Roblox game descriptions."
+#            description: "1e. SVM BERT with preprocessing and SMOTE on Roblox game descriptions."
 #            save_path: "output/svm_results"
 #            cv_enabled: true
 #            cv_stratified: true
@@ -2075,9 +2941,12 @@ pipelines:
 #            cv_shuffle: true
 #            cv_random_state: 42
 #            model_params:
-#              kernel: "linear"
+#              kernel: "rbf"
 #              C: 1.0
-#              # scale_features: true
+#              gamma: "scale"
+#              class_weight: "balanced"
+#              max_iter: 10000
+##              scale_features: true
 #            vectorizer:
 #              vectorizer_name: "bert"
 #              vectorizer_field: "Description"
@@ -2095,5 +2964,5 @@ pipelines:
 #            visualisations:
 #              - name: confusion_matrix
 #                kwargs:
-#                  figsize: [8, 6]
+#                  figsize: [ 8, 6 ]
 #                  cmap: "Blues"
