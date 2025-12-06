@@ -13,6 +13,7 @@ from .base import Reducer
 class UMAPReducer(Reducer):
     def __init__(self, name='umap', n_components: int = 2, random_state: int = 42, **kwargs):
         self.logger = get_logger("UMAPReducer")
+        self.logger.info(f"Initializing UMAPReducer with n_components={n_components}, random_state={random_state}, kwargs={kwargs}")
         self.name = name
         if umap is None:
             self.logger.warning("umap-learn is not installed; UMAPReducer will raise on fit/transform.")

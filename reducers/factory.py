@@ -37,3 +37,13 @@ class ReducerFactory:
         params = config.get("params", {}) or {}
         cls.logger.info(f"Instantiating reducer '{name}' with params: {params}")
         return reducer_cls(**params)
+
+    @classmethod
+    def create_reducer(cls, name: str, **kwargs) -> Reducer:
+        """Create reducer instance by name with optional kwargs."""
+        reducer_cls = cls._registry.get(name)
+        if not reducer_cls:
+            raise KeyError(f"Reducer '{name}' is not registered. Available: {list(cls._registry.keys())}")
+
+        cls.logger.info(f"Creating reducer '{name}' with kwargs: {kwargs}")
+        return reducer_cls(**kwargs)

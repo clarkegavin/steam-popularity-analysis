@@ -2,6 +2,7 @@
 from experiments.base import Experiment
 from models.factory import ModelFactory
 from evaluators.factory import EvaluatorFactory
+from reducers.factory import ReducerFactory
 from logs.logger import get_logger
 import mlflow
 import json, os
@@ -35,6 +36,7 @@ class ClassificationExperiment(Experiment):
         visualisations: Optional[List[Dict]] = None,
         preprocessing_metadata: Optional[Dict] = None,
         sampler: Optional[Dict] = None,
+        reducer: Optional[Dict] = None,
         **kwargs
     ):
 
@@ -72,9 +74,17 @@ class ClassificationExperiment(Experiment):
         self.sampler_config = sampler or {}
         self.sampler_name = self.sampler_config.get("name")
         self.sampler_params = self.sampler_config.get("params", {})
-        self.sampler = None
+        #self.sampler = None
+        self.sampler = sampler
         # if self.sampler_name:
         #     self.sampler = SamplerFactory.get_sampler(self.sampler_name, **self.sampler_params)
+
+        # Reducer
+        self.reducer_config = reducer or {}
+        self.reducer_name = self.reducer_config.get("name")
+        self.reducer_params = self.reducer_config.get("params", {})
+        self.reducer = reducer
+
 
         # Model parameters: merge YAML model_params + extra params that belong to the model
         self.model_params = (model_params or {}).copy()
@@ -131,7 +141,13 @@ class ClassificationExperiment(Experiment):
                     self.sampler_name, **self.sampler_params
                 )
 
-
+            # Reducer
+            if self.reducer:
+                self.logger.info(f"Using reducer '{self.reducer_name}' with params {self.reducer_params}")
+                reducer = ReducerFactory.create_reducer(self.reducer_name, **self.reducer_params)
+                X_train = reducer.fit_transform(X_train)
+                X_test = reducer.transform(X_test)
+                self.logger.info("Dimensionality reduction complete.")
 
             if self.cv_enabled:
                 self.results = self._run_cross_validation(X_train, y_train)

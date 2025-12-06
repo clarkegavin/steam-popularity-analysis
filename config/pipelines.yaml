@@ -2272,94 +2272,284 @@ pipelines:
 #                  figsize: [8, 6]
 #                  cmap: "Blues"
 
-        - run_name: "1d. XGBoost TF-IDF stopword only"
-          text_field: "Description"
-          preprocessing:
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
-            save_path: "output/xgboost_results"
-            calculate_sample_weights: true
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params:    # default XGBoost hyperparameters
-              # device: 'cuda'
-              learning_rate: 0.1
-              max_depth: 8
-              min_child_weight : 2
-              gamma: 0.3
-              scale_pos_weight: 5 # for imbalanced classes
-              max_delta_step: 2 # stabilise rare classes
-              reg_lambda: 2 # regulatisation
-              n_estimators: 1000
-#              early_stopping_rounds: 50
-#              eval_metric: "mlogloss"
-              colsample_bytree: 0.7
-            vectorizer:
-              vectorizer_name: "tfidf"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                max_features: 10000
-                ngram_range: [1, 2]
-                #stop_words: "english"
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
+#        - run_name: "1d. XGBoost TF-IDF stopword only"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "XGBoost experiments with TF-IDF vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            calculate_sample_weights: true
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:    # default XGBoost hyperparameters
+#              # device: 'cuda'
+#              learning_rate: 0.1
+#              max_depth: 8
+#              min_child_weight : 2
+#              gamma: 0.3
+#              scale_pos_weight: 5 # for imbalanced classes
+#              max_delta_step: 2 # stabilise rare classes
+#              reg_lambda: 2 # regulatisation
+#              n_estimators: 1000
+##              early_stopping_rounds: 50
+##              eval_metric: "mlogloss"
+#              colsample_bytree: 0.7
+#            vectorizer:
+#              vectorizer_name: "tfidf"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                max_features: 10000
+#                ngram_range: [1, 2]
+#                #stop_words: "english"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#
+#        - run_name: "1e. XGBoost Word2Vec stopword only"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "XGBoost experiments with Word2Vec vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            calculate_sample_weights: true
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:    # default XGBoost hyperparameters
+#              # device: 'cuda'
+#              learning_rate: 0.1
+#              max_depth: 8
+#              min_child_weight : 2
+#              gamma: 0.3
+#              scale_pos_weight: 5 # for imbalanced classes
+#              max_delta_step: 2 # stabilise rare classes
+#              reg_lambda: 2 # regulatisation
+#              n_estimators: 1000
+##              early_stopping_rounds: 50
+##              eval_metric: "mlogloss"
+#              colsample_bytree: 0.7
+#            vectorizer:
+#              vectorizer_name: "word2vec"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                vector_size: 300
+#                window: 5
+#                min_count: 2
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#        - run_name: "1f. XGBoost BERT stopword only"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "XGBoost experiments with BERT vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            calculate_sample_weights: true
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:    # default XGBoost hyperparameters
+#              # device: 'cuda'
+#              learning_rate: 0.1
+#              max_depth: 8
+#              min_child_weight : 2
+#              gamma: 0.3
+#              scale_pos_weight: 5 # for imbalanced classes
+#              max_delta_step: 2 # stabilise rare classes
+#              reg_lambda: 2 # regulatisation
+#              n_estimators: 1000
+##              early_stopping_rounds: 50
+##              eval_metric: "mlogloss"
+#              colsample_bytree: 0.7
+#            reducer:
+#               name: "umap"
+#               params:
+#                  n_components: 100
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#
+#        - run_name: "1g. XGBoost BERT stopword only - UMAP 250"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "XGBoost experiments with BERT vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            calculate_sample_weights: true
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:    # default XGBoost hyperparameters
+#              # device: 'cuda'
+#              learning_rate: 0.1
+#              max_depth: 8
+#              min_child_weight : 2
+#              gamma: 0.3
+#              scale_pos_weight: 5 # for imbalanced classes
+#              max_delta_step: 2 # stabilise rare classes
+#              reg_lambda: 2 # regulatisation
+#              n_estimators: 1000
+##              early_stopping_rounds: 50
+##              eval_metric: "mlogloss"
+#              colsample_bytree: 0.7
+#            reducer:
+#               name: "umap"
+#               params:
+#                  n_components: 250
+#                  random_state: 42
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#
+#        - run_name: "1h. XGBoost BERT stopword only - UMAP 50"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "XGBoost experiments with BERT vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            calculate_sample_weights: true
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:    # default XGBoost hyperparameters
+#              # device: 'cuda'
+#              learning_rate: 0.1
+#              max_depth: 8
+#              min_child_weight : 2
+#              gamma: 0.3
+#              scale_pos_weight: 5 # for imbalanced classes
+#              max_delta_step: 2 # stabilise rare classes
+#              reg_lambda: 2 # regulatisation
+#              n_estimators: 1000
+##              early_stopping_rounds: 50
+##              eval_metric: "mlogloss"
+#              colsample_bytree: 0.7
+#            reducer:
+#               name: "umap"
+#               params:
+#                  n_components: 100
+#                  random_state: 42
+#                  n_neighbors: 15
+#                  min_dist: 0.1
+#                  metric: "cosine"
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
+#
+#
+#        - run_name: "1i. XGBoost BERT stopword only"
+#          text_field: "Description"
+#          preprocessing:
+#            - name: stopword_remover
+#              params:
+#                language: "english"
+#                lower: true
+#                field: "Description"
+#          params:
+#            description: "XGBoost experiments with BERT vectorization technique on Roblox game descriptions."
+#            save_path: "output/xgboost_results"
+#            calculate_sample_weights: true
+#            cv_enabled: true
+#            cv_stratified: true
+#            cv_folds: 5
+#            cv_shuffle: true
+#            cv_random_state: 42
+#            model_params:    # default XGBoost hyperparameters
+#              # device: 'cuda'
+#              learning_rate: 0.1
+#              max_depth: 8
+#              min_child_weight : 2
+#              gamma: 0.3
+#              scale_pos_weight: 5 # for imbalanced classes
+#              max_delta_step: 2 # stabilise rare classes
+#              reg_lambda: 2 # regulatisation
+#              n_estimators: 1000
+##              early_stopping_rounds: 50
+##              eval_metric: "mlogloss"
+#              colsample_bytree: 0.7
+#            reducer:
+#               name: "pca"
+#               params:
+#                  n_components: 250
+#            vectorizer:
+#              vectorizer_name: "bert"
+#              vectorizer_field: "Description"
+#              vectorizer_params:
+#                model_name: "sentence-transformers/all-mpnet-base-v2"
+#            visualisations:
+#              - name: confusion_matrix
+#                kwargs:
+#                  figsize: [8, 6]
+#                  cmap: "Blues"
 
 
-        - run_name: "1e. XGBoost Word2Vec stopword only"
-          text_field: "Description"
-          preprocessing:
-            - name: stopword_remover
-              params:
-                language: "english"
-                lower: true
-                field: "Description"
-          params:
-            description: "XGBoost experiments with Word2Vec vectorization technique on Roblox game descriptions."
-            save_path: "output/xgboost_results"
-            calculate_sample_weights: true
-            cv_enabled: true
-            cv_stratified: true
-            cv_folds: 5
-            cv_shuffle: true
-            cv_random_state: 42
-            model_params:    # default XGBoost hyperparameters
-              # device: 'cuda'
-              learning_rate: 0.1
-              max_depth: 8
-              min_child_weight : 2
-              gamma: 0.3
-              scale_pos_weight: 5 # for imbalanced classes
-              max_delta_step: 2 # stabilise rare classes
-              reg_lambda: 2 # regulatisation
-              n_estimators: 1000
-#              early_stopping_rounds: 50
-#              eval_metric: "mlogloss"
-              colsample_bytree: 0.7
-            vectorizer:
-              vectorizer_name: "word2vec"
-              vectorizer_field: "Description"
-              vectorizer_params:
-                vector_size: 300
-                window: 5
-                min_count: 2
-            visualisations:
-              - name: confusion_matrix
-                kwargs:
-                  figsize: [8, 6]
-                  cmap: "Blues"
 
-        - run_name: "1f. XGBoost BERT stopword only"
+        - run_name: "1j. XGBoost BERT stopword only - PCA 500"
           text_field: "Description"
           preprocessing:
             - name: stopword_remover
@@ -2390,9 +2580,9 @@ pipelines:
 #              eval_metric: "mlogloss"
               colsample_bytree: 0.7
             reducer:
-               name: "umap"
+               name: "pca"
                params:
-                  n_components: 100
+                  n_components: 500
             vectorizer:
               vectorizer_name: "bert"
               vectorizer_field: "Description"
@@ -2404,6 +2594,163 @@ pipelines:
                   figsize: [8, 6]
                   cmap: "Blues"
 
+
+        - run_name: "1k. XGBoost BERT stopword only - PCA 750"
+          text_field: "Description"
+          preprocessing:
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+          params:
+            description: "XGBoost experiments with BERT vectorization technique on Roblox game descriptions."
+            save_path: "output/xgboost_results"
+            calculate_sample_weights: true
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:    # default XGBoost hyperparameters
+              # device: 'cuda'
+              learning_rate: 0.1
+              max_depth: 8
+              min_child_weight : 2
+              gamma: 0.3
+              scale_pos_weight: 5 # for imbalanced classes
+              max_delta_step: 2 # stabilise rare classes
+              reg_lambda: 2 # regulatisation
+              n_estimators: 1000
+#              early_stopping_rounds: 50
+#              eval_metric: "mlogloss"
+              colsample_bytree: 0.7
+            reducer:
+               name: "pca"
+               params:
+                  n_components: 750
+            vectorizer:
+              vectorizer_name: "bert"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                model_name: "sentence-transformers/all-mpnet-base-v2"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
+
+
+        - run_name: "1l. XGBoost BERT stopword only - n_estimators 750"
+          text_field: "Description"
+          preprocessing:
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+          params:
+            description: "XGBoost experiments with BERT vectorization technique on Roblox game descriptions."
+            save_path: "output/xgboost_results"
+            calculate_sample_weights: true
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:    # default XGBoost hyperparameters
+              # device: 'cuda'
+              learning_rate: 0.1
+              max_depth: 8
+              min_child_weight : 2
+              gamma: 0.3
+              scale_pos_weight: 5 # for imbalanced classes
+              max_delta_step: 2 # stabilise rare classes
+              reg_lambda: 2 # regulatisation
+              n_estimators: 750
+#              early_stopping_rounds: 50
+#              eval_metric: "mlogloss"
+              colsample_bytree: 0.7
+            reducer:
+               name: "pca"
+               params:
+                  n_components: 500
+            vectorizer:
+              vectorizer_name: "bert"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                model_name: "sentence-transformers/all-mpnet-base-v2"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
+
+
+        - run_name: "1m. XGBoost BERT - n_estimators 750"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+            - name: remove_whitespace
+              params:
+                field: "Description"
+                pattern: '\\s+'
+            - name: remove_punctuation_noise
+              params:
+                field: "Description"
+                pattern: '([!?.,])\\1+'
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+            - name: emoji_remover
+              params:
+                use_emoji_lib: true
+          params:
+            description: "XGBoost experiments with BERT vectorization technique on Roblox game descriptions."
+            save_path: "output/xgboost_results"
+            calculate_sample_weights: true
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:    # default XGBoost hyperparameters
+              # device: 'cuda'
+              learning_rate: 0.1
+              max_depth: 8
+              min_child_weight : 2
+              gamma: 0.3
+              scale_pos_weight: 5 # for imbalanced classes
+              max_delta_step: 2 # stabilise rare classes
+              reg_lambda: 2 # regulatisation
+              n_estimators: 750
+#              early_stopping_rounds: 50
+#              eval_metric: "mlogloss"
+              colsample_bytree: 0.7
+            reducer:
+               name: "pca"
+               params:
+                  n_components: 750
+            vectorizer:
+              vectorizer_name: "bert"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                model_name: "sentence-transformers/all-mpnet-base-v2"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [8, 6]
+                  cmap: "Blues"
 #        # ------------------------------------------------------------
 #        # 1. XGBoost + TF-IDF
 #        # ------------------------------------------------------------
@@ -2710,45 +3057,402 @@ pipelines:
 #                  cmap: "Blues"
 #
 #
-#  - name: svm
-#    type: pipelines.experiment_pipeline.ExperimentPipeline
-#    params:
-#      experiment_type: "classification"
-#      model_name: "svm"
-#      evaluator_name: "classification"
-#      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
-#      mlflow_experiment: "SVM Experiments"
-#      experiments:
-#
-#        # ------------------------------------------------------------
-#        # 1. SVM + TF-IDF
-#        # ------------------------------------------------------------
-#        - run_name: "1a. SVM TF-IDF"
-#          params:
-#            description: "SVM experiments with TF-IDF vectorization on Roblox game descriptions."
-#            save_path: "output/svm_results"
-#            cv_enabled: true
-#            cv_stratified: true
-#            cv_folds: 5
-#            cv_shuffle: true
-#            cv_random_state: 42
-#            model_params:
-#              kernel: "linear"
-#              C: 1.0
-#              class_weight: "balanced"  # handle class imbalance
-#              max_iter: 10000           # prevent convergence issues
-#            vectorizer:
-#              vectorizer_name: "tfidf"
-#              vectorizer_field: "Description"
-#              vectorizer_params:
-#                max_features: 5000
-#                ngram_range: [ 1, 2 ]
-#                stop_words: "english"
-#            visualisations:
-#              - name: confusion_matrix
-#                kwargs:
-#                  figsize: [ 8, 6 ]
-#                  cmap: "Blues"
+  - name: svm
+    type: pipelines.experiment_pipeline.ExperimentPipeline
+    params:
+      experiment_type: "classification"
+      model_name: "svm"
+      evaluator_name: "classification"
+      metrics: [ "accuracy", "f1_score", "precision", "recall" ]
+      mlflow_experiment: "SVM Experiments"
+      experiments:
+
+        # ------------------------------------------------------------
+        # 1. SVM + TF-IDF
+        # ------------------------------------------------------------
+        - run_name: "1a. SVM TF-IDF"
+          params:
+            description: "SVM experiments with TF-IDF vectorization on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"
+              C: 1.0
+              class_weight: "balanced"  # handle class imbalance
+              max_iter: 10000           # prevent convergence issues
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 5000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        - run_name: "1b. SVM TF-IDF - max_features 10000"
+          params:
+            description: "SVM experiments with TF-IDF vectorization on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"
+              C: 1.0
+              class_weight: "balanced"  # handle class imbalance
+              max_iter: 10000           # prevent convergence issues
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 10000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        - run_name: "1c. SVM TF-IDF"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+            - name: remove_whitespace
+              params:
+                field: "Description"
+                pattern: '\\s+'
+            - name: remove_punctuation_noise
+              params:
+                field: "Description"
+                pattern: '([!?.,])\\1+'
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+            - name: emoji_remover
+              params:
+                use_emoji_lib: true
+          params:
+            description: "SVM experiments with TF-IDF vectorization on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"
+              C: 1.0
+              class_weight: "balanced"  # handle class imbalance
+              max_iter: 10000           # prevent convergence issues
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 10000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        - run_name: "1d. SVM TF-IDF - stopword"
+          text_field: "Description"
+          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+#            - name: emoji_remover
+#              params:
+#                use_emoji_lib: true
+          params:
+            description: "SVM experiments with TF-IDF vectorization on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"
+              C: 1.0
+              class_weight: "balanced"  # handle class imbalance
+              max_iter: 10000           # prevent convergence issues
+            vectorizer:
+              vectorizer_name: "tfidf"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                max_features: 10000
+                ngram_range: [ 1, 2 ]
+                stop_words: "english"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        - run_name: "1e. SVM word2vec"
+          text_field: "Description"
+          preprocessing:
+#            - name: lowercase
+#            - name: remove_repeated_characters
+#              params:
+#                field: "Description"
+#                pattern: "(.)\\1{2,}"
+#            - name: remove_urls
+#              params:
+#                field: "Description"
+#                pattern: 'https?://\S+|www\.\S+'
+#            - name: remove_whitespace
+#              params:
+#                field: "Description"
+#                pattern: '\\s+'
+#            - name: remove_punctuation_noise
+#              params:
+#                field: "Description"
+#                pattern: '([!?.,])\\1+'
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+#            - name: emoji_remover
+#              params:
+#                use_emoji_lib: true
+          params:
+            description: "SVM experiments with TF-IDF vectorization on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"
+              C: 1.0
+              class_weight: "balanced"  # handle class imbalance
+              max_iter: 10000           # prevent convergence issues
+            vectorizer:
+              vectorizer_name: "word2vec"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                vector_size: 500
+                window: 5
+                min_count: 2
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+
+        - run_name: "1f. SVM word2vec"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+            - name: remove_whitespace
+              params:
+                field: "Description"
+                pattern: '\\s+'
+            - name: remove_punctuation_noise
+              params:
+                field: "Description"
+                pattern: '([!?.,])\\1+'
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+            - name: emoji_remover
+              params:
+                use_emoji_lib: true
+          params:
+            description: "SVM experiments with TF-IDF vectorization on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"
+              C: 1.0
+              class_weight: "balanced"  # handle class imbalance
+              max_iter: 10000           # prevent convergence issues
+            vectorizer:
+              vectorizer_name: "word2vec"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                vector_size: 500
+                window: 5
+                min_count: 2
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+
+        - run_name: "1g. SVM BERT"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+            - name: remove_whitespace
+              params:
+                field: "Description"
+                pattern: '\\s+'
+            - name: remove_punctuation_noise
+              params:
+                field: "Description"
+                pattern: '([!?.,])\\1+'
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+            - name: emoji_remover
+              params:
+                use_emoji_lib: true
+          params:
+            description: "SVM experiments with TF-IDF vectorization on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"
+              C: 1.0
+              class_weight: "balanced"  # handle class imbalance
+              max_iter: 10000           # prevent convergence issues
+#            reducer:
+#              name: "pca"
+#              params:
+#                n_components: 750
+            vectorizer:
+              vectorizer_name: "bert"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                model_name: "sentence-transformers/all-mpnet-base-v2"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
+
+        - run_name: "1h. SVM BERT"
+          text_field: "Description"
+          preprocessing:
+            - name: lowercase
+            - name: remove_repeated_characters
+              params:
+                field: "Description"
+                pattern: "(.)\\1{2,}"
+            - name: remove_urls
+              params:
+                field: "Description"
+                pattern: 'https?://\S+|www\.\S+'
+            - name: remove_whitespace
+              params:
+                field: "Description"
+                pattern: '\\s+'
+            - name: remove_punctuation_noise
+              params:
+                field: "Description"
+                pattern: '([!?.,])\\1+'
+            - name: stopword_remover
+              params:
+                language: "english"
+                lower: true
+                field: "Description"
+            - name: emoji_remover
+              params:
+                use_emoji_lib: true
+          params:
+            description: "SVM experiments with TF-IDF vectorization on Roblox game descriptions."
+            save_path: "output/svm_results"
+            cv_enabled: true
+            cv_stratified: true
+            cv_folds: 5
+            cv_shuffle: true
+            cv_random_state: 42
+            model_params:
+              kernel: "linear"
+              C: 1.0
+              class_weight: "balanced"  # handle class imbalance
+              max_iter: 10000           # prevent convergence issues
+            reducer:
+              name: "pca"
+              params:
+                n_components: 750
+            vectorizer:
+              vectorizer_name: "bert"
+              vectorizer_field: "Description"
+              vectorizer_params:
+                model_name: "sentence-transformers/all-mpnet-base-v2"
+            visualisations:
+              - name: confusion_matrix
+                kwargs:
+                  figsize: [ 8, 6 ]
+                  cmap: "Blues"
 #
 #        - run_name: "1b. SVM TF-IDF"
 #          text_field: "Description"
