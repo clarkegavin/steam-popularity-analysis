@@ -76,6 +76,7 @@ class ClassificationExperiment(Experiment):
         self.sampler_params = self.sampler_config.get("params", {})
         #self.sampler = None
         self.sampler = sampler
+        self.logger.info(f"Sampler name: {self.sampler_name}, params: {self.sampler_params}")
         # if self.sampler_name:
         #     self.sampler = SamplerFactory.get_sampler(self.sampler_name, **self.sampler_params)
 
@@ -140,6 +141,9 @@ class ClassificationExperiment(Experiment):
                 self.sampler = SamplerFactory.get_sampler(
                     self.sampler_name, **self.sampler_params
                 )
+            else:
+                self.logger.info("No sampler configured.")
+
 
             # Reducer
             if self.reducer:

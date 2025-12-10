@@ -46,6 +46,7 @@ def get_runs_by_ids(run_ids: list[str]):
         raise ValueError(f"No runs found for provided IDs: {run_ids}")
 
     print(f"Found {len(df_filtered)} runs matching provided IDs.")
+    print(f"Run IDs found: {df_filtered['run_id'].tolist()}")
     return df_filtered
 
 
@@ -79,10 +80,10 @@ def plot_data(df, output_path: str):
 
     # Metrics to plot
     metrics = [
-        "metrics.cv_mean_accuracy",
+        "metrics.test_accuracy",
         "metrics.cv_mean_recall",
-        "metrics.cv_mean_f1_score",
-        "metrics.cv_mean_precision"
+        "metrics.test_f1_score",
+        "metrics.test_precision"
     ]
 
     # Extract metric values and convert to percentage
@@ -90,10 +91,10 @@ def plot_data(df, output_path: str):
 
     # Apply tiny offsets for overlapping metrics (adjust visually as needed)
     offsets = {
-        "metrics.cv_mean_accuracy": 0.0,
-        "metrics.cv_mean_recall": 0.1,     # +0.1%
-        "metrics.cv_mean_f1_score": 0.0,
-        "metrics.cv_mean_precision": 0.0
+        "metrics.test_accuracy": 0.0,
+        "metrics.test_recall": 0.1,     # +0.1%
+        "metrics.test_f1_score": 0.0,
+        "metrics.test_precision": 0.0
     }
 
     for m in metrics:
@@ -107,6 +108,7 @@ def plot_data(df, output_path: str):
 
     # Plot each metric
     for m in metrics:
+
         plt.plot(
             df["tags.mlflow.runName"],
             metric_values[m],
@@ -116,8 +118,8 @@ def plot_data(df, output_path: str):
 
     plt.xlabel("Experiment Run Name")
     plt.ylabel("Metric Value (%)")
-    plt.title("Comparison of CV Mean Metrics Across Experiments")
-    plt.xticks(rotation=45)
+    plt.title("Comparison of  Metrics Across Experiments")
+    plt.xticks(rotation=90)
     plt.ylim(ymin, ymax)
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
@@ -162,40 +164,74 @@ def plot_data_old(df: pd.DataFrame, output_path: str):
     plt.savefig(output_path)
     plt.show()
 
+
+
+
+
+def update_run_names(rename_mapping: dict[str, str]):
+    """
+    Update MLflow run names given a dictionary of {run_id: new_name}.
+    """
+    _set_tracking_uri()
+    for run_id, new_name in rename_mapping.items():
+        mlflow.set_tag(run_id, "mlflow.runName", new_name)
+        print(f"Updated run {run_id} → '{new_name}'")
+
 # ======================================================
 # Example usage
 # ======================================================
+if __name__ == "__main__":
+    # Option A — get last 9 runs
+    # df = get_last_runs("Default", 28)
 
-# Option A — get last 9 runs
-# df = get_last_runs("Default", 9)
+    # rename_mapping = {
+    #     "d4a1480211ef40609bfd311163ff6666": "1a. NB + TF-IDF baseline",
+    #     "fe0067b1fb174b3a8d41a3df93f5b981": "1b. NB + lowercase",
+    #     "d800a4bb6cd845898bed13cbcd6047a5": "1c. NB + repeated char removal",
+    #     "bc413906cf7a4da7ba21c35d7e6258a0": "1d. NB + remove URLs",
+    #     "00fba5f8a7ff466aa6fdec0ad73fdc33": "1e. NB + remove whitespace",
+    #     "082d1d3a70e644cfb5e8fcbcb515d448": "1f. NB + remove punctuation noise",
+    #     "1a38024763854ba1af26ee9a592ac4c6": "1g. NB + stopword remover",
+    #     "b996987b18e54ebc86cb221fb7edfa9e": "1h. NB + stemmer (porter)",
+    #     "f77543ff914d467ca78077328e7f60ca": "1i. NB + Lemmatization",
+    #     "3636caee57d048eb9231b57528286787": "1m. NB + remove repeated characters only",
+    #     "dfc90e71f50049878929d68524c63dfa": "1n. NB + remove urls only",
+    #     "add63f443ff44a84aa778378f7a7b8c0": "1o. NB + remove whitespace only",
+    #     "5c38c47c314b400088259e81b45c2888": "1p. NB + remove punct noise only",
+    #     "99d72077c98f4472b19a46918305d82a": "1q. NB + stopword remover only",
+    #     "6ad5eb2a745a4c8382e72fc6f6a220b0": "1r. NB + emoji remover only",
+    #     "4164603266b74cb38cee7b9188deeb0b": "1s. NB + stemmer (porter) only",
+    #     "afdc5387e71448ed90ab4300433cf68c": "1j. NB + Sampling (SMOTE)",
+    #     "302e86f2daa24644bbcfebf882c1b3cd": "1k. NB + Sampling (under)",
+    #     "2bc2967d2ef545cba04172ef233342f7": "1l. NB + Sampling (over)"
+    # }
+    # update_run_names(rename_mapping)
+    # Option B — get specific runs by ID
+    df = get_runs_by_ids([
+        '51eab872baa94f0a90f35164eef2e62a',
+        '9e68704941844867ae33aa8d06050e6c', 'c8c9a94835b042959a4728207b37521e',
+        '35b99fcd4c874162840c310db51d0153', 'ef85f6fe24bf46c0a79b6ca826e46487', 'ac276c54b92442529c72fc13ba3a8de5',
+        '0a43743a8bcb4e058562f3b8cb58d96e', '6fe8883434cb4d9ebbd1134e9cf0affa', '36eaad02cdbc40658e67b34551c85762',
+        'f9ed6a8ab50e47a8bea647eb4d5589ed',
+        '8da79ab2165e4996b6dee69ac4932bbc',
+        '9942c24a588748839a546364b051e7ee',
+        '8238fd201f714a4499acdf951ac69ed1', '575345ff74e2457aba40887240eba91d', '41e43de20c5048c19275665049ed4671',
+        '1a819296449642d48e190ecfc17a1e29', 'a6c4603836024c0789cc02629801e5c9', '4f44240c90264197b4a27be2377e7765',
+        '9374a5d062fe42b2bd9891d3c5d9ac59', '8225f545343c43499ed31220053a5ebd', '4a04e412ace64756ad843cf2df4447e8',
+        '13daf52853964da186e3a5950ba44d19', '8fceeb050d92452bb44cbf7c1d4f5eec', 'd4d8ec8c6c714719a820d7ad4e95ebe0',
+        '96316d79d88b484680b11209a306856d', 'bc9267e17fbf46998c63a23b23d91f6b', 'dc23071204cc44d595352a5b0028bc31',
+        '9242ced92c744912a3bacd69447286b4'
+    ])
 
-# Option B — get specific runs by ID
-df = get_runs_by_ids([
-    # individual
-    '6ad5eb2a745a4c8382e72fc6f6a220b0',
-    '99d72077c98f4472b19a46918305d82a',
-    '5c38c47c314b400088259e81b45c2888',
-    'add63f443ff44a84aa778378f7a7b8c0',
-    'dfc90e71f50049878929d68524c63dfa',
-    '3636caee57d048eb9231b57528286787',
-    'd4a1480211ef40609bfd311163ff6666', # baseline
-    'f77543ff914d467ca78077328e7f60ca',
-    'b04a6c319ed8416b8900e34cd880b76a'
 
-    # consolidated
-    'b9c7506367d2442a8aa6e24f8f1a6596',
-    'b996987b18e54ebc86cb221fb7edfa9e',
-    '1a38024763854ba1af26ee9a592ac4c6',
-    '082d1d3a70e644cfb5e8fcbcb515d448',
-    '00fba5f8a7ff466aa6fdec0ad73fdc33',
-    'bc413906cf7a4da7ba21c35d7e6258a0',
-    'd800a4bb6cd845898bed13cbcd6047a5',
-    'fe0067b1fb174b3a8d41a3df93f5b981',
-   # '7ad193bc7e364278be28e08069ef0097' # baseline
-    # individual
+    # Example: rename runs
 
-])
 
-#df = melt_data(df)
-plot_data(df, "naive_bayes_experiments_consolidated.png")
-save_runs_to_excel(df, "naive_bayes_experiments_consolidated.xlsx")
+    #update_run_names(rename_mapping)
+
+    #df = melt_data(df)
+    #df["tags.mlflow.runName"] = df["run_id"].map(rename_mapping)
+
+    plot_data(df, "naive_bayes_experiments_consolidated.png")
+    save_runs_to_excel(df, "naive_bayes_experiments_consolidated.xlsx")
+
