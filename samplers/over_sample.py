@@ -15,4 +15,18 @@ class OverSampler(Sampler):
 
     def fit_resample(self, X, y):
         self.logger.info("Starting OverSampler fit_resample")
-        return self.sampler.fit_resample(X, y)
+        # if X is a DataFrame, log its shape otherwise log its length
+        # X_res, y_res = self.sampler.fit_resample(X, y)
+
+        # if hasattr(X, 'shape'):
+        #     self.logger.info(f"OverSampler Input X shape: {X.shape}")
+        #     self.logger.info(f"OverSampler Resampled X shape: {X_res.shape}")
+        # else:
+        #     self.logger.info(f"OverSampler Input X length: {len(X)}")
+        #     self.logger.info(f"OverSampler Resampled X length: {len(X_res)}")
+
+        X_res, y_res = self.sampler.fit_resample(X, y)
+
+        return X_res, y_res
+
+        #return self.sampler.fit_resample(X, y)

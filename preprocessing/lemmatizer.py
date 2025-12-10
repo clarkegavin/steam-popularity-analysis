@@ -37,12 +37,20 @@ class Lemmatizer(Preprocessor):
 
     def transform(self, X: Iterable[str]) -> List[str]:
         self.logger.info("Starting Lemmatizer transformation")
+
+        #log sample before transformation
+        # sample_before = list(X)[:2]
+        # self.logger.info(f"Sample before lemmatization: {sample_before}")
+
         if self.nlp is None:
             return list(X)
         out = []
         for doc in self.nlp.pipe(X, disable=["ner", "parser"]):
             out.append(" ".join(tok.lemma_ for tok in doc))
         self.logger.info("Completed Lemmatizer transformation")
+
+        # sample_after = out[:2]
+        # self.logger.info(f"Sample after lemmatization: {sample_after}")
         return out
 
     def get_params(self) -> dict:
