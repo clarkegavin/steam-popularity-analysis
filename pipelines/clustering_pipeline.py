@@ -23,6 +23,8 @@ class ClusteringPipeline(Pipeline):
     def __init__(self, **params):
         self.logger = get_logger("ClusteringPipeline")
 
+        self.name = params.get("name", "clustering_pipeline")
+        self.logger.info(f"Initializing ClusteringPipeline with name: {self.name}")
         # params dict contains all YAML keys
         self.text_field = params.get("text_field")
         self.genre_field = params.get("genre_field")
@@ -59,11 +61,14 @@ class ClusteringPipeline(Pipeline):
 
         # Filter genre
         df_filtered = df[df[self.genre_field] == self.filter_genre].copy()
+        self.logger.info(f"Filtering records where {self.genre_field} == {self.filter_genre}")
+        self.logger.info(f"df_filtered type: {type(df_filtered)}")
+
         texts = df_filtered[self.text_field].fillna("").tolist()
         self.logger.info(f"Filtered records: {len(texts)}")
 
-        # Vectorize
 
+        # Vectorize
         self.logger.info(f"Vectorizing texts using {self.vectorizer.name}")
         X = self.vectorizer.fit_transform(df_filtered)
         self.logger.info(f"Vectorized shape: {X.shape}")
@@ -76,7 +81,13 @@ class ClusteringPipeline(Pipeline):
         # Cluster
         self.logger.info(f"Clustering using {self.clusterer.name}")
         labels = self.clusterer.fit_predict(X_reduced)
+        probabilities = self.clusterer.probabilities_ if hasattr(self.clusterer, "probabilities_") else None
         self.logger.info(f"Cluster labels assigned: {set(labels)}")
+        if probabilities is not None:
+            self.logger.info(f"Cluster probabilities shape: {probabilities.shape}")
+        else:
+            self.logger.info("Cluster probabilities not available for this clusterer")
+
 
         # Reduce (for visualisation)
         self.logger.info(f"Reducing dimensions using {self.reducer.name}")
@@ -89,10 +100,18 @@ class ClusteringPipeline(Pipeline):
         self.logger.info(f"Plotting clusters using {self.plotter.name}")
         fig, ax, scatter = self.plotter.plot(X_reduced, labels)
         self.logger.info("Cluster plot generated")
-        plot_path = os.path.join(self.plotter.output_dir, "clustering_pipeline_cluster_plot.png")
+        plot_path = os.path.join(self.plotter.output_dir, f"{self.name}_cluster_plot.png")
         self.plotter.save(fig, plot_path)
-        self.plotter.save_embeddings(X_reduced, labels, df_filtered, prefix="clustering_pipeline")
-        self.logger.info("Cluster plot saved as 'clustering_pipeline_cluster_plot.png'")
+        self.plotter.save_embeddings(X_reduced, labels, df_filtered, prefix=f"{self.name}_clustering_pipeline")
+        self.logger.info(f"Cluster plot saved as '{self.name}_cluster_plot.png'")
+        self.plotter.save_interactive_plot(X_reduced, labels, prefix=f"{self.name}_cluster_plot")
+        if probabilities is not None:
+            self.plotter.save_interactive_plot_by_probability(
+                X_reduced,
+                labels,
+                probabilities,
+                prefix=f"{self.name}_cluster_plot_by_probability"
+            )
 
 
 
@@ -110,10 +129,12 @@ class ClusteringPipeline(Pipeline):
             )
 
         # save cluster keywords to file
-        self._save_cluster_keywords(cluster_keywords, "output/clustering_pipeline_cluster_keywords.txt")
+        keyword_path = os.path.join(self.plotter.output_dir, f"{self.name}_cluster_keywords.txt")
+        self._save_cluster_keywords(cluster_keywords, keyword_path)
+        #self._save_cluster_keywords(cluster_keywords, "output/clustering_pipeline_cluster_keywords.txt")
 
 
-        return df_filtered, cluster_keywords
+        return df_filtered #, cluster_keywords
 
     def _save_cluster_keywords(self, cluster_keywords, filepath):
         try:

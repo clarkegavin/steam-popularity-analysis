@@ -2,7 +2,7 @@ import mlflow
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-
+import textwrap
 
 def _set_tracking_uri():
     """Internal helper to set MLflow tracking URI to project_root/mlruns."""
@@ -119,7 +119,12 @@ def plot_data(df, output_path: str):
     plt.xlabel("Experiment Run Name")
     plt.ylabel("Metric Value (%)")
     plt.title("Comparison of  Metrics Across Experiments")
-    plt.xticks(rotation=90)
+    #plt.xticks(rotation=90)
+    wrapped_labels = [
+        textwrap.fill(label, width=10) for label in df["tags.mlflow.runName"]
+    ]
+    plt.xticks(df["tags.mlflow.runName"], wrapped_labels)
+
     plt.ylim(ymin, ymax)
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
@@ -213,12 +218,24 @@ if __name__ == "__main__":
         # '12db27bbf21e46309eb27e198228d331', '7f8be5cfad474d268d8893ef72733e15', '3b75b4b5a3e245c4b942c73761443660',
         # '49ccc829d1434bf69ad1265ca81b8024', '2431e391329945ed9846c6b8bb08ae76'
 
-        # # XGBoost experiments
-        '3e91943f53794178acc32682d2d00de5', '910effcf9b5a472faf738ef3340dede7', 'da19a43cf23f40d5bcae273764100137',
-        '99ab369e8a8e41babc7ebe0d51b7c00a', '82312831698c4210980338a5353383b1', 'd6f03513dcfa4be6a1a5fe6eb499c160',
-        'b92ec170012d4aecae5f817a1101dc6f', '87e6ac3985ec4da789693158fe295354', '059bfaf00938450186b2039dc1e67b5b'
+        # XGBoost experiments
+        # '3e91943f53794178acc32682d2d00de5', '910effcf9b5a472faf738ef3340dede7', 'da19a43cf23f40d5bcae273764100137',
+        # '99ab369e8a8e41babc7ebe0d51b7c00a', '82312831698c4210980338a5353383b1', 'd6f03513dcfa4be6a1a5fe6eb499c160',
+        # 'b92ec170012d4aecae5f817a1101dc6f', '87e6ac3985ec4da789693158fe295354', '059bfaf00938450186b2039dc1e67b5b'
+
+        # Random Forest 
+        #  '2f3a7027ae10451a8824b2efc37d88bc',
+        # '1a7b97bc06694842ac611f5095aa30f5', 'e7b835ba0f93413e97d8850cce53ac1c', '7620429a27d441d6b0015e907a89c6f7',
+        # 'ef5d632eaa2f4026b5b254eecde161a8', 'be61981cedff48bd911390cb64cb3af4', 'a942a89dfe1f4da68c060e616e4b9831',
+        # '2c48a241b3f1459fa95ccc1ef2172d7b', '2e9bc8528f2d48c697fef6713b0f616d'
+
 
         # Linear SVC experiments
+        '5764a7485c474d1289d827c291f42a43',
+        '4a82b55e5b054e6da75eb6ba556a4d52', '72b4985bfd7f44f29bf93ae983c6eace', '453f36262bca41a3bdf9e57dbecfe09a',
+        'cb7098c3615a4a7683b418ff8693766b', '03f7d1f56f8f491a9c51b00a943bb889', 'a0309fbf42414f78abdb9d2919f154b4',
+        '4b9f082e5454481fa1095380af39c951', '2068449f6398425f819bcda94d2656c3'
+
         # '5764a7485c474d1289d827c291f42a43', '4a82b55e5b054e6da75eb6ba556a4d52', '72b4985bfd7f44f29bf93ae983c6eace',
         # '453f36262bca41a3bdf9e57dbecfe09a', 'cb7098c3615a4a7683b418ff8693766b', '03f7d1f56f8f491a9c51b00a943bb889',
         # 'a0309fbf42414f78abdb9d2919f154b4', '4b9f082e5454481fa1095380af39c951', '2068449f6398425f819bcda94d2656c3'
@@ -248,6 +265,11 @@ if __name__ == "__main__":
     #df = melt_data(df)
     #df["tags.mlflow.runName"] = df["run_id"].map(rename_mapping)
 
-    plot_data(df, "xgboost_experiments.png")
-    save_runs_to_excel(df, "xgboost_experiments.xlsx")
+    # plot_data(df, "xgboost_experiments.png")
+    # save_runs_to_excel(df, "xgboost_experiments.xlsx")
 
+    # plot_data(df, "random_forest_experiments.png")
+    # save_runs_to_excel(df, "random_forest_experiments.xlsx")
+
+    plot_data(df, "linear_svc_experiments.png")
+    save_runs_to_excel(df, "linear_svc_experiments.xlsx")
