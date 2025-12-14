@@ -7,6 +7,8 @@ import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D
 from collections import Counter
 import numpy as np
+import plotly.express as px
+from mpl_toolkits.mplot3d import Axes3D
 
 class ClusterPlotter(Visualisation):
     """
@@ -33,7 +35,6 @@ class ClusterPlotter(Visualisation):
         self.logger.info(f"Built ClusterPlotter with params: {self.params}")
         return self
 
-    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
     def plot(self, X_reduced, labels, **kwargs):
         """
@@ -105,37 +106,6 @@ class ClusterPlotter(Visualisation):
         else:
             raise ValueError(f"Can only plot 2D or 3D, got {n_dims} dimensions")
 
-
-    def plot_deprecated(self, X_reduced, labels, **kwargs):
-        """
-        Plot 2D cluster scatter plot.
-
-        Parameters:
-            X_reduced: np.ndarray of shape (n_samples, 2)
-            labels: cluster labels for each sample
-            kwargs: optional style overrides (e.g., cmap, alpha)
-        """
-        self.logger.info(f"Creating cluster plot with {X_reduced.shape[0]} points")
-
-        fig, ax = plt.subplots(figsize=self.figsize)
-        scatter = ax.scatter(
-            X_reduced[:, 0], X_reduced[:, 1], c=labels, **kwargs
-        )
-
-        ax.set_title(self.title)
-        if self.xlabel:
-            ax.set_xlabel(self.xlabel)
-        if self.ylabel:
-            ax.set_ylabel(self.ylabel)
-
-        # Optional: xticks / yticks rotation from params
-        rotation = self.params.get("xticks_rotation")
-        if rotation is not None:
-            ax.tick_params(axis='x', labelrotation=rotation)
-
-        self.logger.info("Cluster plot created")
-        return fig, ax, scatter
-
     def save_embeddings(self, X_embedded, labels, df_original, prefix="embedding"):
         """
         Save reduced coordinates + cluster labels + original metadata.
@@ -197,3 +167,111 @@ class ClusterPlotter(Visualisation):
                 fontweight="bold",
                 bbox=dict(facecolor="white", alpha=0.7, edgecolor="black", pad=2)
             )
+
+    def save_interactive_plot(self, X_reduced, labels, prefix="cluster_plot"):
+        """
+        Save interactive 2D or 3D cluster plot as HTML (Plotly).
+        """
+        self.logger.info("Saving interactive Plotly cluster plot")
+
+        os.makedirs(self.output_dir, exist_ok=True)
+
+        # Build dataframe
+        if X_reduced.shape[1] == 2:
+            df = pd.DataFrame({
+                "x": X_reduced[:, 0],
+                "y": X_reduced[:, 1],
+                "cluster": labels
+            })
+
+            fig = px.scatter(
+                df,
+                x="x",
+                y="y",
+                color="cluster",
+                title=self.title
+            )
+
+        elif X_reduced.shape[1] == 3:
+            df = pd.DataFrame({
+                "x": X_reduced[:, 0],
+                "y": X_reduced[:, 1],
+                "z": X_reduced[:, 2],
+                "cluster": labels
+            })
+
+            fig = px.scatter_3d(
+                df,
+                x="x",
+                y="y",
+                z="z",
+                color="cluster",
+                title=self.title + " By Cluster"
+            )
+
+        else:
+            raise ValueError("Only 2D or 3D embeddings supported")
+
+        out_path = os.path.join(self.output_dir, f"{prefix}.html")
+        fig.write_html(out_path)
+
+        self.logger.info(f"Interactive plot saved to {out_path}")
+        return out_path
+
+    def save_interactive_plot_by_probability(self, X_reduced, labels, probabilities, prefix="cluster_plot"):
+        """
+        Save interactive 2D or 3D cluster plot as HTML (Plotly).
+        """
+        self.logger.info("Saving interactive Plotly cluster plot")
+
+        os.makedirs(self.output_dir, exist_ok=True)
+
+        # Build dataframe
+        if X_reduced.shape[1] == 2:
+            df = pd.DataFrame({
+                "x": X_reduced[:, 0],
+                "y": X_reduced[:, 1],
+                "cluster": labels
+            })
+
+            fig = px.scatter(
+                df,
+                x="x",
+                y="y",
+                color="cluster",
+                title=self.title
+            )
+
+        elif X_reduced.shape[1] == 3:
+            df = pd.DataFrame({
+                "x": X_reduced[:, 0],
+                "y": X_reduced[:, 1],
+                "z": X_reduced[:, 2],
+                "cluster": labels
+            })
+
+            fig = px.scatter_3d(
+                df,
+                x="x",
+                y="y",
+                z="z",
+                color="probability",
+                color_continuous_scale='Viridis',
+                hover_data={'cluster': True, 'probability': ':.4f', 'is_noise': True},
+                title=self.title + f" By Probability"
+            )
+
+        else:
+            raise ValueError("Only 2D or 3D embeddings supported")
+
+            # Improve layout for academic clarity
+        fig.update_layout(
+            coloraxis_colorbar=dict(
+                title="Cluster<br>Probability"
+            )
+        )
+        out_path = os.path.join(self.output_dir, f"{prefix}.html")
+        fig.write_html(out_path)
+
+        self.logger.info(f"Interactive plot saved to {out_path}")
+        return out_path

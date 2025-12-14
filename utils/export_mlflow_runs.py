@@ -2,7 +2,7 @@ import mlflow
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-
+import textwrap
 
 def _set_tracking_uri():
     """Internal helper to set MLflow tracking URI to project_root/mlruns."""
@@ -119,7 +119,12 @@ def plot_data(df, output_path: str):
     plt.xlabel("Experiment Run Name")
     plt.ylabel("Metric Value (%)")
     plt.title("Comparison of  Metrics Across Experiments")
-    plt.xticks(rotation=90)
+    #plt.xticks(rotation=90)
+    wrapped_labels = [
+        textwrap.fill(label, width=10) for label in df["tags.mlflow.runName"]
+    ]
+    plt.xticks(df["tags.mlflow.runName"], wrapped_labels)
+
     plt.ylim(ymin, ymax)
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
@@ -208,19 +213,47 @@ if __name__ == "__main__":
     # update_run_names(rename_mapping)
     # Option B — get specific runs by ID
     df = get_runs_by_ids([
-        '51eab872baa94f0a90f35164eef2e62a',
-        '9e68704941844867ae33aa8d06050e6c', 'c8c9a94835b042959a4728207b37521e',
-        '35b99fcd4c874162840c310db51d0153', 'ef85f6fe24bf46c0a79b6ca826e46487', 'ac276c54b92442529c72fc13ba3a8de5',
-        '0a43743a8bcb4e058562f3b8cb58d96e', '6fe8883434cb4d9ebbd1134e9cf0affa', '36eaad02cdbc40658e67b34551c85762',
-        'f9ed6a8ab50e47a8bea647eb4d5589ed',
-        '8da79ab2165e4996b6dee69ac4932bbc',
-        '9942c24a588748839a546364b051e7ee',
-        '8238fd201f714a4499acdf951ac69ed1', '575345ff74e2457aba40887240eba91d', '41e43de20c5048c19275665049ed4671',
-        '1a819296449642d48e190ecfc17a1e29', 'a6c4603836024c0789cc02629801e5c9', '4f44240c90264197b4a27be2377e7765',
-        '9374a5d062fe42b2bd9891d3c5d9ac59', '8225f545343c43499ed31220053a5ebd', '4a04e412ace64756ad843cf2df4447e8',
-        '13daf52853964da186e3a5950ba44d19', '8fceeb050d92452bb44cbf7c1d4f5eec', 'd4d8ec8c6c714719a820d7ad4e95ebe0',
-        '96316d79d88b484680b11209a306856d', 'bc9267e17fbf46998c63a23b23d91f6b', 'dc23071204cc44d595352a5b0028bc31',
-        '9242ced92c744912a3bacd69447286b4'
+        # # SVC experiments
+        # 'cca653ada0fb4335bc33f4b0ec119959', '28f8623df98e4a74a1602db773d85031', '5e2bf2820d7742f2b8acb4cb74b0e1d0',
+        # '12db27bbf21e46309eb27e198228d331', '7f8be5cfad474d268d8893ef72733e15', '3b75b4b5a3e245c4b942c73761443660',
+        # '49ccc829d1434bf69ad1265ca81b8024', '2431e391329945ed9846c6b8bb08ae76'
+
+        # XGBoost experiments
+        # '3e91943f53794178acc32682d2d00de5', '910effcf9b5a472faf738ef3340dede7', 'da19a43cf23f40d5bcae273764100137',
+        # '99ab369e8a8e41babc7ebe0d51b7c00a', '82312831698c4210980338a5353383b1', 'd6f03513dcfa4be6a1a5fe6eb499c160',
+        # 'b92ec170012d4aecae5f817a1101dc6f', '87e6ac3985ec4da789693158fe295354', '059bfaf00938450186b2039dc1e67b5b'
+
+        # Random Forest 
+        #  '2f3a7027ae10451a8824b2efc37d88bc',
+        # '1a7b97bc06694842ac611f5095aa30f5', 'e7b835ba0f93413e97d8850cce53ac1c', '7620429a27d441d6b0015e907a89c6f7',
+        # 'ef5d632eaa2f4026b5b254eecde161a8', 'be61981cedff48bd911390cb64cb3af4', 'a942a89dfe1f4da68c060e616e4b9831',
+        # '2c48a241b3f1459fa95ccc1ef2172d7b', '2e9bc8528f2d48c697fef6713b0f616d'
+
+
+        # Linear SVC experiments
+        '5764a7485c474d1289d827c291f42a43',
+        '4a82b55e5b054e6da75eb6ba556a4d52', '72b4985bfd7f44f29bf93ae983c6eace', '453f36262bca41a3bdf9e57dbecfe09a',
+        'cb7098c3615a4a7683b418ff8693766b', '03f7d1f56f8f491a9c51b00a943bb889', 'a0309fbf42414f78abdb9d2919f154b4',
+        '4b9f082e5454481fa1095380af39c951', '2068449f6398425f819bcda94d2656c3'
+
+        # '5764a7485c474d1289d827c291f42a43', '4a82b55e5b054e6da75eb6ba556a4d52', '72b4985bfd7f44f29bf93ae983c6eace',
+        # '453f36262bca41a3bdf9e57dbecfe09a', 'cb7098c3615a4a7683b418ff8693766b', '03f7d1f56f8f491a9c51b00a943bb889',
+        # 'a0309fbf42414f78abdb9d2919f154b4', '4b9f082e5454481fa1095380af39c951', '2068449f6398425f819bcda94d2656c3'
+
+        # Naive Bayes experiments
+        #                                                                         '51eab872baa94f0a90f35164eef2e62a',
+        # '9e68704941844867ae33aa8d06050e6c', 'c8c9a94835b042959a4728207b37521e',
+        # '35b99fcd4c874162840c310db51d0153', 'ef85f6fe24bf46c0a79b6ca826e46487', 'ac276c54b92442529c72fc13ba3a8de5',
+        # '0a43743a8bcb4e058562f3b8cb58d96e', '6fe8883434cb4d9ebbd1134e9cf0affa', '36eaad02cdbc40658e67b34551c85762',
+        # 'f9ed6a8ab50e47a8bea647eb4d5589ed',
+        # '8da79ab2165e4996b6dee69ac4932bbc',
+        # '9942c24a588748839a546364b051e7ee',
+        # '8238fd201f714a4499acdf951ac69ed1', '575345ff74e2457aba40887240eba91d', '41e43de20c5048c19275665049ed4671',
+        # '1a819296449642d48e190ecfc17a1e29', 'a6c4603836024c0789cc02629801e5c9', '4f44240c90264197b4a27be2377e7765',
+        # '9374a5d062fe42b2bd9891d3c5d9ac59', '8225f545343c43499ed31220053a5ebd', '4a04e412ace64756ad843cf2df4447e8',
+        # '13daf52853964da186e3a5950ba44d19', '8fceeb050d92452bb44cbf7c1d4f5eec', 'd4d8ec8c6c714719a820d7ad4e95ebe0',
+        # '96316d79d88b484680b11209a306856d', 'bc9267e17fbf46998c63a23b23d91f6b', 'dc23071204cc44d595352a5b0028bc31',
+        # '9242ced92c744912a3bacd69447286b4'
     ])
 
 
@@ -232,6 +265,11 @@ if __name__ == "__main__":
     #df = melt_data(df)
     #df["tags.mlflow.runName"] = df["run_id"].map(rename_mapping)
 
-    plot_data(df, "naive_bayes_experiments_consolidated.png")
-    save_runs_to_excel(df, "naive_bayes_experiments_consolidated.xlsx")
+    # plot_data(df, "xgboost_experiments.png")
+    # save_runs_to_excel(df, "xgboost_experiments.xlsx")
 
+    # plot_data(df, "random_forest_experiments.png")
+    # save_runs_to_excel(df, "random_forest_experiments.xlsx")
+
+    plot_data(df, "linear_svc_experiments.png")
+    save_runs_to_excel(df, "linear_svc_experiments.xlsx")
