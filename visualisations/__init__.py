@@ -5,6 +5,7 @@ from .confusion_matrix_chart import ConfusionMatrixChart
 from .word_cloud import WordCloudChart
 from .factory import VisualisationFactory
 from .base import Visualisation
+from .correlation_matrix import CorrelationMatrix
 
 # Register visualisations
 
@@ -12,6 +13,7 @@ VisualisationFactory.register_visualisation("confusion_matrix", ConfusionMatrixC
 VisualisationFactory.register_visualisation("bar_chart", BarChart)
 VisualisationFactory.register_visualisation("word_cloud", WordCloudChart)
 VisualisationFactory.register_visualisation("cluster_plot", ClusterPlotter)
+VisualisationFactory.register_visualisation("correlation_matrix", CorrelationMatrix)
 
 __all__ = [
     "ConfusionMatrixChart",
@@ -19,5 +21,6 @@ __all__ = [
     "Visualisation",
     "BarChart",
     "WordCloudChart",
-    "ClusterPlotter"
+    "ClusterPlotter",
+    "CorrelationMatrix"
 ]
