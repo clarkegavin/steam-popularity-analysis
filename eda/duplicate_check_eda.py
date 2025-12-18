@@ -11,7 +11,7 @@ class DuplicateCheckEDA(EDAComponent):
         self.logger = get_logger("DuplicateCheckEDA")
         self.logger.info("Initialized DuplicateCheckEDA component")
 
-    def run(self, data, target, text_field, **kwargs):
+    def run(self, data, target=None, text_field=None, **kwargs):
         """
         Check for duplicate entries in the dataset.
 
