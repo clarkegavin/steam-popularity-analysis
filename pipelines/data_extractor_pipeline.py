@@ -40,6 +40,8 @@ class DataExtractorPipeline(Pipeline):
         # Create the extractor via factory
         if extractor_type == "roblox":
             extractor = ExtractorFactory.create_roblox_extractor(**extractor_params)
+        elif extractor_type == "steam":
+            extractor = ExtractorFactory.create_steam_extractor(**extractor_params)
         else:
             raise ValueError(f"Unknown extractor type '{extractor_type}'")
 
@@ -59,7 +61,7 @@ class DataExtractorPipeline(Pipeline):
         self.logger.info("Starting transformation")
 
         # Example: parse datetime columns if present
-        for col in ("Date", "Date_Created", "Last_Updated"):
+        for col in ("Date", "Date_Created", "Last_Updated", "Release_Date"):
             if col in self.df.columns:
                 self.df[col] = pd.to_datetime(self.df[col], errors="coerce")
         self.logger.info("Transformation complete")

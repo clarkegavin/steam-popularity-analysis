@@ -1,11 +1,11 @@
 #config/pipelines.yaml
 
 pipelines:
-  - name: roblox_extraction
+  - name: steam_extraction
     type: pipelines.data_extractor_pipeline.DataExtractorPipeline
-    extractor_type: roblox
+    extractor_type: steam
     params:
-      output_csv: "output/roblox_data.csv"
+      output_csv: "output/steam_data.csv"
 #      extractor_params:
 #        sample_size: 1000
 
