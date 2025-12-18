@@ -1,4 +1,4 @@
-# table_extractor.py
+# data/table_extractor.py
 from typing import List, Optional, Dict, Any, Type
 from sqlalchemy import select, func
 from .extractor import DataExtractor

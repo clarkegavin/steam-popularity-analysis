@@ -1,4 +1,4 @@
-#extractor.py
+#data/extractor.py
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
 

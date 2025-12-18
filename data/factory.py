@@ -1,10 +1,11 @@
-# factory.py (refactored)
+# data/factory.py
 from typing import Optional, Type
 from .sqlalchemy_connector import SQLAlchemyConnector
 from .table_extractor import TableDataExtractor
 from .abstract_connector import DBConnector
 from .models import RobloxGame
 from sqlalchemy.orm import DeclarativeMeta
+from .steam_extractor import SteamAPIExtractor
 
 
 class ExtractorFactory:
@@ -38,3 +39,9 @@ class ExtractorFactory:
         if connector is None:
             connector = SQLAlchemyConnector(db_url=db_url)
         return TableDataExtractor(connector, model, sample_size=sample_size)
+
+    @staticmethod
+    def create_steam_extractor(connector: Optional[DBConnector] = None, chunk_size: int = 100):
+        if connector is None:
+            connector = SQLAlchemyConnector()  # Default connection
+        return SteamAPIExtractor(connector, chunk_size=chunk_size)
