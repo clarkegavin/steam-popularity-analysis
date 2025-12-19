@@ -100,6 +100,18 @@ class ClassBalanceEDA(EDAComponent):
         except Exception:
             exclude = []
 
+        # Handle log transform columns and histogram bins from kwargs
+        log_transform_cols = kwargs.get('log_transform_columns') or []
+        if isinstance(log_transform_cols, str):
+            log_transform_cols = [log_transform_cols]
+        try:
+            log_transform_cols = list(log_transform_cols)
+        except Exception:
+            log_transform_cols = []
+
+        # hist_bins can be an int (global) or dict mapping column->bins
+        hist_bins_cfg = kwargs.get('hist_bins')
+
         # Normalization helper used to match column names robustly
         def _norms(x):
             s = '' if x is None else str(x)
@@ -158,7 +170,39 @@ class ClassBalanceEDA(EDAComponent):
             try:
                 # Call visualiser plotters and expect them to draw into the provided `ax`.
                 if col in numeric_cols:
-                    hist_viz.plot(data=data[col].dropna(), ax=ax, title=col)
+                    # Prepare series
+                    ser = data[col].dropna()
+
+                    # Apply log transform if requested for this column
+                    if col in log_transform_cols:
+                        import numpy as _np
+                        try:
+                            minv = ser.min()
+                            if minv <= 0:
+                                # shift to positive domain: subtract min and add 1
+                                shift = 1 - minv
+                                self.logger.info(f"Column '{col}' contains non-positive values; applying shift {shift} before log1p")
+                                ser_trans = _np.log1p(ser + shift)
+                            else:
+                                ser_trans = _np.log1p(ser)
+                        except Exception as e:
+                            self.logger.warning(f"Failed to apply log1p to column '{col}': {e}; falling back to raw values")
+                            ser_trans = ser
+                    else:
+                        ser_trans = ser
+
+                    # Determine bins for this column: dict or global int
+                    bins = None
+                    if isinstance(hist_bins_cfg, dict):
+                        bins = hist_bins_cfg.get(col, None)
+                    elif isinstance(hist_bins_cfg, int):
+                        bins = hist_bins_cfg
+
+                    # Pass bins via kwargs to histogram visualiser
+                    if bins is not None:
+                        hist_viz.plot(data=ser_trans, ax=ax, title=col, bins=bins)
+                    else:
+                        hist_viz.plot(data=ser_trans, ax=ax, title=col)
                 else:
                     # Pass the Series directly to the bar visualiser so it computes counts and
                     # draws categories on the x-axis and counts on the y-axis.

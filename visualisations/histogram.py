@@ -36,7 +36,12 @@ class Histogram(Visualisation):
         except Exception:
             values = data
 
-        ax.hist(values, bins=self.bins, **kwargs)
+        # Allow callers to override bins per-call using kwargs['bins']
+        bins = kwargs.pop('bins', None)
+        if bins is None:
+            bins = self.bins
+
+        ax.hist(values, bins=bins, **kwargs)
         ax.set_title(title or self.title)
         if self.xlabel:
             ax.set_xlabel(self.xlabel)
@@ -49,4 +54,3 @@ class Histogram(Visualisation):
 
         self.logger.info("Histogram visualisation created")
         return created_fig, ax
-

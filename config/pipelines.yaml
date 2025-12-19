@@ -17,7 +17,7 @@ pipelines:
       cleanup_steps:
         - name: explode_columns
           params:
-            columns: ['Platforms', 'Categories', 'Supported_Languages']
+            columns: ['Platforms', 'Categories', 'Supported_Languages', 'Genres']
             sep: ","
         - name: remove_html_tags
           params:
@@ -92,6 +92,8 @@ pipelines:
           params:
             exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'ReleaseDate', 'Current_Players_Last_Updated']
             label_max_chars: 10
+            top_n: 15
+            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
 #        - name: wordcloud_global
 #        - name: wordcloud_by_class
         - name: describe_info
