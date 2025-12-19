@@ -94,7 +94,8 @@ class SteamAppListFetcher(Fetcher):
             "key": self.context.api_key,
             "include_games": 1,
             "cc": "ie",
-            "l": "en"
+            "l": "en",
+            "max_results": 50000
         }
 
         response = steam_get(url, params, timeout=self.context.timeout)

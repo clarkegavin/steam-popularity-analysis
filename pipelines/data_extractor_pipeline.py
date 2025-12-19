@@ -40,6 +40,8 @@ class DataExtractorPipeline(Pipeline):
         # Create the extractor via factory
         if extractor_type == "roblox":
             extractor = ExtractorFactory.create_roblox_extractor(**extractor_params)
+        elif extractor_type == "steam":
+            extractor = ExtractorFactory.create_steam_table_extractor(**extractor_params)
         else:
             raise ValueError(f"Unknown extractor type '{extractor_type}'")
 
@@ -59,7 +61,7 @@ class DataExtractorPipeline(Pipeline):
         self.logger.info("Starting transformation")
 
         # Example: parse datetime columns if present
-        for col in ("Date", "Date_Created", "Last_Updated"):
+        for col in ("Date", "Date_Created", "Last_Updated", "Release_Date"):
             if col in self.df.columns:
                 self.df[col] = pd.to_datetime(self.df[col], errors="coerce")
         self.logger.info("Transformation complete")
@@ -67,6 +69,9 @@ class DataExtractorPipeline(Pipeline):
     def load(self) -> None:
         """Save transformed data to CSV."""
         if self.df is not None:
+            output_dir = os.path.dirname(self.output_csv)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir, exist_ok=True)
             self.logger.info(f"Saving data to {self.output_csv}")
             self.df.to_csv(self.output_csv, index=False)
             self.logger.info("Data saved successfully")

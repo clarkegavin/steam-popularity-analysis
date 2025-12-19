@@ -40,11 +40,15 @@ class EDAPipeline(Pipeline):
 
             eda_component = EDAFactory.get_eda(name)
 
+            # Forward any step-specific params from the pipeline YAML into the EDA run
+            step_params = step.get("params", {}) or {}
+
             results = eda_component.run(
                 data=data,
                 target=self.target,
                 text_field=self.text_field,
-                save_path=self.save_path
+                save_path=self.save_path,
+                **step_params,
             )
 
             outputs[name] = results
