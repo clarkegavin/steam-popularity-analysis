@@ -12,6 +12,8 @@ class StandardDataScaler(Scaler):
         self.scaler = StandardScaler(**kwargs)
         self.logger.info("StandardDataScaler initialized.")
 
+
+
     def fit(self, X):
         self.scaler.fit(X)
 
@@ -20,3 +22,8 @@ class StandardDataScaler(Scaler):
 
     def fit_transform(self, X):
         return self.scaler.fit_transform(X)
+
+    def execute(self, X):
+        """Convenience method to fit and transform in one step."""
+        self.logger.info("Executing fit_transform on data.")
+        return self.fit_transform(X)

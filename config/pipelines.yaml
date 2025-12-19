@@ -16,18 +16,18 @@ pipelines:
         params:
           columns_to_drop:  ['Tags' ]
 
-  - name: eda #output correlations before exploding columns
-    type: pipelines.eda_pipeline.EDAPipeline
-    params:
-      save_path: "output/eda"
-      steps:
-        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
-          params:
-            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'Current_Players_Last_Updated', 'ReleaseDate']
-            annot: true
-            cmap: "coolwarm"
-            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
-            filename: "correlation_matrix_after_log_transform.png"
+#  - name: eda #output correlations before exploding columns
+#    type: pipelines.eda_pipeline.EDAPipeline
+#    params:
+#      save_path: "output/eda"
+#      steps:
+#        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
+#          params:
+#            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'Current_Players_Last_Updated', 'ReleaseDate']
+#            annot: true
+#            cmap: "coolwarm"
+#            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
+#            filename: "correlation_matrix_after_log_transform.png"
 
 
   # anything that changes the shape of the data will need to be in this cleanup block
@@ -57,12 +57,22 @@ pipelines:
             exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'ReleaseDate', 'Current_Players_Last_Updated']
             label_max_chars: 10
             top_n: 15
-            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
+            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
         - name: describe_info
         - name: duplicate_check
     dataset:
       target:  null
       text_field: "AppID"
+
+  - name: feature_scaling
+    type: pipelines.feature_scaler_pipeline.FeatureScalerPipeline
+    scaler:
+      name: standard
+      params:
+        with_mean: true
+        with_std: true
+      columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Positive', 'Recommendations' ]
+
 
 
 #  # anything that changes the shape of the data will need to be in this cleanup block
