@@ -5,6 +5,7 @@ from .wordcloud_eda import WordCloudEDA
 from .duplicate_check_eda import DuplicateCheckEDA
 from .describe_info_eda import DescribeInfoEDA
 from .info_eda import InfoEDA
+from .dython_correlation_eda import DythonCorrelationEDA
 
 EDAFactory.register_eda("class_balance", ClassBalanceEDA)
 EDAFactory.register_eda("wordcloud_global", lambda: WordCloudEDA(per_class=False))
@@ -12,8 +13,8 @@ EDAFactory.register_eda("wordcloud_by_class", lambda: WordCloudEDA(per_class=Tru
 EDAFactory.register_eda("duplicate_check", DuplicateCheckEDA)
 EDAFactory.register_eda("describe_info", DescribeInfoEDA)
 EDAFactory.register_eda("info", InfoEDA)
-
-
+EDAFactory.register_eda("dython_correlation_matrix", DythonCorrelationEDA)
+EDAFactory.register_eda("correlation_matrix", DythonCorrelationEDA)
 
 __all__ = [
     "EDAFactory",
@@ -22,4 +23,5 @@ __all__ = [
     "DuplicateCheckEDA",
     "DescribeInfoEDA",
     "InfoEDA",
+    "DythonCorrelationEDA",
 ]

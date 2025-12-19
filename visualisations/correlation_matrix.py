@@ -1,4 +1,6 @@
 # visualisations/correlation_matrix.py
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for plotting
 from .base import Visualisation
 from logs.logger import get_logger
 import matplotlib.pyplot as plt
@@ -78,20 +80,28 @@ class CorrelationMatrix(Visualisation):
 
         # dython will draw to the current matplotlib figure/axes when plot=True
         # so we clear any existing figure and call associations.
-        plt.figure(figsize=self.figsize)
+        # plt.figure(figsize=self.figsize)
 
         # associations will both compute and plot the correlations/associations
         # it supports mixed type data. We pass plot=True to render the heatmap.
+        plt.ioff()  # turn off interactive mode to prevent display during plotting
         try:
-            associations(df, plot=True, **plot_kwargs)
+            result = associations(df, plot=True, **plot_kwargs)
         except TypeError:
             # Some older versions of dython do not accept `fmt` or `fontsize` etc.
             # Retry with a minimal set of args.
             minimal = {k: plot_kwargs[k] for k in ["figsize", "cmap", "annot", "title"] if k in plot_kwargs}
-            associations(df, plot=True, **minimal)
+            result = associations(df, plot=True, **minimal)
 
-        fig = plt.gcf()
-        ax = plt.gca()
+        # Newer dython versions
+        if isinstance(result, dict) and "fig" in result:
+            fig = result["fig"]
+            ax = result.get("ax")
+        else: # Older dython versions
+            fig = plt.gcf()
+            ax = plt.gca()
+        # fig = plt.gcf()
+        # ax = plt.gca()
 
         # Optionally save
         if save_path:
@@ -106,6 +116,7 @@ class CorrelationMatrix(Visualisation):
                 out_path = os.path.join(self.output_dir, filename)
                 self.save(fig, out_path)
 
+        plt.close(fig)
         self.logger.info("Correlation matrix created")
         return fig, ax
 
