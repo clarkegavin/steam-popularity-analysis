@@ -23,7 +23,13 @@ class ClassBalanceEDA(EDAComponent):
 
     def _is_categorical(self, series: pd.Series) -> bool:
         # treat object, category, bool or low-cardinality numeric as categorical
-        if pd.api.types.is_object_dtype(series) or pd.api.types.is_categorical_dtype(series) or pd.api.types.is_bool_dtype(series):
+        # pandas.is_categorical is deprecated; use dtype check for CategoricalDtype
+        try:
+            is_cat_dtype = isinstance(series.dtype, pd.CategoricalDtype)
+        except Exception:
+            is_cat_dtype = False
+
+        if pd.api.types.is_object_dtype(series) or is_cat_dtype or pd.api.types.is_bool_dtype(series):
             return True
         # numeric with small number of unique values -> categorical
         if pd.api.types.is_numeric_dtype(series) and series.nunique(dropna=True) <= 20:
@@ -56,8 +62,10 @@ class ClassBalanceEDA(EDAComponent):
                 self.logger.error(f"Target column '{target}' not found in data")
                 raise ValueError(f"Target column '{target}' not found in data")
 
-            class_counts = data[target].value_counts().to_dict()
-            self.logger.info(f"Class distribution for {target}: {class_counts}")
+            # Pass the raw Series (not a pre-computed dict) to the BarChart visualiser.
+            # The BarChart will compute value_counts and draw categories on the x-axis
+            # and counts on the y-axis.
+            self.logger.info(f"Creating class balance plot for target column: {target}")
 
             viz = VisualisationFactory.get_visualisation(
                 "bar_chart",
@@ -69,7 +77,7 @@ class ClassBalanceEDA(EDAComponent):
                 **kwargs,
             )
 
-            fig, ax = viz.plot(data=class_counts)
+            fig, ax = viz.plot(data=data[target])
             viz.save(fig, filepath)
             return filepath
 
@@ -83,11 +91,48 @@ class ClassBalanceEDA(EDAComponent):
             self.logger.error("Empty DataFrame provided")
             raise ValueError("Empty DataFrame provided")
 
-        # Determine types
-        numeric_cols = [c for c in cols if pd.api.types.is_numeric_dtype(data[c]) and not self._is_categorical(data[c])]
-        categorical_cols = [c for c in cols if c not in numeric_cols]
+        # Handle exclude_columns passed via kwargs (from pipeline YAML)
+        exclude = kwargs.get('exclude_columns') or []
+        if isinstance(exclude, str):
+            exclude = [exclude]
+        try:
+            exclude = list(exclude)
+        except Exception:
+            exclude = []
 
-        total_plots = len(cols)
+        # Normalization helper used to match column names robustly
+        def _norms(x):
+            s = '' if x is None else str(x)
+            s_raw = s
+            s_lower = s.strip().lower()
+            s_alnum = ''.join(ch.lower() for ch in s if ch.isalnum())
+            s_stripped = s.replace('_', '').replace(' ', '').lower()
+            return {s_raw, s_lower, s_alnum, s_stripped}
+
+        exclude_variants = set()
+        for ex in exclude:
+            try:
+                exclude_variants.update(_norms(ex))
+            except Exception:
+                continue
+
+        # Filter out excluded columns from the list of columns to plot
+        cols_to_plot = []
+        for c in cols:
+            try:
+                c_variants = _norms(c)
+                if exclude_variants.intersection(c_variants):
+                    self.logger.info(f"Excluding column from class balance plots: {c}")
+                    continue
+            except Exception:
+                pass
+            cols_to_plot.append(c)
+
+        # Determine types only for columns that will be plotted
+        numeric_cols = [c for c in cols_to_plot if pd.api.types.is_numeric_dtype(data[c]) and not self._is_categorical(data[c])]
+        categorical_cols = [c for c in cols_to_plot if c not in numeric_cols]
+
+        total_plots = len(cols_to_plot)
         # layout: try square-ish grid
         ncols = int(math.ceil(math.sqrt(total_plots)))
         nrows = int(math.ceil(total_plots / ncols))
@@ -108,29 +153,17 @@ class ClassBalanceEDA(EDAComponent):
         else:
             axes = axes.flatten()
 
-        for idx, col in enumerate(cols):
+        for idx, col in enumerate(cols_to_plot):
             ax = axes[idx]
             try:
+                # Call visualiser plotters and expect them to draw into the provided `ax`.
                 if col in numeric_cols:
-                    # Pass series or DataFrame depending on viz implementation
-                    result = hist_viz.plot(data=data[col].dropna(), ax=ax, title=col)
+                    hist_viz.plot(data=data[col].dropna(), ax=ax, title=col)
                 else:
-                    counts = data[col].value_counts(dropna=False).to_dict()
-                    result = bar_viz.plot(data=counts, ax=ax, title=col)
+                    # Pass the Series directly to the bar visualiser so it computes counts and
+                    # draws categories on the x-axis and counts on the y-axis.
+                    bar_viz.plot(data=data[col], ax=ax, title=col)
 
-                # If the visualiser returned a (fig, ax), we assume it created its own fig;
-                # in that case we try to move artists into our combined ax (best-effort)
-                if isinstance(result, tuple) and len(result) >= 2:
-                    # visualiser created its own axes; try to copy artists
-                    created_ax = result[1]
-                    for artist in created_ax.get_children():
-                        try:
-                            artist.remove()
-                            ax.add_artist(artist)
-                        except Exception:
-                            # ignore non-transferable artists
-                            pass
-                # otherwise we assume it drew into provided ax
             except Exception as e:
                 self.logger.warning(f"Failed to plot column '{col}': {e}")
                 ax.text(0.5, 0.5, f"Error plotting {col}", ha="center")

@@ -66,7 +66,7 @@ pipelines:
       - name: drop_columns
         params:
           columns_to_drop:
-            [ 'Tags' ]
+            ['Tags' ]
 
   - name: eda
     type: pipelines.eda_pipeline.EDAPipeline
@@ -74,6 +74,8 @@ pipelines:
       save_path: "output/eda"
       steps:
         - name: class_balance
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'ReleaseDate', 'Current_Players_Last_Updated']
 #        - name: wordcloud_global
 #        - name: wordcloud_by_class
         - name: describe_info
