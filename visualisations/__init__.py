@@ -7,6 +7,7 @@ from .factory import VisualisationFactory
 from .base import Visualisation
 from .correlation_matrix import CorrelationMatrix
 from .histogram import Histogram
+from .boxplot import BoxPlot
 
 # Register visualisations
 
@@ -17,6 +18,7 @@ VisualisationFactory.register_visualisation("cluster_plot", ClusterPlotter)
 VisualisationFactory.register_visualisation("correlation_matrix", CorrelationMatrix)
 VisualisationFactory.register_visualisation("dython_correlation_matrix", CorrelationMatrix)  # alias
 VisualisationFactory.register_visualisation("histogram", Histogram)
+VisualisationFactory.register_visualisation("boxplot", BoxPlot)
 
 __all__ = [
     "ConfusionMatrixChart",
@@ -26,5 +28,6 @@ __all__ = [
     "WordCloudChart",
     "ClusterPlotter",
     "CorrelationMatrix",
-    "Histogram"
+    "Histogram",
+    "BoxPlot"
 ]

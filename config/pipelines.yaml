@@ -16,11 +16,25 @@ pipelines:
         params:
           columns_to_drop:  ['Tags' ]
 
-#  - name: eda #output correlations before exploding columns
-#    type: pipelines.eda_pipeline.EDAPipeline
-#    params:
-#      save_path: "output/eda"
-#      steps:
+  - name: eda #output correlations before exploding columns
+    type: pipelines.eda_pipeline.EDAPipeline
+    params:
+      save_path: "output/eda"
+      steps:
+        - name: boxplots
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL',
+                               'Current_Players_Last_Updated', 'ReleaseDate', 'Genres', 'Platforms',
+                               'Categories', 'Supported_Languages', 'Review_Score_Desc']
+            filename: "boxplots_before_log_transform.png"
+        - name: boxplots
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL',
+                               'Current_Players_Last_Updated', 'ReleaseDate', 'Genres', 'Platforms',
+                               'Categories', 'Supported_Languages', 'Review_Score_Desc' ]
+            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
+            filename: "boxplots_after_log_transform.png"
+
 #        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
 #          params:
 #            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'Current_Players_Last_Updated', 'ReleaseDate']
