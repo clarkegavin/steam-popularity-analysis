@@ -15,6 +15,7 @@ VisualisationFactory.register_visualisation("bar_chart", BarChart)
 VisualisationFactory.register_visualisation("word_cloud", WordCloudChart)
 VisualisationFactory.register_visualisation("cluster_plot", ClusterPlotter)
 VisualisationFactory.register_visualisation("correlation_matrix", CorrelationMatrix)
+VisualisationFactory.register_visualisation("dython_correlation_matrix", CorrelationMatrix)  # alias
 VisualisationFactory.register_visualisation("histogram", Histogram)
 
 __all__ = [
