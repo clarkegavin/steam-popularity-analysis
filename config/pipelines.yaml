@@ -14,26 +14,26 @@ pipelines:
     filter_features:
       - name: drop_columns
         params:
-          columns_to_drop:  ['Tags' ]
+          columns_to_drop:  ['Tags' , 'Type', 'URL', 'Metacritic_URL']
 
-  - name: eda #output correlations before exploding columns
-    type: pipelines.eda_pipeline.EDAPipeline
-    params:
-      save_path: "output/eda"
-      steps:
-        - name: boxplots
-          params:
-            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL',
-                               'Current_Players_Last_Updated', 'ReleaseDate', 'Genres', 'Platforms',
-                               'Categories', 'Supported_Languages', 'Review_Score_Desc']
-            filename: "boxplots_before_log_transform.png"
-        - name: boxplots
-          params:
-            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL',
-                               'Current_Players_Last_Updated', 'ReleaseDate', 'Genres', 'Platforms',
-                               'Categories', 'Supported_Languages', 'Review_Score_Desc' ]
-            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
-            filename: "boxplots_after_log_transform.png"
+#  - name: eda #output correlations before exploding columns
+#    type: pipelines.eda_pipeline.EDAPipeline
+#    params:
+#      save_path: "output/eda"
+#      steps:
+#        - name: boxplots
+#          params:
+#            exclude_columns: [ 'Id', 'AppId', 'Name',
+#                               'Current_Players_Last_Updated', 'ReleaseDate', 'Genres', 'Platforms',
+#                               'Categories', 'Supported_Languages', 'Review_Score_Desc']
+#            filename: "boxplots_before_log_transform.png"
+#        - name: boxplots
+#          params:
+#            exclude_columns: [ 'Id', 'AppId', 'Name',
+#                               'Current_Players_Last_Updated', 'ReleaseDate', 'Genres', 'Platforms',
+#                               'Categories', 'Supported_Languages', 'Review_Score_Desc' ]
+#            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
+#            filename: "boxplots_after_log_transform.png"
 
 #        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
 #          params:
@@ -50,10 +50,10 @@ pipelines:
     params:
       # cleanup_steps is a list of preprocessors (built via PreprocessorFactory)
       cleanup_steps:
-        - name: explode_columns
-          params:
-            columns: ['Platforms', 'Categories', 'Supported_Languages', 'Genres']
-            sep: ","
+#        - name: explode_columns #only do this after EDA to see correlations
+#          params:
+#            columns: ['Platforms', 'Categories', 'Supported_Languages', 'Genres']
+#            sep: ","
         - name: remove_html_tags
           params:
             columns: ['Supported_Languages']
@@ -61,22 +61,44 @@ pipelines:
             strip: true           # optional: default true
 
 
-  - name: eda
-    type: pipelines.eda_pipeline.EDAPipeline
+#  - name: eda
+#    type: pipelines.eda_pipeline.EDAPipeline
+#    params:
+#      save_path: "output/eda"
+#      steps:
+#        - name: class_balance
+#          params:
+#            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'ReleaseDate', 'Current_Players_Last_Updated']
+#            label_max_chars: 10
+#            top_n: 15
+#            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
+#        - name: describe_info
+#        - name: duplicate_check
+#    dataset:
+#      target:  null
+#      text_field: "AppID"
+
+  - name: feature_encoding
+    type: pipelines.feature_encoder_pipeline.FeatureEncoderPipeline
     params:
-      save_path: "output/eda"
-      steps:
-        - name: class_balance
+      # Define encoders and the columns they should be applied to. Supported encoder names:
+      #   - one_hot / onehot    -> OneHotEncoder (single-label categorical)
+      #   - multihot / multi_hot -> MultiHotEncoder (multi-label cells, e.g. comma-separated)
+      #   - sklearn_label / label -> SklearnLabelEncoder (integer label encoding)
+      encoders:
+        - name: multihot
+          columns: ['Platforms', 'Supported_Languages', 'Genres', 'Categories', 'Developers', 'Publishers']
           params:
-            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'ReleaseDate', 'Current_Players_Last_Updated']
-            label_max_chars: 10
-            top_n: 15
-            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
-        - name: describe_info
-        - name: duplicate_check
-    dataset:
-      target:  null
-      text_field: "AppID"
+            sep: ','
+#        - name: multihot
+#          columns: ['Categories']
+#          params:
+#            sep: ','
+        - name: onehot
+          columns: ['Review_Score_Desc']
+        - name: label
+          columns: ['Name']
+
 
   - name: feature_scaling
     type: pipelines.feature_scaler_pipeline.FeatureScalerPipeline
