@@ -9,6 +9,21 @@ pipelines:
 #      extractor_params:
 #        sample_size: 1000
 
+  # anything that changes the shape of the data will need to be in this cleanup block
+  - name: data_cleanup
+    type: pipelines.data_cleanup_pipeline.DataCleanupPipeline
+    params:
+      # cleanup_steps is a list of preprocessors (built via PreprocessorFactory)
+      cleanup_steps:
+        - name: explode_columns
+          params:
+            columns: ['Platforms', 'Categories', 'Supported_Languages']
+            sep: ","
+        - name: remove_html_tags
+          params:
+            columns: ['Supported_Languages']
+            br_replace: ', '     # optional: replace <br> with ', ' or use ' / ' etc.
+            strip: true           # optional: default true
 
 #  # anything that changes the shape of the data will need to be in this cleanup block
 #  - name: data_cleanup
@@ -76,6 +91,7 @@ pipelines:
         - name: class_balance
           params:
             exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'ReleaseDate', 'Current_Players_Last_Updated']
+            label_max_chars: 10
 #        - name: wordcloud_global
 #        - name: wordcloud_by_class
         - name: describe_info

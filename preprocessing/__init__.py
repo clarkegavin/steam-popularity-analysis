@@ -15,6 +15,8 @@ from .remove_repeated_characters import RemoveRepeatedCharacters
 from .remove_punctuation_noise import RemovePunctuationNoise
 from .remove_whitespace import RemoveWhitespace
 from .merge_features import MergeFeatures
+from .explode_columns import ExplodeColumns
+from .remove_html_tags import RemoveHTMLTags
 import nltk
 
 # Register built-in preprocessors
@@ -44,6 +46,10 @@ PreprocessorFactory.register("remove_whitespace", RemoveWhitespace)
 PreprocessorFactory.register("whitespace", RemoveWhitespace)
 PreprocessorFactory.register("merge_features", MergeFeatures)
 PreprocessorFactory.register("merge", MergeFeatures)
+PreprocessorFactory.register("explode_columns", ExplodeColumns)
+PreprocessorFactory.register("explode", ExplodeColumns)
+PreprocessorFactory.register("remove_html_tags", RemoveHTMLTags)
+PreprocessorFactory.register("removehtml", RemoveHTMLTags)
 
 # List of required resources
 REQUIRED_NLTK_RESOURCES = ["punkt", "stopwords"]

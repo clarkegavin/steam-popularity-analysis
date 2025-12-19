@@ -161,6 +161,23 @@ class BarChart(Visualisation):
             # Ensure labels are string-friendly when categorical
             if labels is not None:
                 labels_plot = [str(l) for l in labels]
+                # Truncate long labels for readability if requested via params
+                try:
+                    max_chars = int(self.params.get("label_max_chars", 10))
+                except Exception:
+                    max_chars = 10
+                if max_chars and max_chars > 0:
+                    def _truncate(s):
+                        if len(s) <= max_chars:
+                            return s
+                        # leave room for ellipsis
+                        if max_chars > 3:
+                            return s[: max_chars - 3] + "..."
+                        return s[:max_chars]
+                    truncated_labels = [_truncate(s) for s in labels_plot]
+                else:
+                    truncated_labels = labels_plot
+
                 # Ensure values are numeric (counts). Coerce and fill NaN with 0.
                 try:
                     import numpy as _np
@@ -178,7 +195,22 @@ class BarChart(Visualisation):
                     except Exception:
                         values_arr = list(values)
 
-                ax.bar(labels_plot, values_arr, **kwargs)
+                ax.bar(truncated_labels, values_arr, **kwargs)
+                # ensure tick positions match labels and set rotated labels if requested
+                try:
+                    ax.set_xticks(range(len(truncated_labels)))
+                    rotation = self.params.get("xticks_rotation")
+                    if rotation is not None:
+                        ax.set_xticklabels(truncated_labels, rotation=rotation)
+                    else:
+                        ax.set_xticklabels(truncated_labels)
+                except Exception:
+                    # fallback: set_xticklabels directly
+                    rotation = self.params.get("xticks_rotation")
+                    if rotation is not None:
+                        ax.set_xticklabels(truncated_labels, rotation=rotation)
+                    else:
+                        ax.set_xticklabels(truncated_labels)
             else:
                 # Fallback numeric conversion for values without labels
                 try:
