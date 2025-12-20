@@ -85,8 +85,17 @@ class PipelineOrchestrator:
                 target_encoder = pipeline.encoder
 
             elif isinstance(pipeline, FeatureEncoderPipeline):
-                X_train = self.run_pipeline(pipeline, data=X_train, extra={"fit": True})
-                X_test = self.run_pipeline(pipeline, data=X_test, extra={"fit": False})
+                # Note: this is poor design, as FeatureEncoderPipeline should not depend on DataSplitterPipeline
+                if X_train is None or X_test is None:
+                    self.logger.warning("DataSplitterPipeline must run before FeatureEncoderPipeline for supervised models")
+                    # raise RuntimeError(
+                    #     "FeatureEncoderPipeline cannot run before DataSplitterPipeline"
+                    # )
+                    current_data = self.run_pipeline(pipeline, data=current_data)
+                else:
+                    self.logger.warning("DataSplitterPipeline has run; applying FeatureEncoderPipeline to train/test sets")
+                    X_train = self.run_pipeline(pipeline, data=X_train, extra={"fit": True})
+                    X_test = self.run_pipeline(pipeline, data=X_test, extra={"fit": False})
             elif isinstance(pipeline, ExperimentPipeline):
                 # Pass train/test data explicitly
                 self.logger.info(f"Target encoder being passed to ExperimentPipeline: {target_encoder is not None}")

@@ -17,6 +17,7 @@ from .remove_whitespace import RemoveWhitespace
 from .merge_features import MergeFeatures
 from .explode_columns import ExplodeColumns
 from .remove_html_tags import RemoveHTMLTags
+from .log_transform import LogTransform
 import nltk
 
 # Register built-in preprocessors
@@ -50,6 +51,8 @@ PreprocessorFactory.register("explode_columns", ExplodeColumns)
 PreprocessorFactory.register("explode", ExplodeColumns)
 PreprocessorFactory.register("remove_html_tags", RemoveHTMLTags)
 PreprocessorFactory.register("removehtml", RemoveHTMLTags)
+PreprocessorFactory.register("log_transform", LogTransform)
+PreprocessorFactory.register("log", LogTransform)
 
 # List of required resources
 REQUIRED_NLTK_RESOURCES = ["punkt", "stopwords"]
