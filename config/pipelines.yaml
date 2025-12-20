@@ -91,6 +91,33 @@ pipelines:
 #      test_size: 0.2
 #      random_state: 42
 
+
+#  - name: preprocessing
+#    type: pipelines.preprocessing_pipeline.PreprocessingPipeline
+#    params:
+#      text_field: 'Description'
+#      data_preprocessors:
+#        - name: temporal_features
+#          params:
+#            date_column: 'ReleaseDate'
+#            days_since: true
+#            prefix: 'release'
+
+  - name: preprocessing
+    type: pipelines.preprocessing_pipeline.PreprocessingPipeline
+    params:
+      text_field: 'Developers'
+      preprocessors:
+        - name: lowercase
+          applies_to: text
+        - name: temporal_features
+          applies_to: data   # <-- important: temporal features operate on the DataFrame
+          params:
+            date_column: 'Release_Date'
+            days_since: true
+            prefix: 'release'
+
+
   - name: feature_encoding
     type: pipelines.feature_encoder_pipeline.FeatureEncoderPipeline
     params:
@@ -103,14 +130,7 @@ pipelines:
           columns: ['Platforms', 'Supported_Languages', 'Genres', 'Categories', 'Developers', 'Publishers']
           params:
             sep: ','
-#        - name: multihot
-#          columns: ['Categories']
-#          params:
-#            sep: ','
-#        - name: ordinal
-#          columns: ['Review_Score_Desc']
-#        - name: label
-#          columns: ['Developers', 'Publishers']
+
 
 
   - name: feature_scaling
@@ -213,3 +233,4 @@ pipelines:
 #            xticks_rotation: 45
 #            label_min_cluster_size: 250
 #            dimensions: 3
+
