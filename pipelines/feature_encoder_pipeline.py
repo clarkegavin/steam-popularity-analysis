@@ -113,7 +113,7 @@ class FeatureEncoderPipeline(Pipeline):
 
     def execute(self, df: pd.DataFrame) -> pd.DataFrame:
         if df is None or not isinstance(df, pd.DataFrame):
-            raise ValueError("Input must be a DataFrame for FeatureEncoderPipeline")
+            raise ValueError(f"Input must be a DataFrame for FeatureEncoderPipeline instead of {type(df)}")
         cols = [c for _, cols in self._encoders for c in cols]
         self.logger.info(f"Encoding features: {cols}")
         return self.fit_transform(df)

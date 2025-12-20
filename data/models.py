@@ -1,6 +1,7 @@
 #data/models.py
 from sqlalchemy import Column, BigInteger, DateTime, String, Float, Boolean, Date as SQLDate
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.types import UnicodeText
 
 Base = declarative_base()
 
@@ -38,7 +39,8 @@ class SteamGame(Base):
     # Core identifiers
     Id = Column("Id", BigInteger, primary_key=True, autoincrement=True)
     AppID = Column("AppID", BigInteger, nullable=False)
-    Name = Column("Name", String(255), nullable=False)
+    #Name = Column("Name", String(255), nullable=False)
+    Name = Column("Name", UnicodeText, nullable=False)
     Type = Column("Type", String(50), nullable=True)
     Is_Free = Column("Is_Free", String(10), nullable=True)  # store as 'True'/'False' for consistency
 
