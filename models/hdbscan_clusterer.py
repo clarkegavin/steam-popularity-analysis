@@ -8,7 +8,9 @@ class HDBSCANClusterer(Model):
         super().__init__(name, **params)
         self.logger = get_logger(f"HDBSCANClusterer.{name}")
         self.logger.info(f"Initializing HDBSCAN clusterer with name={name} and params={params}")
-
+        self.probabilities_ = None
+        self.outlier_scores_ = None
+        self.cluster_persistence_ = None
 
     def build(self):
         self.model = hdbscan.HDBSCAN(**self.params)
@@ -23,6 +25,15 @@ class HDBSCANClusterer(Model):
         return self
 
     def fit_predict(self, X, y=None, X_test=None):
+
         if self.model is None:
             self.build()
-        return self.model.fit_predict(X)
+
+        labels = self.model.fit_predict(X)
+
+        # expose HDBSCAN - specific attributes
+        self.probabilities_ = self.model.probabilities_
+        self.outlier_scores_ = self.model.outlier_scores_
+        self.cluster_persistence_ = getattr(self.model, "cluster_persistence_", None)
+
+        return labels

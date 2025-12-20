@@ -84,6 +84,7 @@ class ClusteringPipeline(Pipeline):
         # Cluster
         self.logger.info(f"Clustering using {self.clusterer.name}")
         labels = self.clusterer.fit_predict(df)
+        self.logger.info(type(self.clusterer))
         probabilities = self.clusterer.probabilities_ if hasattr(self.clusterer, "probabilities_") else None
         self.logger.info(f"Cluster labels assigned: {set(labels)}")
         if probabilities is not None:
