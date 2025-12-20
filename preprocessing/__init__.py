@@ -18,6 +18,7 @@ from .merge_features import MergeFeatures
 from .explode_columns import ExplodeColumns
 from .remove_html_tags import RemoveHTMLTags
 from .log_transform import LogTransform
+from .temporal_features import TemporalFeatures
 import nltk
 
 # Register built-in preprocessors
@@ -53,6 +54,8 @@ PreprocessorFactory.register("remove_html_tags", RemoveHTMLTags)
 PreprocessorFactory.register("removehtml", RemoveHTMLTags)
 PreprocessorFactory.register("log_transform", LogTransform)
 PreprocessorFactory.register("log", LogTransform)
+PreprocessorFactory.register("temporal_features", TemporalFeatures)
+PreprocessorFactory.register("temporal", TemporalFeatures)
 
 # List of required resources
 REQUIRED_NLTK_RESOURCES = ["punkt", "stopwords"]
