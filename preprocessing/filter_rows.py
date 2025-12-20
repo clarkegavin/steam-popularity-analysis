@@ -155,24 +155,22 @@ class FilterRows(Preprocessor):
                 # mask = ser.isin(values)
                 # Normalise dataframe values
                 self.logger.info(f"Operator was {self.operator}; normalising values for comparison")
-                ser_norm = ser.astype(str).str.strip()
+                # normalize strings if needed
                 if not self.case_sensitive:
-                    ser_norm = ser_norm.str.lower()
+                    ser_norm = ser.astype(str).str.lower().str.strip()
+                    values_norm = [str(v).lower().strip() for v in self.values if v is not None]
+                else:
+                    ser_norm = ser.astype(str).str.strip()
+                    values_norm = [str(v).strip() for v in self.values if v is not None]
 
-                # Normalise filter values
-                values = [str(v).strip() for v in self.values]
-                if not self.case_sensitive:
-                    values = [v.lower() for v in values]
+                # mask for normal values
+                mask_values = ser_norm.isin(values_norm)
+                # mask for nulls
+                mask_nan = pd.isna(ser) if any(v is None for v in self.values) else pd.Series(False, index=ser.index)
 
-                # Build mask
-                mask = ser_norm.isin(values)
+                # final mask
+                mask = mask_values | mask_nan
 
-                # Debug info (optional but very useful)
-                # self.logger.info(f"FilterRows - Normalised unique values sample: {ser_norm.unique()[:10]}")
-                # self.logger.info(f"FilterRows - Looking for values: {values}")
-            # elif self.operator == "in":
-            #     values = [v if self.case_sensitive or not isinstance(v, str) else v.lower() for v in self.values]
-            #     mask = ser.isin(values)
             elif self.operator == "contains":
                 # build OR mask for each value
                 mask = pd.Series(False, index=X.index)

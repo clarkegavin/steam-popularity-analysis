@@ -1,6 +1,8 @@
 # reducers/umap_reducer.py
 from typing import Any
 from logs.logger import get_logger
+import pandas as pd
+import numpy as np
 
 try:
     import umap
@@ -36,10 +38,36 @@ class UMAPReducer(Reducer):
         return self._model.transform(X)
 
     def fit_transform(self, X: Any):
+        self.logger.info("Fitting and transforming data using UMAPReducer")
         if umap is None:
             raise RuntimeError("umap-learn is required for UMAPReducer. Install with 'pip install umap-learn'.")
+
+        # --- Preserve index if X is a DataFrame ---
+        index = X.index if hasattr(X, "index") else None
+
+        # if X is a dataframe, convert to numpy array
+        if isinstance(X, pd.DataFrame):
+            self.logger.info("Input is a DataFrame, converting to numpy array")
+            X_np = np.asarray(X, dtype=np.float32)
+
+        # --- Sanity checks ---
+        if np.isnan(X_np).any():
+            self.logger.warning("NaNs detected in UMAP input; replacing with 0")
+            X_np = np.nan_to_num(X_np)
+
         self._model = umap.UMAP(n_components=self.n_components, random_state=self.random_state, **self.kwargs)
-        return self._model.fit_transform(X)
+        self.logger.info("UMAP model created, performing fit_transform")
+        embedding  = self._model.fit_transform(X)
+        # convert numpy array back to DataFrame
+        columns = [f"umap_{i}" for i in range(embedding.shape[1])]
+        embedding_df = pd.DataFrame(
+            embedding,
+            index=index,
+            columns=columns,
+        )
+        self.logger.info("UMAP fit_transform completed")
+        return embedding_df
+
 
     def set_components(self, n_components: int):
         self.n_components = n_components

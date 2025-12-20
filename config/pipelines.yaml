@@ -9,12 +9,6 @@ pipelines:
 #      extractor_params:
 #        sample_size: 1000
 
-  - name: filter_features
-    type: pipelines.filter_pipeline.FilterPipeline
-    filter_features:
-      - name: drop_columns
-        params:
-          columns_to_drop:  ['Tags' , 'Type', 'URL', 'Metacritic_URL', 'Name', 'Review_Score_Desc']
 
 #  - name: eda #output correlations before exploding columns
 #    type: pipelines.eda_pipeline.EDAPipeline
@@ -44,7 +38,6 @@ pipelines:
 #            filename: "correlation_matrix_after_log_transform.png"
 
 
-  # anything that changes the shape of the data will need to be in this cleanup block
   - name: data_cleanup
     type: pipelines.data_cleanup_pipeline.DataCleanupPipeline
     params:
@@ -65,7 +58,27 @@ pipelines:
             method: 'log1p'
             shift: true
             suffix: ''  # empty means replace original columns; set to '_log' to persist alongside originals
+        - name: remove_duplicates
+          params:
+            field: "AppID"
+            keep: "first"
+            case_sensitive: false
+            dropna: true
+        - name: filter_rows
+          params:
+            field: "Release_Date"
+            values: [ null ]
+            operator: "in"
+            case_sensitive: false
 
+  - name: filter_features
+    type: pipelines.filter_pipeline.FilterPipeline
+    filter_features:
+      - name: drop_columns
+        params:
+          columns_to_drop:  ['Id', 'AppID', 'Tags' , 'Type', 'URL', 'Metacritic_URL', 'Name', 'Review_Score_Desc', 'Price_Currency',
+                             'Current_Players_Last_Updated', 'Content_Descriptors',
+                             'Developers', 'Publishers']
 
 #  - name: eda
 #    type: pipelines.eda_pipeline.EDAPipeline
@@ -106,10 +119,10 @@ pipelines:
   - name: preprocessing
     type: pipelines.preprocessing_pipeline.PreprocessingPipeline
     params:
-      text_field: 'Developers'
+      #text_field: 'Developers'
       preprocessors:
-        - name: lowercase
-          applies_to: text
+#        - name: lowercase
+#          applies_to: text
         - name: temporal_features
           applies_to: data   # <-- important: temporal features operate on the DataFrame
           params:
@@ -117,6 +130,29 @@ pipelines:
             days_since: true
             prefix: 'release'
 
+  - name: filter_features # DROP RELEASE DATE AFTER  GENERATING TEMPORAL FEATURES
+    type: pipelines.filter_pipeline.FilterPipeline
+    filter_features:
+      - name: drop_columns
+        params:
+          columns_to_drop:  ['Release_Date']
+
+  - name: imputation
+    type: pipelines.imputer_pipeline.ImputerPipeline
+    params:
+      imputers:
+        - name: simple
+          params:
+            columns: [ 'Current_Players', 'Platforms', 'Categories', 'Genres', 'Supported_Languages',
+                      'Price_Initial', 'Price_Final', 'Price_Discount_Percent', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations',
+                      'Metacritic_Score', 'Is_Free', 'release_days_since' ]
+            numeric_strategy: 'zero'
+            text_strategy: 'UNKNOWN'
+        - name: simple
+          params:
+            columns: [ 'Review_Score' ]
+            numeric_strategy: 'mean'
+            text_strategy: 'UNKNOWN'
 
   - name: feature_encoding
     type: pipelines.feature_encoder_pipeline.FeatureEncoderPipeline
@@ -127,7 +163,8 @@ pipelines:
       #   - sklearn_label / label -> SklearnLabelEncoder (integer label encoding)
       encoders:
         - name: multihot
-          columns: ['Platforms', 'Supported_Languages', 'Genres', 'Categories', 'Developers', 'Publishers']
+          columns: ['Platforms', 'Supported_Languages', 'Genres', 'Categories']
+                    # 'Developers', 'Publishers']
           params:
             sep: ','
 
@@ -141,6 +178,8 @@ pipelines:
         with_mean: true
         with_std: true
       columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Positive', 'Recommendations' ]
+
+
 
 
 
@@ -196,9 +235,9 @@ pipelines:
 #------------------------------------------------------------
 # Clustering
 #------------------------------------------------------------
-#  - name: clustering_euclidean
-#    type: pipelines.clustering_pipeline.ClusteringPipeline
-#    params:
+  - name: clustering_euclidean
+    type: pipelines.clustering_pipeline.ClusteringPipeline
+    params:
 #      text_field: "Description"
 #      genre_field: "Genre"
 #      filter_genre: "All"
@@ -209,28 +248,31 @@ pipelines:
 #          max_features: 10000
 #          ngram_range: [ 4, 6 ]
 #          analyzer: "char_wb"
-#      clusterer:
-#         name: "hdbscan"
-#         params:
-#            min_cluster_size: 50
-#            min_samples: 25
-#            #metric: "cosine" # memory issues with cosine on large datasets
-#            metric: "euclidean"
-#      reducer:
-#         name: "umap"
-#         params:
-#            n_components: 5
-#            n_neighbors: 15
-#      visualisations:
-#         name: cluster_plot
-#         params:
-#            output_dir: "output/clustering_euclidean"
-#            figsize: [10, 8]
-#            xlabel: "UMAP Dimension 1"
-#            ylabel: "UMAP Dimension 2"
-#            zlabel: "UMAP Dimension 3"
-#            title: "HDBSCAN Clustering of Roblox Game Descriptions"
-#            xticks_rotation: 45
-#            label_min_cluster_size: 250
-#            dimensions: 3
-
+      clusterer:
+         name: "hdbscan"
+         params:
+            min_cluster_size: 50
+            min_samples: 25
+            #metric: "cosine" # memory issues with cosine on large datasets
+            metric: "euclidean"
+      reducer:
+        - name: truncated_svd
+          params:
+            n_components: 5
+            random_state: 42
+        - name: "umap"
+          params:
+            n_components: 5
+            n_neighbors: 15
+      visualisations:
+         name: cluster_plot
+         params:
+            output_dir: "output/clustering_euclidean"
+            figsize: [10, 8]
+            xlabel: "UMAP Dimension 1"
+            ylabel: "UMAP Dimension 2"
+            zlabel: "UMAP Dimension 3"
+            title: "HDBSCAN Clustering of Steam Games"
+            xticks_rotation: 45
+            label_min_cluster_size: 250
+            dimensions: 3
