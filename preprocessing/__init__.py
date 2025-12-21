@@ -19,6 +19,7 @@ from .explode_columns import ExplodeColumns
 from .remove_html_tags import RemoveHTMLTags
 from .log_transform import LogTransform
 from .temporal_features import TemporalFeatures
+from .count_features import CountFeatures
 import nltk
 
 # Register built-in preprocessors
@@ -56,6 +57,8 @@ PreprocessorFactory.register("log_transform", LogTransform)
 PreprocessorFactory.register("log", LogTransform)
 PreprocessorFactory.register("temporal_features", TemporalFeatures)
 PreprocessorFactory.register("temporal", TemporalFeatures)
+PreprocessorFactory.register("count_features", CountFeatures)
+PreprocessorFactory.register("count", CountFeatures)
 
 # List of required resources
 REQUIRED_NLTK_RESOURCES = ["punkt", "stopwords"]
@@ -68,4 +71,4 @@ for res in REQUIRED_NLTK_RESOURCES:
         # Download silently if missing
         nltk.download(res, quiet=True)
 
-__all__ = ["Preprocessor", "PreprocessorFactory", "Stemmer", "Lemmatizer", "Lowercase", "StopwordRemover", "EmojiRemover", "FilterRows", "MaskGenreWords", "RemoveDuplicates", "RemoveURLs", "RemoveRepeatedCharacters", "RemovePunctuationNoise", "RemoveWhitespace", "MergeFeatures"]
+__all__ = ["Preprocessor", "PreprocessorFactory", "Stemmer", "Lemmatizer", "Lowercase", "StopwordRemover", "EmojiRemover", "FilterRows", "MaskGenreWords", "RemoveDuplicates", "RemoveURLs", "RemoveRepeatedCharacters", "RemovePunctuationNoise", "RemoveWhitespace", "MergeFeatures", "CountFeatures"]

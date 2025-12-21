@@ -1,5 +1,6 @@
 #models/hdbscan_clusterer.py
 import hdbscan
+#from sklearn.cluster import HDBSCAN
 from .base import Model
 from logs.logger import get_logger
 
@@ -14,6 +15,7 @@ class HDBSCANClusterer(Model):
 
     def build(self):
         self.model = hdbscan.HDBSCAN(**self.params)
+        #self.model = HDBSCAN(**self.params)
         self.logger.info(f"Built HDBSCAN model with params={self.params}")
         return self
 

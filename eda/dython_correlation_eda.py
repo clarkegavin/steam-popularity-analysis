@@ -30,6 +30,10 @@ class DythonCorrelationEDA(EDAComponent):
             self.logger.error("DythonCorrelationEDA requires a pandas DataFrame as `data`")
             raise ValueError("DythonCorrelationEDA requires a pandas DataFrame as `data")
 
+        # Limit for performance reasons if specified in kwargs
+        max_rows = kwargs.pop('max_rows', data.shape[0])
+        limited_data = data.sample(max_rows, random_state=42) if data.shape[0] > max_rows else data.copy()
+
         # Handle exclude columns
         exclude = kwargs.pop('exclude_columns', []) or []
         if isinstance(exclude, str):
@@ -65,7 +69,7 @@ class DythonCorrelationEDA(EDAComponent):
 
         # Build list of columns to include (preserve original ordering)
         cols = []
-        for c in data.columns:
+        for c in limited_data.columns:
             try:
                 if exclude_variants.intersection(_norms(c)):
                     self.logger.info(f"Excluding column from correlation matrix: {c}")
@@ -78,7 +82,7 @@ class DythonCorrelationEDA(EDAComponent):
             self.logger.error("No columns left to compute correlation matrix after exclusions")
             raise ValueError("No columns left to compute correlation matrix after exclusions")
 
-        df_sub = data[cols]
+        df_sub = limited_data[cols]
 
         # Auto-drop datetime-like columns to avoid comparison issues in dython (float vs Timestamp)
         try:

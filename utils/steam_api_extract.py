@@ -40,8 +40,8 @@ if __name__ == "__main__":
     steam_pipeline = SteamDataPipeline(
         api_key=api_key,
         chunk_size=100,
-        limit_apps=50000,  # Limit to first 10 apps for testing
-        offset_apps=28662  #
+        limit_apps=50000,
+        offset_apps=48832  #
     )
     logger.info("Running Steam data extraction pipeline...")
     steam_pipeline.run()

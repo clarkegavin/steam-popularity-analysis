@@ -9,33 +9,89 @@ pipelines:
 #      extractor_params:
 #        sample_size: 1000
 
+  - name: data_cleanup
+    type: pipelines.data_cleanup_pipeline.DataCleanupPipeline
+    params:
+      # cleanup_steps is a list of preprocessors (built via PreprocessorFactory)
+      cleanup_steps:
+        - name: remove_duplicates
+          params:
+            field: "AppID"
+            keep: "first"
+            case_sensitive: false
+            dropna: true
+        - name: filter_rows
+          params:
+            field: "Release_Date"
+            values: [ null ]
+            operator: "in"
+            case_sensitive: false
 
-#  - name: eda #output correlations before exploding columns
-#    type: pipelines.eda_pipeline.EDAPipeline
-#    params:
-#      save_path: "output/eda"
-#      steps:
-#        - name: boxplots
-#          params:
-#            exclude_columns: [ 'Id', 'AppId',
-#                               'Current_Players_Last_Updated', 'ReleaseDate', 'Genres', 'Platforms',
-#                               'Categories', 'Supported_Languages', 'Review_Score_Desc']
-#            filename: "boxplots_before_log_transform.png"
-#        - name: boxplots
-#          params:
-#            exclude_columns: [ 'Id', 'AppId',
-#                               'Current_Players_Last_Updated', 'ReleaseDate', 'Genres', 'Platforms',
-#                               'Categories', 'Supported_Languages', 'Review_Score_Desc' ]
-#            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
-#            filename: "boxplots_after_log_transform.png"
+  - name: filter_features
+    type: pipelines.filter_pipeline.FilterPipeline
+    filter_features:
+      - name: drop_columns
+        params:
+          columns_to_drop: [ 'Id', 'AppID', 'Name',  'Type', 'URL', 'Tags', 'Price_Currency', 'Review_Score_Desc', 'Metacritic_URL',
+                             'Current_Players_Last_Updated', 'Content_Descriptors',
+          #                   'Developers', 'Publishers'
+          ]
 
-#        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
-#          params:
-#            exclude_columns: [ 'Id', 'AppId',  'Type', 'URL', 'Metacritic_URL', 'Current_Players_Last_Updated', 'ReleaseDate']
-#            annot: true
-#            cmap: "coolwarm"
-#            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
-#            filename: "correlation_matrix_after_log_transform.png"
+
+  - name: eda #output correlations before exploding columns
+    type: pipelines.eda_pipeline.EDAPipeline
+    params:
+      save_path: "output/eda"
+      steps:
+        - name: describe_info
+        - name: duplicate_check # after duplicates have been removed
+        - name: boxplots
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type',
+                               'Current_Players_Last_Updated', 'Release_Date', 'Genres', 'Platforms',
+                               'Categories', 'Supported_Languages', 'Review_Score_Desc']
+            filename: "boxplots_before_log_transform.png"
+        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
+          params:
+            exclude_columns: [ 'Release_Date']
+            annot: true
+            cmap: "coolwarm"
+            max_rows: 15000
+            #log_transform_columns: [ 'Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
+            filename: "correlation_matrix_before_log_transform.png"
+        - name: class_balance
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'Release_Date', 'Current_Players_Last_Updated']
+            label_max_chars: 10
+            top_n: 15
+            filename: "class_balance_before_log_transform.png"
+            #log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
+
+       # EDA After Log Transform
+        - name: boxplots
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name',
+                               'Current_Players_Last_Updated', 'Release_Date', 'Genres', 'Platforms',
+                               'Categories', 'Supported_Languages', 'Review_Score_Desc' ]
+            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
+            filename: "boxplots_after_log_transform.png"
+
+        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
+          params:
+            #exclude_columns: [ 'Id', 'AppId',  'Name', 'Type', 'URL', 'Metacritic_URL', 'Current_Players_Last_Updated', 'Release_Date']
+            exclude_columns: ['Release_Date']
+            annot: true
+            cmap: "coolwarm"
+            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
+            max_rows: 15000
+            filename: "correlation_matrix_after_log_transform.png"
+        - name: class_balance
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'Release_Date', 'Current_Players_Last_Updated' ]
+            label_max_chars: 10
+            top_n: 15
+            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations', 'Price_Initial', 'Price_Final' ]
+            filename: "class_balance_after_log_transform.png"
 
 
   - name: data_cleanup
@@ -58,27 +114,7 @@ pipelines:
             method: 'log1p'
             shift: true
             suffix: ''  # empty means replace original columns; set to '_log' to persist alongside originals
-        - name: remove_duplicates
-          params:
-            field: "AppID"
-            keep: "first"
-            case_sensitive: false
-            dropna: true
-        - name: filter_rows
-          params:
-            field: "Release_Date"
-            values: [ null ]
-            operator: "in"
-            case_sensitive: false
 
-  - name: filter_features
-    type: pipelines.filter_pipeline.FilterPipeline
-    filter_features:
-      - name: drop_columns
-        params:
-          columns_to_drop:  ['Id', 'AppID', 'Tags' , 'Type', 'URL', 'Metacritic_URL', 'Name', 'Review_Score_Desc', 'Price_Currency',
-                             'Current_Players_Last_Updated', 'Content_Descriptors',
-                             'Developers', 'Publishers']
 
 #  - name: eda
 #    type: pipelines.eda_pipeline.EDAPipeline
@@ -87,7 +123,7 @@ pipelines:
 #      steps:
 #        - name: class_balance
 #          params:
-#            exclude_columns: [ 'Id', 'AppId', 'Type', 'URL', 'Metacritic_URL', 'ReleaseDate', 'Current_Players_Last_Updated']
+#            exclude_columns: [ 'Id', 'AppId', 'Type', 'URL', 'Metacritic_URL', 'Release_Date', 'Current_Players_Last_Updated']
 #            label_max_chars: 10
 #            top_n: 15
 #            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
@@ -105,17 +141,6 @@ pipelines:
 #      random_state: 42
 
 
-#  - name: preprocessing
-#    type: pipelines.preprocessing_pipeline.PreprocessingPipeline
-#    params:
-#      text_field: 'Description'
-#      data_preprocessors:
-#        - name: temporal_features
-#          params:
-#            date_column: 'ReleaseDate'
-#            days_since: true
-#            prefix: 'release'
-
   - name: preprocessing
     type: pipelines.preprocessing_pipeline.PreprocessingPipeline
     params:
@@ -129,6 +154,15 @@ pipelines:
             date_column: 'Release_Date'
             days_since: true
             prefix: 'release'
+            quarter: true
+            quarter_format: 'int'
+        - name: count_features
+          applies_to: data
+          params:
+            columns: ['Publishers', 'Developers']
+            sep: ','
+            drop_original: true
+            prefix: 'num_'
 
   - name: filter_features # DROP RELEASE DATE AFTER  GENERATING TEMPORAL FEATURES
     type: pipelines.filter_pipeline.FilterPipeline
@@ -169,7 +203,6 @@ pipelines:
             sep: ','
 
 
-
   - name: feature_scaling
     type: pipelines.feature_scaler_pipeline.FeatureScalerPipeline
     scaler:
@@ -178,9 +211,6 @@ pipelines:
         with_mean: true
         with_std: true
       columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Positive', 'Recommendations' ]
-
-
-
 
 
 #  # anything that changes the shape of the data will need to be in this cleanup block
@@ -254,7 +284,8 @@ pipelines:
             min_cluster_size: 50
             min_samples: 25
             #metric: "cosine" # memory issues with cosine on large datasets
-            metric: "euclidean"
+            #algorithm: "brute"
+            metric: "euclidean" # memory issues... try euclidean
       reducer:
         - name: truncated_svd
           params:
