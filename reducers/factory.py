@@ -36,7 +36,7 @@ class ReducerFactory:
 
         params = config.get("params", {}) or {}
         cls.logger.info(f"Instantiating reducer '{name}' with params: {params}")
-        return reducer_cls(**params)
+        return reducer_cls(name=name, **params)
 
     @classmethod
     def create_reducer(cls, name: str, **kwargs) -> Reducer:
@@ -47,3 +47,31 @@ class ReducerFactory:
 
         cls.logger.info(f"Creating reducer '{name}' with kwargs: {kwargs}")
         return reducer_cls(**kwargs)
+
+    @classmethod
+    def get_reducers(cls, config):
+        """
+        Create a list of reducers from config.
+        Accepts:
+          - None
+          - single reducer dict
+          - list of reducer dicts
+        """
+        if not config:
+            return []
+
+        # normalize to list
+        if isinstance(config, dict):
+            config = [config]
+
+        if not isinstance(config, list):
+            raise TypeError(
+                f"Reducer config must be dict or list of dicts, got {type(config)}"
+            )
+
+        reducers = []
+        for cfg in config:
+            reducer = cls.get_reducer(cfg)
+            reducers.append(reducer)
+
+        return reducers

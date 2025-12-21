@@ -47,8 +47,8 @@ class ClusteringPipeline(Pipeline):
         self.clusterer = ModelFactory.get_model(clusterer_name, **clusterer_params)
 
         #Reducer
-        reducer_cfg = params.get("reducer", {})
-        self.reducer = ReducerFactory.get_reducer(reducer_cfg)
+        reducer_cfg = params.get("reducer", [])
+        self.reducers = ReducerFactory.get_reducers(reducer_cfg)
 
         visualisations_cfg = params.get("visualisations", {})
         visualisations_name = visualisations_cfg.get("name")
@@ -60,27 +60,31 @@ class ClusteringPipeline(Pipeline):
         self.logger.info("Starting clustering pipeline")
 
         # Filter genre
-        df_filtered = df[df[self.genre_field] == self.filter_genre].copy()
-        self.logger.info(f"Filtering records where {self.genre_field} == {self.filter_genre}")
-        self.logger.info(f"df_filtered type: {type(df_filtered)}")
-
-        texts = df_filtered[self.text_field].fillna("").tolist()
-        self.logger.info(f"Filtered records: {len(texts)}")
+        # df_filtered = df[df[self.genre_field] == self.filter_genre].copy()
+        # self.logger.info(f"Filtering records where {self.genre_field} == {self.filter_genre}")
+        # self.logger.info(f"df_filtered type: {type(df_filtered)}")
+        #
+        # texts = df_filtered[self.text_field].fillna("").tolist()
+        # self.logger.info(f"Filtered records: {len(texts)}")
 
 
         # Vectorize
-        self.logger.info(f"Vectorizing texts using {self.vectorizer.name}")
-        X = self.vectorizer.fit_transform(df_filtered)
-        self.logger.info(f"Vectorized shape: {X.shape}")
+        if self.vectorizer is not None:
+            self.logger.info(f"Vectorizing texts using {self.vectorizer.name}")
+            df = self.vectorizer.fit_transform(df)
+            self.logger.info(f"Vectorized shape: {df.shape}")
 
         # Reduce
-        self.logger.info(f"Reducing dimensions using {self.reducer.name}")
-        X_reduced = self.reducer.fit_transform(X)
-        self.logger.info(f"Reduced shape: {X_reduced.shape}")
+        df.columns = df.columns.astype(str) # ensure columns are str for reducers
+        for reducer in self.reducers:
+            self.logger.info(f"Reducing dimensions using {reducer.name}")
+            df = reducer.fit_transform(df)
+            self.logger.info(f"Shape after {reducer.name}: {df.shape}")
 
         # Cluster
         self.logger.info(f"Clustering using {self.clusterer.name}")
-        labels = self.clusterer.fit_predict(X_reduced)
+        labels = self.clusterer.fit_predict(df)
+        self.logger.info(type(self.clusterer))
         probabilities = self.clusterer.probabilities_ if hasattr(self.clusterer, "probabilities_") else None
         self.logger.info(f"Cluster labels assigned: {set(labels)}")
         if probabilities is not None:
@@ -90,10 +94,11 @@ class ClusteringPipeline(Pipeline):
 
 
         # Reduce (for visualisation)
-        self.logger.info(f"Reducing dimensions using {self.reducer.name}")
-        dimensions = self.dimensions
-        self.reducer.set_components(dimensions)
-        X_reduced = self.reducer.fit_transform(X_reduced)
+        viz_reducer = ReducerFactory.create_reducer(name='umap', n_components=self.dimensions)
+        self.logger.info(f"Reducing dimensions using {viz_reducer}")
+        # dimensions = self.dimensions
+        # self.reducer.set_components(dimensions)
+        X_reduced = viz_reducer.fit_transform(df)
         self.logger.info(f"Reduced shape: {X_reduced.shape}")
 
         # Plot
@@ -102,7 +107,7 @@ class ClusteringPipeline(Pipeline):
         self.logger.info("Cluster plot generated")
         plot_path = os.path.join(self.plotter.output_dir, f"{self.name}_cluster_plot.png")
         self.plotter.save(fig, plot_path)
-        self.plotter.save_embeddings(X_reduced, labels, df_filtered, prefix=f"{self.name}_clustering_pipeline")
+        self.plotter.save_embeddings(X_reduced, labels, df, prefix=f"{self.name}_clustering_pipeline")
         self.logger.info(f"Cluster plot saved as '{self.name}_cluster_plot.png'")
         self.plotter.save_interactive_plot(X_reduced, labels, prefix=f"{self.name}_cluster_plot")
         if probabilities is not None:
@@ -116,25 +121,26 @@ class ClusteringPipeline(Pipeline):
 
 
         # Attach cluster labels
-        df_filtered["cluster"] = labels
+        df["cluster"] = labels
 
+        if self.vectorizer is not None:
         # Optional: extract cluster keywords
-        cluster_keywords = self._extract_cluster_keywords(X, labels)
-        # Log cluster keywords
-        label_counts = Counter(labels)
-        for cluster_id, keywords in cluster_keywords.items():
-            size = label_counts.get(cluster_id, 0)
-            self.logger.info(
-                f"Cluster {cluster_id} (size={size}) keywords: {keywords}"
-            )
+            cluster_keywords = self._extract_cluster_keywords(df, labels)
+            # Log cluster keywords
+            label_counts = Counter(labels)
+            for cluster_id, keywords in cluster_keywords.items():
+                size = label_counts.get(cluster_id, 0)
+                self.logger.info(
+                    f"Cluster {cluster_id} (size={size}) keywords: {keywords}"
+                )
 
-        # save cluster keywords to file
-        keyword_path = os.path.join(self.plotter.output_dir, f"{self.name}_cluster_keywords.txt")
-        self._save_cluster_keywords(cluster_keywords, keyword_path)
+            # save cluster keywords to file
+            keyword_path = os.path.join(self.plotter.output_dir, f"{self.name}_cluster_keywords.txt")
+            self._save_cluster_keywords(cluster_keywords, keyword_path)
         #self._save_cluster_keywords(cluster_keywords, "output/clustering_pipeline_cluster_keywords.txt")
 
 
-        return df_filtered #, cluster_keywords
+        return df #, cluster_keywords
 
     def _save_cluster_keywords(self, cluster_keywords, filepath):
         try:

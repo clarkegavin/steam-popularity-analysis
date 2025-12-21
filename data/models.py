@@ -50,8 +50,8 @@ class SteamGame(Base):
     # About_The_Game = Column("About_The_Game", String(3000), nullable=True)
 
     # Developers / Publishers / URLs
-    Developers = Column("Developers", String(500), nullable=True)
-    Publishers = Column("Publishers", String(500), nullable=True)
+    Developers = Column("Developers", UnicodeText, nullable=True)
+    Publishers = Column("Publishers", UnicodeText, nullable=True)
     URL = Column("URL", String(1000), nullable=True)
 
     # Platforms / Categories / Genres / Tags

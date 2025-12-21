@@ -54,7 +54,10 @@ class ClassBalanceEDA(EDAComponent):
         if save_path is None:
             save_path = os.getcwd()
 
-        filepath = os.path.join(save_path, "class_balance.png")
+        filename = kwargs.get('filename') or 'class_balance.png'
+        filepath = os.path.join(save_path, filename)
+
+        #filepath = os.path.join(save_path, "class_balance.png")
 
         # If a specific target is provided, keep original behaviour
         if target is not None:

@@ -52,8 +52,8 @@ class PipelineOrchestrator:
                     self.logger.info(f"Pipeline {pipeline.__class__.__name__} output shape: {result.shape if isinstance(result, pd.DataFrame) else 'N/A'}")
                     self.logger.info(f"Result type: {type(result)}")
                     # log result features if result is a DataFrame
-                    if isinstance(result, pd.DataFrame):
-                        self.logger.info(f"Result columns: {result.columns.tolist()}")
+                    # if isinstance(result, pd.DataFrame):
+                    #     self.logger.info(f"Result columns: {result.columns.tolist()}")
 
 
                 self.logger.info(f"Pipeline {pipeline.__class__.__name__} completed successfully")

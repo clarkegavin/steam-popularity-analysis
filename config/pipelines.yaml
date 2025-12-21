@@ -9,42 +9,91 @@ pipelines:
 #      extractor_params:
 #        sample_size: 1000
 
+  - name: data_cleanup
+    type: pipelines.data_cleanup_pipeline.DataCleanupPipeline
+    params:
+      # cleanup_steps is a list of preprocessors (built via PreprocessorFactory)
+      cleanup_steps:
+        - name: remove_duplicates
+          params:
+            field: "AppID"
+            keep: "first"
+            case_sensitive: false
+            dropna: true
+        - name: filter_rows
+          params:
+            field: "Release_Date"
+            values: [ null ]
+            operator: "in"
+            case_sensitive: false
+
   - name: filter_features
     type: pipelines.filter_pipeline.FilterPipeline
     filter_features:
       - name: drop_columns
         params:
-          columns_to_drop:  ['Tags' , 'Type', 'URL', 'Metacritic_URL', 'Name', 'Review_Score_Desc']
-
-#  - name: eda #output correlations before exploding columns
-#    type: pipelines.eda_pipeline.EDAPipeline
-#    params:
-#      save_path: "output/eda"
-#      steps:
-#        - name: boxplots
-#          params:
-#            exclude_columns: [ 'Id', 'AppId',
-#                               'Current_Players_Last_Updated', 'ReleaseDate', 'Genres', 'Platforms',
-#                               'Categories', 'Supported_Languages', 'Review_Score_Desc']
-#            filename: "boxplots_before_log_transform.png"
-#        - name: boxplots
-#          params:
-#            exclude_columns: [ 'Id', 'AppId',
-#                               'Current_Players_Last_Updated', 'ReleaseDate', 'Genres', 'Platforms',
-#                               'Categories', 'Supported_Languages', 'Review_Score_Desc' ]
-#            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
-#            filename: "boxplots_after_log_transform.png"
-
-#        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
-#          params:
-#            exclude_columns: [ 'Id', 'AppId',  'Type', 'URL', 'Metacritic_URL', 'Current_Players_Last_Updated', 'ReleaseDate']
-#            annot: true
-#            cmap: "coolwarm"
-#            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
-#            filename: "correlation_matrix_after_log_transform.png"
+          columns_to_drop: [ 'Id', 'AppID', 'Name',  'Type', 'URL', 'Tags', 'Price_Currency', 'Review_Score_Desc', 'Metacritic_URL',
+                             'Current_Players_Last_Updated', 'Content_Descriptors',
+          #                   'Developers', 'Publishers'
+          ]
 
 
-  # anything that changes the shape of the data will need to be in this cleanup block
+  - name: eda #output correlations before exploding columns
+    type: pipelines.eda_pipeline.EDAPipeline
+    params:
+      save_path: "output/eda"
+      steps:
+        - name: describe_info
+        - name: duplicate_check # after duplicates have been removed
+        - name: boxplots
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type',
+                               'Current_Players_Last_Updated', 'Release_Date', 'Genres', 'Platforms',
+                               'Categories', 'Supported_Languages', 'Review_Score_Desc']
+            filename: "boxplots_before_log_transform.png"
+        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
+          params:
+            exclude_columns: [ 'Release_Date']
+            annot: true
+            cmap: "coolwarm"
+            max_rows: 15000
+            #log_transform_columns: [ 'Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
+            filename: "correlation_matrix_before_log_transform.png"
+        - name: class_balance
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'Release_Date', 'Current_Players_Last_Updated']
+            label_max_chars: 10
+            top_n: 15
+            filename: "class_balance_before_log_transform.png"
+            #log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
+
+       # EDA After Log Transform
+        - name: boxplots
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name',
+                               'Current_Players_Last_Updated', 'Release_Date', 'Genres', 'Platforms',
+                               'Categories', 'Supported_Languages', 'Review_Score_Desc' ]
+            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
+            filename: "boxplots_after_log_transform.png"
+
+        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
+          params:
+            #exclude_columns: [ 'Id', 'AppId',  'Name', 'Type', 'URL', 'Metacritic_URL', 'Current_Players_Last_Updated', 'Release_Date']
+            exclude_columns: ['Release_Date']
+            annot: true
+            cmap: "coolwarm"
+            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
+            max_rows: 15000
+            filename: "correlation_matrix_after_log_transform.png"
+        - name: class_balance
+          params:
+            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'Release_Date', 'Current_Players_Last_Updated' ]
+            label_max_chars: 10
+            top_n: 15
+            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations', 'Price_Initial', 'Price_Final' ]
+            filename: "class_balance_after_log_transform.png"
+
+
   - name: data_cleanup
     type: pipelines.data_cleanup_pipeline.DataCleanupPipeline
     params:
@@ -74,7 +123,7 @@ pipelines:
 #      steps:
 #        - name: class_balance
 #          params:
-#            exclude_columns: [ 'Id', 'AppId', 'Type', 'URL', 'Metacritic_URL', 'ReleaseDate', 'Current_Players_Last_Updated']
+#            exclude_columns: [ 'Id', 'AppId', 'Type', 'URL', 'Metacritic_URL', 'Release_Date', 'Current_Players_Last_Updated']
 #            label_max_chars: 10
 #            top_n: 15
 #            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
@@ -92,31 +141,52 @@ pipelines:
 #      random_state: 42
 
 
-#  - name: preprocessing
-#    type: pipelines.preprocessing_pipeline.PreprocessingPipeline
-#    params:
-#      text_field: 'Description'
-#      data_preprocessors:
-#        - name: temporal_features
-#          params:
-#            date_column: 'ReleaseDate'
-#            days_since: true
-#            prefix: 'release'
-
   - name: preprocessing
     type: pipelines.preprocessing_pipeline.PreprocessingPipeline
     params:
-      text_field: 'Developers'
+      #text_field: 'Developers'
       preprocessors:
-        - name: lowercase
-          applies_to: text
+#        - name: lowercase
+#          applies_to: text
         - name: temporal_features
           applies_to: data   # <-- important: temporal features operate on the DataFrame
           params:
             date_column: 'Release_Date'
             days_since: true
             prefix: 'release'
+            quarter: true
+            quarter_format: 'int'
+        - name: count_features
+          applies_to: data
+          params:
+            columns: ['Publishers', 'Developers']
+            sep: ','
+            drop_original: true
+            prefix: 'num_'
 
+  - name: filter_features # DROP RELEASE DATE AFTER  GENERATING TEMPORAL FEATURES
+    type: pipelines.filter_pipeline.FilterPipeline
+    filter_features:
+      - name: drop_columns
+        params:
+          columns_to_drop:  ['Release_Date']
+
+  - name: imputation
+    type: pipelines.imputer_pipeline.ImputerPipeline
+    params:
+      imputers:
+        - name: simple
+          params:
+            columns: [ 'Current_Players', 'Platforms', 'Categories', 'Genres', 'Supported_Languages',
+                      'Price_Initial', 'Price_Final', 'Price_Discount_Percent', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations',
+                      'Metacritic_Score', 'Is_Free', 'release_days_since' ]
+            numeric_strategy: 'zero'
+            text_strategy: 'UNKNOWN'
+        - name: simple
+          params:
+            columns: [ 'Review_Score' ]
+            numeric_strategy: 'mean'
+            text_strategy: 'UNKNOWN'
 
   - name: feature_encoding
     type: pipelines.feature_encoder_pipeline.FeatureEncoderPipeline
@@ -127,10 +197,10 @@ pipelines:
       #   - sklearn_label / label -> SklearnLabelEncoder (integer label encoding)
       encoders:
         - name: multihot
-          columns: ['Platforms', 'Supported_Languages', 'Genres', 'Categories', 'Developers', 'Publishers']
+          columns: ['Platforms', 'Supported_Languages', 'Genres', 'Categories']
+                    # 'Developers', 'Publishers']
           params:
             sep: ','
-
 
 
   - name: feature_scaling
@@ -141,7 +211,6 @@ pipelines:
         with_mean: true
         with_std: true
       columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Positive', 'Recommendations' ]
-
 
 
 #  # anything that changes the shape of the data will need to be in this cleanup block
@@ -196,9 +265,9 @@ pipelines:
 #------------------------------------------------------------
 # Clustering
 #------------------------------------------------------------
-#  - name: clustering_euclidean
-#    type: pipelines.clustering_pipeline.ClusteringPipeline
-#    params:
+  - name: clustering_euclidean
+    type: pipelines.clustering_pipeline.ClusteringPipeline
+    params:
 #      text_field: "Description"
 #      genre_field: "Genre"
 #      filter_genre: "All"
@@ -209,28 +278,32 @@ pipelines:
 #          max_features: 10000
 #          ngram_range: [ 4, 6 ]
 #          analyzer: "char_wb"
-#      clusterer:
-#         name: "hdbscan"
-#         params:
-#            min_cluster_size: 50
-#            min_samples: 25
-#            #metric: "cosine" # memory issues with cosine on large datasets
-#            metric: "euclidean"
-#      reducer:
-#         name: "umap"
-#         params:
-#            n_components: 5
-#            n_neighbors: 15
-#      visualisations:
-#         name: cluster_plot
-#         params:
-#            output_dir: "output/clustering_euclidean"
-#            figsize: [10, 8]
-#            xlabel: "UMAP Dimension 1"
-#            ylabel: "UMAP Dimension 2"
-#            zlabel: "UMAP Dimension 3"
-#            title: "HDBSCAN Clustering of Roblox Game Descriptions"
-#            xticks_rotation: 45
-#            label_min_cluster_size: 250
-#            dimensions: 3
-
+      clusterer:
+         name: "hdbscan"
+         params:
+            min_cluster_size: 50
+            min_samples: 25
+            #metric: "cosine" # memory issues with cosine on large datasets
+            #algorithm: "brute"
+            metric: "euclidean" # memory issues... try euclidean
+      reducer:
+        - name: truncated_svd
+          params:
+            n_components: 5
+            random_state: 42
+        - name: "umap"
+          params:
+            n_components: 5
+            n_neighbors: 15
+      visualisations:
+         name: cluster_plot
+         params:
+            output_dir: "output/clustering_euclidean"
+            figsize: [10, 8]
+            xlabel: "UMAP Dimension 1"
+            ylabel: "UMAP Dimension 2"
+            zlabel: "UMAP Dimension 3"
+            title: "HDBSCAN Clustering of Steam Games"
+            xticks_rotation: 45
+            label_min_cluster_size: 250
+            dimensions: 3

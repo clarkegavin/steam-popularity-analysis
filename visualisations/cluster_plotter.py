@@ -46,8 +46,14 @@ class ClusterPlotter(Visualisation):
             labels: cluster labels for each sample
             kwargs: optional style overrides (e.g. cmap, alpha)
         """
-        n_dims = X_reduced.shape[1]
-        self.logger.info(f"Creating cluster plot with {X_reduced.shape[0]} points and {n_dims}D embedding")
+        # Convert DataFrame to NumPy array if necessary
+        if isinstance(X_reduced, pd.DataFrame):
+            X_plot = X_reduced.values
+        else:
+            X_plot = X_reduced
+
+        n_dims = X_plot.shape[1]
+        self.logger.info(f"Creating cluster plot with {X_plot.shape[0]} points and {n_dims}D embedding")
 
         # --- 3D PLOT ---------------------------------------------------------
         if n_dims == 3:
@@ -55,9 +61,9 @@ class ClusterPlotter(Visualisation):
             ax = fig.add_subplot(111, projection="3d")
 
             scatter = ax.scatter(
-                X_reduced[:, 0],
-                X_reduced[:, 1],
-                X_reduced[:, 2],
+                X_plot[:, 0],
+                X_plot[:, 1],
+                X_plot[:, 2],
                 c=labels,
                 **kwargs
             )
@@ -78,8 +84,8 @@ class ClusterPlotter(Visualisation):
         elif n_dims == 2:
             fig, ax = plt.subplots(figsize=self.figsize)
             scatter = ax.scatter(
-                X_reduced[:, 0],
-                X_reduced[:, 1],
+                X_plot[:, 0],
+                X_plot[:, 1],
                 c=labels,
                 **kwargs
             )
@@ -98,7 +104,7 @@ class ClusterPlotter(Visualisation):
 
             # Optional: label large clusters
             min_size = self.params.get("label_min_cluster_size", 100)
-            self._label_large_clusters(ax, X_reduced, labels, min_cluster_size=min_size)
+            self._label_large_clusters(ax, X_plot, labels, min_cluster_size=min_size)
 
             self.logger.info("2D cluster plot created with cluster labels (if enabled)")
             return fig, ax, scatter
@@ -175,12 +181,17 @@ class ClusterPlotter(Visualisation):
         self.logger.info("Saving interactive Plotly cluster plot")
 
         os.makedirs(self.output_dir, exist_ok=True)
+        # Convert DataFrame to NumPy array if necessary
+        if isinstance(X_reduced, pd.DataFrame):
+            X_plot = X_reduced.values
+        else:
+            X_plot = X_reduced
 
         # Build dataframe
         if X_reduced.shape[1] == 2:
             df = pd.DataFrame({
-                "x": X_reduced[:, 0],
-                "y": X_reduced[:, 1],
+                "x": X_plot[:, 0],
+                "y": X_plot[:, 1],
                 "cluster": labels
             })
 
@@ -194,9 +205,9 @@ class ClusterPlotter(Visualisation):
 
         elif X_reduced.shape[1] == 3:
             df = pd.DataFrame({
-                "x": X_reduced[:, 0],
-                "y": X_reduced[:, 1],
-                "z": X_reduced[:, 2],
+                "x": X_plot[:, 0],
+                "y": X_plot[:, 1],
+                "z": X_plot[:, 2],
                 "cluster": labels
             })
 
@@ -226,11 +237,17 @@ class ClusterPlotter(Visualisation):
 
         os.makedirs(self.output_dir, exist_ok=True)
 
+        # Convert DataFrame to NumPy array if necessary
+        if isinstance(X_reduced, pd.DataFrame):
+            X_plot = X_reduced.values
+        else:
+            X_plot = X_reduced
+
         # Build dataframe
-        if X_reduced.shape[1] == 2:
+        if X_plot.shape[1] == 2:
             df = pd.DataFrame({
-                "x": X_reduced[:, 0],
-                "y": X_reduced[:, 1],
+                "x": X_plot[:, 0],
+                "y": X_plot[:, 1],
                 "cluster": labels
             })
 
@@ -242,11 +259,11 @@ class ClusterPlotter(Visualisation):
                 title=self.title
             )
 
-        elif X_reduced.shape[1] == 3:
+        elif X_plot.shape[1] == 3:
             df = pd.DataFrame({
-                "x": X_reduced[:, 0],
-                "y": X_reduced[:, 1],
-                "z": X_reduced[:, 2],
+                "x": X_plot[:, 0],
+                "y": X_plot[:, 1],
+                "z": X_plot[:, 2],
                 "cluster": labels
             })
 
@@ -255,10 +272,12 @@ class ClusterPlotter(Visualisation):
                 x="x",
                 y="y",
                 z="z",
-                color="probability",
-                color_continuous_scale='Viridis',
-                hover_data={'cluster': True, 'probability': ':.4f', 'is_noise': True},
-                title=self.title + f" By Probability"
+                color="cluster",
+                hover_data={'cluster': True},
+                #color="probability",
+                # color_continuous_scale='Viridis',
+                # hover_data={'cluster': True, 'probability': ':.4f', 'is_noise': True},
+                title=self.title + f" By Cluster"
             )
 
         else:
@@ -267,7 +286,7 @@ class ClusterPlotter(Visualisation):
             # Improve layout for academic clarity
         fig.update_layout(
             coloraxis_colorbar=dict(
-                title="Cluster<br>Probability"
+                title="Cluster"
             )
         )
         out_path = os.path.join(self.output_dir, f"{prefix}.html")

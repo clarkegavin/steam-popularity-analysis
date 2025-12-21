@@ -15,6 +15,7 @@ class TemporalFeatures(Preprocessor):
     - day: bool (default True) - create a column with day of month
     - month: bool (default True) - create a column with month
     - year: bool (default True) - create a column with year
+    - quarter: bool (default False) - create a column with quarter as 'Q1'..'Q4'
     - days_since: bool (default False) - add a column with days between date and reference_date (or today)
     - reference_date: optional str or pandas.Timestamp - if provided used for days_since calculation; if 'now' or None uses pd.Timestamp.now()
     - date_format: optional str - format passed to pd.to_datetime(format=...) if you want to enforce a format
@@ -27,6 +28,8 @@ class TemporalFeatures(Preprocessor):
                  day: bool = True,
                  month: bool = True,
                  year: bool = True,
+                 quarter: bool = False,
+                 quarter_format: str = 'label',
                  days_since: bool = False,
                  reference_date: Optional[str] = None,
                  date_format: Optional[str] = None,
@@ -35,12 +38,18 @@ class TemporalFeatures(Preprocessor):
         self.day = bool(day)
         self.month = bool(month)
         self.year = bool(year)
+        self.quarter = bool(quarter)
+        # quarter_format: 'label' -> 'Q1'..'Q4'; 'int' -> 1..4 (nullable Int64)
+        self.quarter_format = quarter_format if quarter_format in ('label', 'int') else 'label'
+        if quarter_format not in ('label', 'int'):
+            self.logger = get_logger(self.__class__.__name__)
+            self.logger.warning(f"Unknown quarter_format '{quarter_format}' - defaulting to 'label'")
         self.days_since = bool(days_since)
         self.reference_date = reference_date
         self.date_format = date_format
         self.prefix = prefix or date_column
         self.logger = get_logger(self.__class__.__name__)
-        self.logger.info(f"Initialized TemporalFeatures for '{self.date_column}' (day={self.day}, month={self.month}, year={self.year}, days_since={self.days_since}, reference_date={self.reference_date}, prefix={self.prefix})")
+        self.logger.info(f"Initialized TemporalFeatures for '{self.date_column}' (day={self.day}, month={self.month}, year={self.year}, quarter={self.quarter}, quarter_format={self.quarter_format}, days_since={self.days_since}, reference_date={self.reference_date}, prefix={self.prefix})")
 
     def fit(self, X):
         # Stateless preprocessor
@@ -96,6 +105,21 @@ class TemporalFeatures(Preprocessor):
             except Exception as e:
                 self.logger.warning(f"Failed to write year for '{col}': {e}")
 
+        if self.quarter:
+            out_col = f"{self.prefix}_quarter"
+            try:
+                # dt.dt.quarter returns 1..4 or NaN for NaT
+                q = dt.dt.quarter
+                if self.quarter_format == 'label':
+                    # Map to 'Q1'..'Q4' safely handling NaN values
+                    q_mapped = q.apply(lambda v: f"Q{int(v)}" if pd.notna(v) else pd.NA)
+                    df.loc[:, out_col] = q_mapped.astype(object)
+                else:
+                    # integer quarters, use pandas nullable integer dtype to preserve NA
+                    df.loc[:, out_col] = q.astype('Int64')
+            except Exception as e:
+                self.logger.warning(f"Failed to write quarter for '{col}': {e}")
+
         if self.days_since:
             out_col = f"{self.prefix}_days_since"
             # reference date
@@ -121,9 +145,8 @@ class TemporalFeatures(Preprocessor):
         return self.fit(X).transform(X)
 
     def get_params(self):
-        return {"date_column": self.date_column, "day": self.day, "month": self.month, "year": self.year, "days_since": self.days_since, "reference_date": self.reference_date, "date_format": self.date_format, "prefix": self.prefix}
+        return {"date_column": self.date_column, "day": self.day, "month": self.month, "year": self.year, "quarter": self.quarter, "quarter_format": self.quarter_format, "days_since": self.days_since, "reference_date": self.reference_date, "date_format": self.date_format, "prefix": self.prefix}
 
 
 # alias
 Temporal = TemporalFeatures
-
