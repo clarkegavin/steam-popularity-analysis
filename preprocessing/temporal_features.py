@@ -2,7 +2,6 @@
 from .base import Preprocessor
 from logs.logger import get_logger
 import pandas as pd
-import numpy as np
 from typing import Optional
 
 

@@ -273,7 +273,7 @@ pipelines:
 #------------------------------------------------------------
 # Clustering
 #------------------------------------------------------------
-  - name: clustering_euclidean
+  - name: clustering_hdbscan
     type: pipelines.clustering_pipeline.ClusteringPipeline
     params:
 #      text_field: "Description"
@@ -306,7 +306,7 @@ pipelines:
       visualisations:
          name: cluster_plot
          params:
-            output_dir: "output/clustering_euclidean"
+            output_dir: "output/clustering_hdbscan"
             figsize: [10, 8]
             xlabel: "UMAP Dimension 1"
             ylabel: "UMAP Dimension 2"
@@ -315,3 +315,27 @@ pipelines:
             xticks_rotation: 45
             label_min_cluster_size: 250
             dimensions: 3
+
+  - name: clustering_kmeans
+    type: pipelines.clustering_pipeline.ClusteringPipeline
+    params:
+      #text_field: "Description"
+      clusterer:
+        name: kmeans
+        params:
+          n_clusters: 5
+          random_state: 42
+      reducer:
+        - name: truncated_svd
+          params:
+            n_components: 5
+            random_state: 42
+      visualisations:
+         name: cluster_plot
+         params:
+            output_dir: "output/clustering_kmeans"
+            figsize: [10, 8]
+            xlabel: "Dim 1"
+            ylabel: "Dim 2"
+            title: "KMeans Clustering"
+
