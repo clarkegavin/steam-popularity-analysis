@@ -156,6 +156,14 @@ pipelines:
             prefix: 'release'
             quarter: true
             quarter_format: 'int'
+        - name: catalog_count
+          applies_to: data
+          params:
+            columns: ['Developers', 'Publishers']
+            sep: ','
+            drop_original: false
+            prefix: 'catalog_count_'
+            agg: 'sum'
         - name: count_features
           applies_to: data
           params:
