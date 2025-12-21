@@ -56,7 +56,7 @@ pipelines:
             exclude_columns: [ 'Release_Date']
             annot: true
             cmap: "coolwarm"
-            max_rows: 15000
+            max_rows: 10000
             #log_transform_columns: [ 'Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
             filename: "correlation_matrix_before_log_transform.png"
         - name: class_balance
@@ -83,7 +83,7 @@ pipelines:
             annot: true
             cmap: "coolwarm"
             log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
-            max_rows: 15000
+            max_rows: 10000
             filename: "correlation_matrix_after_log_transform.png"
         - name: class_balance
           params:
@@ -156,6 +156,14 @@ pipelines:
             prefix: 'release'
             quarter: true
             quarter_format: 'int'
+        - name: catalog_count
+          applies_to: data
+          params:
+            columns: ['Developers', 'Publishers']
+            sep: ','
+            drop_original: false
+            prefix: 'catalog_count_'
+            agg: 'sum'
         - name: count_features
           applies_to: data
           params:
