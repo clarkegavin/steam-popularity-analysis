@@ -95,7 +95,7 @@ class ClusteringEvaluator:
                 if "silhouette_per_point" in metrics:
                     try:
                         s_vals = silhouette_samples(X_arr, labels)
-                        results["silhouette_per_point"] = s_vals.tolist()
+                        #results["silhouette_per_point"] = s_vals.tolist()
 
                         # Create silhouette plot
                         fig, ax = plt.subplots(figsize=(8, 6))
@@ -200,5 +200,188 @@ class ClusteringEvaluator:
                     self.logger.info(f"Elbow method selected k={best_k} (ks={ks})")
                 except Exception as e:
                     self.logger.error(f"Error computing elbow method: {e}")
+
+        # Descriptive statistics and per-cluster visualisations
+        if "descriptive_stats" in metrics:
+            try:
+                # Descriptive stats require a pandas DataFrame with columns
+                import pandas as pd
+
+                # Determine whether original X is a DataFrame
+                df = None
+                if hasattr(X, "columns") and hasattr(X, "loc"):
+                    df = X.copy()
+                else:
+                    # if we can't obtain a DataFrame, try params to find one
+                    df = params.get("df") if isinstance(params.get("df"), pd.DataFrame) else None
+
+                if df is None:
+                    self.logger.warning("Descriptive stats require a pandas DataFrame input; skipping descriptive statistics.")
+                else:
+                    # attach cluster labels
+                    df_with_labels = df.copy()
+                    df_with_labels["cluster"] = labels
+
+                    # columns configuration: allow user to pass lists or auto-detect
+                    numeric_cols = params.get("numeric_columns") or params.get("numeric")
+                    cat_cols = params.get("categorical_columns") or params.get("categorical")
+
+                    if numeric_cols is None:
+                        #exclude sparse numeric columns
+                        #numeric_cols = df_with_labels.select_dtypes(include=[np.number]).columns.tolist()
+                        # numeric_cols = [
+                        #     c for c in df_with_labels.select_dtypes(include=[np.number]).columns
+                        #     if not isinstance(df_with_labels[c].dtype, pd.SparseDtype)
+                        # ]
+
+                        numeric_cols = []
+                        binary_sparse_cols = []
+
+                        for col in df_with_labels.columns:
+                            if col == "cluster":
+                                continue
+
+                            dtype = df_with_labels[col].dtype
+
+                            # sparse binary indicators (multi-hot)
+                            if isinstance(dtype, pd.SparseDtype):
+                                binary_sparse_cols.append(col)
+
+                            # true numeric (continuous)
+                            elif np.issubdtype(dtype, np.number):
+                                numeric_cols.append(col)
+
+                    if cat_cols is None:
+                        cat_cols = df_with_labels.select_dtypes(include=[object, "category"]).columns.tolist()
+
+                    # Remove the cluster column if present in lists
+                    numeric_cols = [c for c in numeric_cols if c != "cluster"]
+                    cat_cols = [c for c in cat_cols if c != "cluster"]
+
+                    descriptive = {"numeric_summary": {}, "categorical_summary": {}}
+
+                    clusters_sorted = sorted(list(set(labels)))
+
+                    # Numeric summaries
+                    for col in numeric_cols:
+                        try:
+                            grp = df_with_labels.groupby("cluster")[col]
+                            summary = grp.agg(["count", "mean", "median", "std", "min", "max"]).to_dict()
+                            # convert nested dicts to simple mappings
+                            # pandas returns {stat: {cluster: value}}; reorient to {cluster: {stat: value}}
+                            per_cluster = {}
+                            for stat, vals in summary.items():
+                                for cl, v in vals.items():
+                                    per_cluster.setdefault(str(cl), {})[stat] = float(v) if pd.notnull(v) else None
+                            descriptive["numeric_summary"][col] = per_cluster
+
+                            # Create boxplot comparing clusters for this numeric column
+                            data_list = [df_with_labels.loc[df_with_labels["cluster"] == cl, col].dropna().values for cl in clusters_sorted]
+                            # if all data_list are empty, skip
+                            if any(len(arr) > 0 for arr in data_list):
+                                fig, ax = plt.subplots(figsize=(8, 6))
+                                ax.boxplot(data_list, labels=[str(c) for c in clusters_sorted], patch_artist=True)
+                                ax.set_title(f"{col} by cluster")
+                                ax.set_xlabel("cluster")
+                                ax.set_ylabel(col)
+                                # Save using VisualisationFactory's BoxPlot visualiser if available
+                                box_viz = VisualisationFactory.get_visualisation("boxplot", title=f"{col} by cluster", figsize=(8, 6), ylabel=col)
+                                prefix = params.get("prefix", self.name)
+                                fname = f"{prefix}_{col}_boxplot_by_cluster.png"
+                                if box_viz is not None and hasattr(box_viz, "save"):
+                                    # use visualiser to save for consistent output_dir handling
+                                    box_viz.save(fig, os.path.join(getattr(box_viz, 'output_dir', self.output_dir), fname))
+                                else:
+                                    self._save_fig(fig, fname)
+                                plt.close(fig)
+                        except Exception as e:
+                            self.logger.error(f"Error computing numeric descriptive for {col}: {e}")
+
+                    descriptive["binary_sparse_summary"] = {}
+
+                    for col in binary_sparse_cols:
+                        try:
+                            # Convert sparse to dense *per column only* (cheap)
+                            col_dense = df_with_labels[col].sparse.to_dense()
+
+                            # Proportion of games in each cluster with this feature
+                            proportions = (
+                                col_dense
+                                .groupby(df_with_labels["cluster"])
+                                .mean()
+                            )
+
+                            descriptive["binary_sparse_summary"][col] = {
+                                str(cl): float(val)
+                                for cl, val in proportions.items()
+                            }
+                            # Optional: bar chart
+                            fig, ax = plt.subplots(figsize=(6, 4))
+                            ax.bar(
+                                [str(c) for c in proportions.index],
+                                proportions.values
+                            )
+                            ax.set_title(f"{col} prevalence by cluster")
+                            ax.set_xlabel("cluster")
+                            ax.set_ylabel("proportion")
+
+                            prefix = params.get("prefix", self.name)
+                            fname = f"{prefix}_{col}_proportion_by_cluster.png"
+                            self._save_fig(fig, fname)
+                            plt.close(fig)
+
+                        except Exception as e:
+                            self.logger.error(f"Error computing binary sparse descriptive for {col}: {e}")
+
+
+                    # Categorical summaries
+                    top_n = int(params.get("top_n", 10))
+                    for col in cat_cols:
+                        try:
+                            # compute value counts per cluster
+                            counts = df_with_labels.groupby(["cluster", col]).size().unstack(fill_value=0)
+                            # limit categories to top_n by overall frequency
+                            total_counts = counts.sum(axis=0).sort_values(ascending=False)
+                            top_categories = list(total_counts.head(top_n).index)
+                            counts = counts[top_categories]
+
+                            # convert to nested dict: {cluster: {category: count}}
+                            counts_dict = {}
+                            for cl in counts.index:
+                                counts_dict[str(cl)] = {str(cat): int(counts.loc[cl, cat]) for cat in counts.columns}
+                            descriptive["categorical_summary"][col] = counts_dict
+
+                            # Create grouped barplot: categories on x, bars per cluster
+                            fig, ax = plt.subplots(figsize=(10, 6))
+                            categories = counts.columns.tolist()
+                            n_categories = len(categories)
+                            n_clusters = len(counts.index)
+                            x = np.arange(n_categories)
+                            total_width = 0.8
+                            width = total_width / max(n_clusters, 1)
+                            for i, cl in enumerate(counts.index):
+                                vals = counts.loc[cl].values.astype(float)
+                                ax.bar(x + i * width, vals, width=width, label=str(cl))
+                            ax.set_xticks(x + (n_clusters - 1) * width / 2)
+                            ax.set_xticklabels([str(c) for c in categories], rotation=params.get("xticks_rotation", 45))
+                            ax.set_title(f"{col} category counts by cluster")
+                            ax.set_xlabel(col)
+                            ax.set_ylabel("count")
+                            ax.legend(title="cluster")
+                            # Save using VisualisationFactory's BarChart visualiser if available
+                            bar_viz = VisualisationFactory.get_visualisation("bar_chart", title=f"{col} category counts by cluster", figsize=(10, 6), xlabel=col, ylabel="count")
+                            prefix = params.get("prefix", self.name)
+                            fname = f"{prefix}_{col}_bar_by_cluster.png"
+                            if bar_viz is not None and hasattr(bar_viz, "save"):
+                                bar_viz.save(fig, os.path.join(getattr(bar_viz, 'output_dir', self.output_dir), fname))
+                            else:
+                                self._save_fig(fig, fname)
+                            plt.close(fig)
+                        except Exception as e:
+                            self.logger.error(f"Error computing categorical descriptive for {col}: {e}")
+
+                    results["descriptive_stats"] = descriptive
+            except Exception as e:
+                self.logger.error(f"Error computing descriptive statistics: {e}")
 
         return results

@@ -15,6 +15,7 @@ from vectorizers import VectorizerFactory
 from models import ModelFactory
 from reducers import ReducerFactory
 from evaluators import EvaluatorFactory
+import pandas as pd
 
 class ClusteringPipeline(Pipeline):
     def __init__(self, **params):
@@ -77,7 +78,7 @@ class ClusteringPipeline(Pipeline):
         # texts = df_filtered[self.text_field].fillna("").tolist()
         # self.logger.info(f"Filtered records: {len(texts)}")
 
-
+        df_original = df.copy()
         # Vectorize
         if self.vectorizer is not None:
             self.logger.info(f"Vectorizing texts using {self.vectorizer.name}")
@@ -128,16 +129,26 @@ class ClusteringPipeline(Pipeline):
                 prefix=f"{self.name}_cluster_plot_by_probability"
             )
 
-
-
         # Attach cluster labels
-        df["cluster"] = labels
+        df_original["cluster"] = labels
+        df_original = df_original.copy()
+        df_with_labels = df_original.apply(
+            lambda s: s.astype(float) if isinstance(s.dtype, pd.Int64Dtype) else s
+        )
+
+        # save dataframe with cluster labels
+        output_path = os.path.join(self.plotter.output_dir, f"{self.name}_clustered_data.csv")
+        try:
+            df_original.to_csv(output_path, index=False, encoding='utf-8', errors='replace')
+            self.logger.info(f"Clustered data with labels saved to {output_path}")
+        except Exception as e:
+            self.logger.error(f"Error saving clustered data to {output_path}: {e}")
 
         # Run evaluator if configured
         if self.evaluator is not None and self.evaluator_metrics:
             try:
                 self.logger.info(f"Running evaluator {self.evaluator.name} metrics={self.evaluator_metrics}")
-                eval_results = self.evaluator.evaluate(df if hasattr(df, 'to_numpy') else df.values, labels, clusterer=self.clusterer, metrics=self.evaluator_metrics, params=self.evaluator_params)
+                eval_results = self.evaluator.evaluate(df_original if hasattr(df_original, 'to_numpy') else df_original.values, labels, clusterer=self.clusterer, metrics=self.evaluator_metrics, params=self.evaluator_params)
                 self.logger.info(f"Evaluator results: {eval_results}")
             except Exception as e:
                 self.logger.error(f"Error running evaluator: {e}")

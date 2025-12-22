@@ -347,7 +347,7 @@ pipelines:
       # Example: evaluator configuration for clustering
       evaluator:
         name: clustering
-        metrics: ["silhouette_average", "silhouette_per_point", "elbow"]
+        metrics: ["silhouette_average", "silhouette_per_point", "elbow", "descriptive_stats" ]
         params:
           # For elbow: range of k to scan
           k_min: 2
@@ -355,6 +355,8 @@ pipelines:
           step: 1
           # optional prefix for saved evaluator plot filenames
           prefix: "clustering_kmeans_mini_eval"
+
+
 
   - name: clustering_kmeans
     type: pipelines.clustering_pipeline.ClusteringPipeline
