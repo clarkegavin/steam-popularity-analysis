@@ -14,13 +14,12 @@ from collections import Counter
 from vectorizers import VectorizerFactory
 from models import ModelFactory
 from reducers import ReducerFactory
-
-from sklearn.decomposition import TruncatedSVD
-from sklearn.preprocessing import Normalizer
-from sklearn.pipeline import make_pipeline
+from evaluators import EvaluatorFactory
 
 class ClusteringPipeline(Pipeline):
     def __init__(self, **params):
+        # Ensure parent initializer is called with a default name to satisfy base contract
+        super().__init__(name=params.get("name", "clustering_pipeline"))
         self.logger = get_logger("ClusteringPipeline")
 
         self.name = params.get("name", "clustering_pipeline")
@@ -56,7 +55,18 @@ class ClusteringPipeline(Pipeline):
         self.dimensions = visualisations_params.get("dimensions", 2)
         self.plotter = VisualisationFactory.get_visualisation(visualisations_name, **visualisations_params)
 
-    def execute(self, df):
+        # Evaluator configuration
+        evaluator_cfg = params.get("evaluator", {}) or {}
+        # allow legacy keys at top-level
+        evaluator_name = params.get("evaluator_name") or evaluator_cfg.get("name") or params.get("evaluator_name")
+        self.evaluator_metrics = evaluator_cfg.get("metrics") or params.get("metrics") or []
+        self.evaluator_params = evaluator_cfg.get("params") or {}
+        self.evaluator = None
+        if evaluator_name:
+            self.evaluator = EvaluatorFactory.get_evaluator(evaluator_name, plotter_name=visualisations_name, plotter_params=visualisations_params)
+
+    def execute(self, df=None):
+        # match base signature (data=None) and accept dataframe
         self.logger.info("Starting clustering pipeline")
 
         # Filter genre
@@ -122,6 +132,15 @@ class ClusteringPipeline(Pipeline):
 
         # Attach cluster labels
         df["cluster"] = labels
+
+        # Run evaluator if configured
+        if self.evaluator is not None and self.evaluator_metrics:
+            try:
+                self.logger.info(f"Running evaluator {self.evaluator.name} metrics={self.evaluator_metrics}")
+                eval_results = self.evaluator.evaluate(df if hasattr(df, 'to_numpy') else df.values, labels, clusterer=self.clusterer, metrics=self.evaluator_metrics, params=self.evaluator_params)
+                self.logger.info(f"Evaluator results: {eval_results}")
+            except Exception as e:
+                self.logger.error(f"Error running evaluator: {e}")
 
         if self.vectorizer is not None:
         # Optional: extract cluster keywords
