@@ -32,11 +32,12 @@ pipelines:
     filter_features:
       - name: drop_columns
         params:
-          columns_to_drop: [ 'Id', 'AppID', 'Name',  'Type', 'URL', 'Tags', 'Price_Currency', 'Review_Score_Desc', 'Metacritic_URL',
+          columns_to_drop: [#'Id', 'AppID', 'Name',
+                             'Type', 'URL', 'Tags', 'Price_Currency', 'Review_Score_Desc', 'Metacritic_URL',
                              'Current_Players_Last_Updated', 'Content_Descriptors',
           #                   'Developers', 'Publishers'
           ]
-#
+#i
 #
 #  - name: eda #output correlations before exploding columns
 #    type: pipelines.eda_pipeline.EDAPipeline
@@ -324,9 +325,11 @@ pipelines:
         name: kmeans_mini
         params:
           n_clusters: 5
-          n_init: auto
-          max_iter: 300
+          n_init: 20
+          max_iter: 500
           random_state: 42
+          batch_size: 2048
+          reassignment_ratio: 0.01
           #algorithm: 'elkan'
           #verbose: 1
       reducer:
@@ -345,16 +348,23 @@ pipelines:
             title: "KMeans Clustering"
             dimensions: 3
       # Example: evaluator configuration for clustering
-      evaluator:
-        name: clustering
-        metrics: ["silhouette_average", "silhouette_per_point", "elbow"]
-        params:
-          # For elbow: range of k to scan
-          k_min: 2
-          k_max: 10
-          step: 1
-          # optional prefix for saved evaluator plot filenames
-          prefix: "clustering_kmeans_mini_eval"
+      evaluators:
+        - name: clustering_quality
+          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+          params:
+            k_min: 2
+            k_max: 10
+            step: 1
+            prefix: "clustering_kmeans_mini_quality"
+            output_dir: "output/clustering_kmeans_mini"
+        - name: cluster_profile
+          metrics: [ "descriptive_stats" ]
+          params:
+            top_n: 10
+            prefix: "clustering_kmeans_mini_profile"
+            output_dir: "output/clustering_kmeans_mini"
+
+
 
   - name: clustering_kmeans
     type: pipelines.clustering_pipeline.ClusteringPipeline
@@ -384,13 +394,18 @@ pipelines:
             zlabel: "Dim 3"
             title: "KMeans Clustering"
             dimensions: 3
-      evaluator:
-        name: clustering
-        metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
-        params:
-          # For elbow: range of k to scan
-          k_min: 2
-          k_max: 10
-          step: 1
-          # optional prefix for saved evaluator plot filenames
-          prefix: "clustering_kmeans_mini_eval"
+      evaluators:
+        - name: clustering_quality
+          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+          params:
+            k_min: 2
+            k_max: 10
+            step: 1
+            prefix: "clustering_kmeans_quality"
+            output_dir: "output/clustering_kmeans"
+        - name: cluster_profile
+          metrics: [ "descriptive_stats" ]
+          params:
+            top_n: 10
+            prefix: "clustering_kmeans_profile"
+            output_dir: "output/clustering_kmeans"
