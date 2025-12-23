@@ -315,20 +315,20 @@ class ClusteringEvaluator:
                                 str(cl): float(val)
                                 for cl, val in proportions.items()
                             }
-                            # Optional: bar chart
-                            fig, ax = plt.subplots(figsize=(6, 4))
-                            ax.bar(
-                                [str(c) for c in proportions.index],
-                                proportions.values
-                            )
-                            ax.set_title(f"{col} prevalence by cluster")
-                            ax.set_xlabel("cluster")
-                            ax.set_ylabel("proportion")
-
-                            prefix = params.get("prefix", self.name)
-                            fname = f"{prefix}_{col}_proportion_by_cluster.png"
-                            self._save_fig(fig, fname)
-                            plt.close(fig)
+                            # # Optional: bar chart
+                            # fig, ax = plt.subplots(figsize=(6, 4))
+                            # ax.bar(
+                            #     [str(c) for c in proportions.index],
+                            #     proportions.values
+                            # )
+                            # ax.set_title(f"{col} prevalence by cluster")
+                            # ax.set_xlabel("cluster")
+                            # ax.set_ylabel("proportion")
+                            #
+                            # prefix = params.get("prefix", self.name)
+                            # fname = f"{prefix}_{col}_proportion_by_cluster.png"
+                            # self._save_fig(fig, fname)
+                            # plt.close(fig)
 
                         except Exception as e:
                             self.logger.error(f"Error computing binary sparse descriptive for {col}: {e}")

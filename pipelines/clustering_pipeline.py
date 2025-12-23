@@ -56,15 +56,28 @@ class ClusteringPipeline(Pipeline):
         self.dimensions = visualisations_params.get("dimensions", 2)
         self.plotter = VisualisationFactory.get_visualisation(visualisations_name, **visualisations_params)
 
-        # Evaluator configuration
-        evaluator_cfg = params.get("evaluator", {}) or {}
-        # allow legacy keys at top-level
-        evaluator_name = params.get("evaluator_name") or evaluator_cfg.get("name") or params.get("evaluator_name")
-        self.evaluator_metrics = evaluator_cfg.get("metrics") or params.get("metrics") or []
-        self.evaluator_params = evaluator_cfg.get("params") or {}
-        self.evaluator = None
-        if evaluator_name:
-            self.evaluator = EvaluatorFactory.get_evaluator(evaluator_name, plotter_name=visualisations_name, plotter_params=visualisations_params)
+        # # Evaluator configuration
+        # evaluator_cfg = params.get("evaluator", {}) or {}
+        # # allow legacy keys at top-level
+        # evaluator_name = params.get("evaluator_name") or evaluator_cfg.get("name") or params.get("evaluator_name")
+        # self.evaluator_metrics = evaluator_cfg.get("metrics") or params.get("metrics") or []
+        # self.evaluator_params = evaluator_cfg.get("params") or {}
+        # self.evaluator = None
+        # if evaluator_name:
+        #     self.evaluator = EvaluatorFactory.get_evaluator(evaluator_name, plotter_name=visualisations_name, plotter_params=visualisations_params)
+
+        self.evaluators = []
+        for cfg in params.get("evaluators", []):
+            self.logger.info(f"Setting up evaluator '{cfg}'")
+            evaluator = EvaluatorFactory.get_evaluator(
+                cfg["name"],
+                params = cfg.get("params", {}),
+                plotter_name=visualisations_name,
+                plotter_params=visualisations_params
+            )
+            if evaluator:
+                self.evaluators.append((evaluator, cfg))
+
 
     def execute(self, df=None):
         # match base signature (data=None) and accept dataframe
@@ -78,24 +91,38 @@ class ClusteringPipeline(Pipeline):
         # texts = df_filtered[self.text_field].fillna("").tolist()
         # self.logger.info(f"Filtered records: {len(texts)}")
 
+        # Keep original dataframe with IDs for saving and descriptive stats
         df_original = df.copy()
+
+        # drop id, appid and name columns if present for clustering
+        cols_to_drop = [col for col in ['Id', 'AppId', 'Name'] if col in df.columns]
+        df_for_clustering = df_original.drop(columns=cols_to_drop, errors='ignore')
+        self.logger.info(f"Dropped columns {cols_to_drop}, shape for clustering: {df_for_clustering.shape}")
+
+        # if cols_to_drop:
+        #     self.logger.info(f"Dropping columns: {cols_to_drop}")
+        #     df = df.drop(columns=cols_to_drop)
+        # self.logger.info(f"DataFrame shape after dropping id/appid/name columns: {df.shape}")
+
         # Vectorize
         if self.vectorizer is not None:
             self.logger.info(f"Vectorizing texts using {self.vectorizer.name}")
-            df = self.vectorizer.fit_transform(df)
+            X_cluster = self.vectorizer.fit_transform(df_for_clustering)
             self.logger.info(f"Vectorized shape: {df.shape}")
+        else:
+            self.logger.info("No vectorizer configured, using original dataframe for clustering")
+            X_cluster = df_for_clustering.copy()
 
         # Reduce
-        df.columns = df.columns.astype(str) # ensure columns are str for reducers
+        X_cluster.columns = X_cluster.columns.astype(str) # ensure columns are str for reducers
         for reducer in self.reducers:
             self.logger.info(f"Reducing dimensions using {reducer.name}")
-            df = reducer.fit_transform(df)
-            self.logger.info(f"Shape after {reducer.name}: {df.shape}")
+            X_cluster = reducer.fit_transform(X_cluster)
+            self.logger.info(f"Shape after {reducer.name}: {X_cluster.shape}")
 
         # Cluster
         self.logger.info(f"Clustering using {self.clusterer.name}")
-        labels = self.clusterer.fit_predict(df)
-        self.logger.info(type(self.clusterer))
+        labels = self.clusterer.fit_predict(X_cluster)
         probabilities = self.clusterer.probabilities_ if hasattr(self.clusterer, "probabilities_") else None
         self.logger.info(f"Cluster labels assigned: {set(labels)}")
         if probabilities is not None:
@@ -109,7 +136,7 @@ class ClusteringPipeline(Pipeline):
         self.logger.info(f"Reducing dimensions using {viz_reducer}")
         # dimensions = self.dimensions
         # self.reducer.set_components(dimensions)
-        X_reduced = viz_reducer.fit_transform(df)
+        X_reduced = viz_reducer.fit_transform(X_cluster)
         self.logger.info(f"Reduced shape: {X_reduced.shape}")
 
         # Plot
@@ -118,7 +145,7 @@ class ClusteringPipeline(Pipeline):
         self.logger.info("Cluster plot generated")
         plot_path = os.path.join(self.plotter.output_dir, f"{self.name}_cluster_plot.png")
         self.plotter.save(fig, plot_path)
-        self.plotter.save_embeddings(X_reduced, labels, df, prefix=f"{self.name}_clustering_pipeline")
+        self.plotter.save_embeddings(X_reduced, labels, df_original, prefix=f"{self.name}_clustering_pipeline")
         self.logger.info(f"Cluster plot saved as '{self.name}_cluster_plot.png'")
         self.plotter.save_interactive_plot(X_reduced, labels, prefix=f"{self.name}_cluster_plot")
         if probabilities is not None:
@@ -131,10 +158,10 @@ class ClusteringPipeline(Pipeline):
 
         # Attach cluster labels
         df_original["cluster"] = labels
-        df_original = df_original.copy()
-        df_with_labels = df_original.apply(
-            lambda s: s.astype(float) if isinstance(s.dtype, pd.Int64Dtype) else s
-        )
+        # Convert nullable Int64 to float for CSV compatibility
+        for col in df_original.columns:
+            if isinstance(df_original[col].dtype, pd.Int64Dtype):
+                df_original[col] = df_original[col].astype(float)
 
         # save dataframe with cluster labels
         output_path = os.path.join(self.plotter.output_dir, f"{self.name}_clustered_data.csv")
@@ -144,14 +171,38 @@ class ClusteringPipeline(Pipeline):
         except Exception as e:
             self.logger.error(f"Error saving clustered data to {output_path}: {e}")
 
-        # Run evaluator if configured
-        if self.evaluator is not None and self.evaluator_metrics:
-            try:
-                self.logger.info(f"Running evaluator {self.evaluator.name} metrics={self.evaluator_metrics}")
-                eval_results = self.evaluator.evaluate(df_original if hasattr(df_original, 'to_numpy') else df_original.values, labels, clusterer=self.clusterer, metrics=self.evaluator_metrics, params=self.evaluator_params)
-                self.logger.info(f"Evaluator results: {eval_results}")
-            except Exception as e:
-                self.logger.error(f"Error running evaluator: {e}")
+        # # Run evaluator if configured
+        # if self.evaluator is not None and self.evaluator_metrics:
+        #     try:
+        #         self.logger.info(f"Running evaluator {self.evaluator.name} metrics={self.evaluator_metrics}")
+        #         eval_results = self.evaluator.evaluate(df_original if hasattr(df_original, 'to_numpy') else df_original.values, labels, clusterer=self.clusterer, metrics=self.evaluator_metrics, params=self.evaluator_params)
+        #         self.logger.info(f"Evaluator results: {eval_results}")
+        #     except Exception as e:
+        #         self.logger.error(f"Error running evaluator: {e}")
+
+        for evaluator, cfg in self.evaluators:
+            self.logger.info(f"Running evaluator {evaluator.name} with config {cfg}")
+            metrics = cfg.get("metrics", [])
+            params = cfg.get("params", {})
+
+            if evaluator.name == "clustering_quality":
+                self.logger.info("Evaluating clustering quality")
+                evaluator.evaluate(
+                    X_cluster,
+                    labels,
+                    clusterer=self.clusterer,
+                    metrics=metrics,
+                    params=params
+                )
+
+            elif evaluator.name == "cluster_profile":
+                self.logger.info("Evaluating cluster profile")
+                evaluator.evaluate(
+                    df_original,
+                    labels,
+                    metrics=metrics,
+                    params=params
+                )
 
         if self.vectorizer is not None:
         # Optional: extract cluster keywords
