@@ -32,6 +32,16 @@ class ClusterProfileEvaluator:
         df = df.copy()
         df["cluster"] = labels
 
+        # ---- success metric ----
+        required_cols = {"Total_Reviews", "Review_Score"}
+        if required_cols.issubset(df.columns):
+            df["success_index"] = np.log1p(df["Total_Reviews"]) * df["Review_Score"]
+        else:
+            self.logger.warning(
+                "Missing columns for success_index; skipping success metric"
+            )
+            df["success_index"] = np.nan
+
         # ---------------- numeric ----------------
         # exclude sparse numeric columns as they are likely binary indicators and handled separately
         numeric_cols = [
@@ -79,11 +89,46 @@ class ClusterProfileEvaluator:
             top = counts.sum().sort_values(ascending=False).head(top_n).index
             results["categorical_summary"][col] = counts[top].to_dict()
 
+        # ---------------- success summary ----------------
+        results["success_summary"] = {}
+        self.logger.info("Generating success index summary by cluster")
+        if "success_index" in df.columns:
+            grp = df.groupby("cluster")["success_index"]
+
+            summary = grp.agg(
+                count="count",
+                mean="mean",
+                median="median",
+                std="std",
+                min="min",
+                max="max",
+            )
+
+            results["success_summary"] = summary.to_dict()
+
+            # Boxplot
+            fig, ax = plt.subplots(figsize=(8, 6))
+            data = [
+                df[df.cluster == c]["success_index"].dropna()
+                for c in sorted(df.cluster.unique())
+            ]
+            ax.boxplot(data, labels=sorted(df.cluster.unique()))
+            ax.set_title("Success Index by Cluster")
+            ax.set_ylabel("Success Index")
+
+            self._save_fig(fig, f"{self.name}_success_index_boxplot.png")
+            self.logger.info("Generated success index summary by cluster")
+
         # Persist CSVs for  interpretation
         self.logger.info("Saving cluster profile summaries to CSV")
         self._save_numeric_csv(results["numeric_summary"])
         self._save_binary_csv(results["binary_sparse_summary"])
         self._save_categorical_csv(results["categorical_summary"])
+
+        self.logger.info("Saved cluster profile summaries to CSV")
+        if "success_index" in df.columns:
+            self.logger.info("Saving cluster success ranking to CSV")
+            self._save_cluster_ranking(df)
 
         return results
 
@@ -136,3 +181,24 @@ class ClusterProfileEvaluator:
         path = os.path.join(self.output_dir, f"{self.name}_categorical_summary.csv")
         df.to_csv(path, index=False)
         self.logger.info(f"Saved categorical summary data to {path}")
+
+    def _save_cluster_ranking(self, df):
+        self.logger.info("Computing cluster success ranking")
+        ranking = (
+            df.groupby("cluster")["success_index"]
+            .agg(
+                n_games="count",
+                median_success="median",
+                mean_success="mean",
+                top_25_pct=lambda x: x.quantile(0.75),
+            )
+            .sort_values("median_success", ascending=False)
+            .reset_index()
+        )
+
+        ranking["rank"] = range(1, len(ranking) + 1)
+
+        path = os.path.join(self.output_dir, f"{self.name}_cluster_success_ranking.csv")
+        ranking.to_csv(path, index=False)
+
+        self.logger.info(f"Saved cluster success ranking to {path}")

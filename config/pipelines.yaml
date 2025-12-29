@@ -20,61 +20,87 @@ pipelines:
             keep: "first"
             case_sensitive: false
             dropna: true
-        - name: filter_rows
-          params:
-            field: "Release_Date"
-            values: [ null ]
-            operator: "in"
-            case_sensitive: false
+
+
+  - name: filter_features
+    type: pipelines.filter_pipeline.FilterPipeline
+    filter_features:
+      - name: filter_rows
+        params:
+          field: "Release_Date"
+          values: [ '2025-12-31' ]
+          operator: "gt"
+          include: false #excludes rows after this date
+          case_sensitive: false
+      - name: filter_rows
+        params:
+          field: "Release_Date"
+          values: [null ]
+          operator: "in"
+          include: false #excludes null rows
+
+
+#  - name: preprocessing
+#    type: pipelines.preprocessing_pipeline.PreprocessingPipeline
+#    params:
+#      #text_field: 'Developers'
+#      preprocessors:
+##        - name: lowercase
+##          applies_to: text
+#        - name: temporal_features
+#          applies_to: data   # <-- important: temporal features operate on the DataFrame
+#          params:
+#            date_column: 'Release_Date'
+#            days_since: true
+#            prefix: 'release'
+#            quarter: true
+#            quarter_format: 'int'
 
   - name: filter_features
     type: pipelines.filter_pipeline.FilterPipeline
     filter_features:
       - name: drop_columns
         params:
-          columns_to_drop: [#'Id', 'AppID', 'Name',
-                             'Type', 'URL', 'Tags', 'Price_Currency', 'Review_Score_Desc', 'Metacritic_URL',
-                             'Current_Players_Last_Updated', 'Content_Descriptors',
-          #                   'Developers', 'Publishers'
+          columns_to_drop: ['Id', 'AppID', 'Name',  'Type', 'URL', 'Tags',
+                            'Price_Currency', 'Metacritic_URL',  'Metacritic_Score',
+                             'Content_Descriptors', 'Current_Players_Last_Updated',
+
           ]
-#i
-#
+
+
 #  - name: eda #output correlations before exploding columns
 #    type: pipelines.eda_pipeline.EDAPipeline
 #    params:
 #      save_path: "output/eda"
 #      steps:
-#        - name: describe_info
-#        - name: duplicate_check # after duplicates have been removed
+##        - name: describe_info
+##        - name: duplicate_check # after duplicates have been removed
 #        - name: boxplots
 #          params:
-#            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type',
-#                               'Current_Players_Last_Updated', 'Release_Date', 'Genres', 'Platforms',
-#                               'Categories', 'Supported_Languages', 'Review_Score_Desc']
+#            exclude_columns: [ 'Release_Date']
 #            filename: "boxplots_before_log_transform.png"
 #        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
 #          params:
 #            exclude_columns: [ 'Release_Date']
 #            annot: true
 #            cmap: "coolwarm"
-#            max_rows: 10000
-#            #log_transform_columns: [ 'Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
+#            max_rows: 20000
 #            filename: "correlation_matrix_before_log_transform.png"
 #        - name: class_balance
 #          params:
-#            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'Release_Date', 'Current_Players_Last_Updated']
+#            exclude_columns: ['Release_Date']
 #            label_max_chars: 10
 #            top_n: 15
 #            filename: "class_balance_before_log_transform.png"
-#            #log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
+#
 #
 #       # EDA After Log Transform
 #        - name: boxplots
 #          params:
-#            exclude_columns: [ 'Id', 'AppId', 'Name',
-#                               'Current_Players_Last_Updated', 'Release_Date', 'Genres', 'Platforms',
-#                               'Categories', 'Supported_Languages', 'Review_Score_Desc' ]
-#            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations' ]
+#            exclude_columns: [ 'Release_Date']
+#            log_transform_columns: ['Price_Initial', 'Price_Final', 'Total_Reviews',
+#                                    'Total_Positive', 'Total_Negative', 'Recommendations',
+#                                    'Current_Players']
 #            filename: "boxplots_after_log_transform.png"
 #
 #        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
@@ -83,38 +109,23 @@ pipelines:
 #            exclude_columns: ['Release_Date']
 #            annot: true
 #            cmap: "coolwarm"
-#            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Negative', 'Recommendations' ]
-#            max_rows: 10000
+#            log_transform_columns: [ 'Price_Initial', 'Price_Final', 'Total_Reviews',
+#                                     'Total_Positive', 'Total_Negative', 'Recommendations',
+#                                     'Current_Players' ]
+#            max_rows: 20000
 #            filename: "correlation_matrix_after_log_transform.png"
 #        - name: class_balance
 #          params:
-#            exclude_columns: [ 'Id', 'AppId', 'Name', 'Type', 'URL', 'Metacritic_URL', 'Release_Date', 'Current_Players_Last_Updated' ]
+#            exclude_columns: [ 'Release_Date']
 #            label_max_chars: 10
 #            top_n: 15
-#            log_transform_columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations', 'Price_Initial', 'Price_Final' ]
+#            log_transform_columns: [ 'Price_Initial', 'Price_Final', 'Total_Reviews',
+#                                     'Total_Positive', 'Total_Negative', 'Recommendations',
+#                                     'Current_Players' ]
 #            filename: "class_balance_after_log_transform.png"
-#
 
-  - name: data_cleanup
-    type: pipelines.data_cleanup_pipeline.DataCleanupPipeline
-    params:
-      # cleanup_steps is a list of preprocessors (built via PreprocessorFactory)
-      cleanup_steps:
-#        - name: explode_columns #only do this after EDA to see correlations
-#          params:
-#            columns: ['Platforms', 'Categories', 'Supported_Languages', 'Genres']
-#            sep: ","
-        - name: remove_html_tags
-          params:
-            columns: ['Supported_Languages']
-            br_replace: ', '     # optional: replace <br> with ', ' or use ' / ' etc.
-            strip: true           # optional: default true
-        - name: log_transform
-          params:
-            columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations']
-            method: 'log1p'
-            shift: true
-            suffix: ''  # empty means replace original columns; set to '_log' to persist alongside originals
+
+
 
 
 #  - name: eda
@@ -178,7 +189,69 @@ pipelines:
     filter_features:
       - name: drop_columns
         params:
-          columns_to_drop:  ['Release_Date']
+          columns_to_drop:  ['Release_Date', 'Developers', 'Publishers']
+
+  - name: data_cleanup
+    type: pipelines.data_cleanup_pipeline.DataCleanupPipeline
+    params:
+      # cleanup_steps is a list of preprocessors (built via PreprocessorFactory)
+      cleanup_steps:
+#        - name: explode_columns #only do this after EDA to see correlations
+#          params:
+#            columns: ['Platforms', 'Categories', 'Supported_Languages', 'Genres']
+#            sep: ","
+        - name: remove_html_tags
+          params:
+            columns: ['Supported_Languages']
+            br_replace: ', '     # optional: replace <br> with ', ' or use ' / ' etc.
+            strip: true           # optional: default true
+        - name: log_transform
+          params:
+            columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations', 'catalog_count_Developers', 'catalog_count_Publishers' ]
+            method: 'log1p'
+            shift: true
+            suffix: ''  # empty means replace original columns; set to '_log' to persist alongside originals
+
+#
+#  - name: eda #output correlations before exploding columns
+#    type: pipelines.eda_pipeline.EDAPipeline
+#    params:
+#      save_path: "output/eda"
+#      steps:
+#
+#       # EDA After Log Transform
+#        - name: boxplots
+#          params:
+#            exclude_columns: [ 'Release_Date']
+#            log_transform_columns: ['Price_Initial', 'Price_Final', 'Total_Reviews',
+#                                    'Total_Positive', 'Total_Negative', 'Recommendations',
+#                                    'Current_Players']
+#            filename: "boxplots_after_feature_engineering.png"
+#        - name: dython_correlation_matrix #NOTE: Execute feature engineering before this step so that we can see correlations for temporal data
+#          params:
+#            exclude_columns: ['Release_Date']
+#            annot: true
+#            cmap: "coolwarm"
+#            log_transform_columns: [ 'Price_Initial', 'Price_Final', 'Total_Reviews',
+#                                     'Total_Positive', 'Total_Negative', 'Recommendations',
+#                                     'Current_Players' ]
+#            max_rows: 20000
+#            filename: "correlation_matrix_after_feature_engineering.png"
+#        - name: class_balance
+#          params:
+#            #Exclude everything except the feature engineered columns
+#            exclude_columns: [ 'Is_Free', 'Developers', 'Publishers', 'Platforms',
+#                               'Categories', 'Genres', 'Supported_Languages',
+#                               'Price_Initial', 'Price_Final', 'Price_Discount_Percent',
+#                                 'Total_Reviews', 'Total_Positive', 'Total_Negative',
+#                               'Review_Score', 'Review_Score_Desc', 'Recommendations',
+#                               'Release_Date', 'Current_Players'
+#            ]
+#            label_max_chars: 10
+#            top_n: 15
+#            log_transform_columns: [ 'release_days_since' ]
+#            filename: "class_balance_after_feature_engineering.png"
+
 
   - name: imputation
     type: pipelines.imputer_pipeline.ImputerPipeline
@@ -186,11 +259,37 @@ pipelines:
       imputers:
         - name: simple
           params:
-            columns: [ 'Current_Players', 'Platforms', 'Categories', 'Genres', 'Supported_Languages',
-                      'Price_Initial', 'Price_Final', 'Price_Discount_Percent', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations',
-                      'Metacritic_Score', 'Is_Free', 'release_days_since' ]
+            columns: [ 'Current_Players',
+                      'Price_Initial', 'Price_Final', 'Price_Discount_Percent',  'Recommendations',
+                      #  'Total_Reviews', 'Total_Positive', 'Total_Negative' # These are the result metrics, so should be excluded
+            ]
             numeric_strategy: 'zero'
             text_strategy: 'UNKNOWN'
+        - name: simple
+          params:
+            columns: [  'Platforms' ]
+            text_strategy: '__UNKNOWN_PLATFORMS__'
+        - name: simple
+          params:
+            columns: [ 'Categories' ]
+            text_strategy: '__UNKNOWN_CATEGORIES__'
+        - name: simple
+          params:
+            columns: [ 'Genres' ]
+            text_strategy: '__UNKNOWN_GENRES__'
+        - name: simple
+          params:
+            columns: [ 'Supported_Languages' ]
+            text_strategy: '__UNKNOWN_SUPPORTED_LANGUAGES__'
+#        - name: simple
+#          params:
+#            columns: [ 'Developers' ]
+#            text_strategy: '__UNKNOWN_DEVELOPERS__'
+#        - name: simple
+#          params:
+#            columns: [ 'Publishers' ]
+#            text_strategy: '__UNKNOWN_PUBLISHERS__'
+
         - name: simple
           params:
             columns: [ 'Review_Score' ]
@@ -222,54 +321,6 @@ pipelines:
       columns: ['Current_Players', 'Total_Reviews', 'Total_Negative', 'Total_Positive', 'Recommendations' ]
 
 
-#  # anything that changes the shape of the data will need to be in this cleanup block
-#  - name: data_cleanup
-#    type: pipelines.data_cleanup_pipeline.DataCleanupPipeline
-#    params:
-#      # cleanup_steps is a list of preprocessors (built via PreprocessorFactory)
-#      cleanup_steps:
-#        - name: remove_duplicates
-#          params:
-#            field: "gameID"
-#            keep: "first"
-#            case_sensitive: false
-#            dropna: true
-##        - name: filter_rows
-##          params:
-##            field: "Genre"
-##            values: [ "All" ]
-##            operator: "equals"
-##            case_sensitive: false
-#        - name: filter_rows
-#          params:
-#            field: "Description"
-#            values: [null, ""]
-#            operator: "in"
-#            case_sensitive: false
-#        - name: merge_features
-#          params:
-#            columns: ["Description", "Title"]
-#            merge_to: "Description"
-#        - name: remove_urls
-#          params:
-#            field: "Description"
-#            pattern: 'https?://\S+|www\.\S+'
-#        - name: remove_repeated_characters
-#          params:
-#            field: "Description"
-#            pattern: "(.)\\1{2,}"
-#        - name: remove_punctuation_noise
-#          params:
-#            field: "Description"
-#            pattern: '([!?.,])\1+'
-#        - name: remove_whitespace
-#          params:
-#            field: "Description"
-#        - name: stopword_remover
-#          params:
-#            language: "english"
-#            lower: true
-#            field: "Description"
 
 #------------------------------------------------------------
 # Clustering
@@ -317,95 +368,95 @@ pipelines:
 #            label_min_cluster_size: 250
 #            dimensions: 3
 
-  - name: clustering_kmeans_mini
-    type: pipelines.clustering_pipeline.ClusteringPipeline
-    params:
-      #text_field: "Description"
-      clusterer:
-        name: kmeans_mini
-        params:
-          n_clusters: 5
-          n_init: 20
-          max_iter: 500
-          random_state: 42
-          batch_size: 2048
-          reassignment_ratio: 0.01
-          #algorithm: 'elkan'
-          #verbose: 1
-      reducer:
-        - name: truncated_svd
-          params:
-            n_components: 50
-            random_state: 42
-      visualisations:
-         name: cluster_plot
-         params:
-            output_dir: "output/clustering_kmeans_mini"
-            figsize: [10, 8]
-            xlabel: "Dim 1"
-            ylabel: "Dim 2"
-            zlabel: "Dim 3"
-            title: "KMeans Clustering"
-            dimensions: 3
-      # Example: evaluator configuration for clustering
-      evaluators:
-        - name: clustering_quality
-          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
-          params:
-            k_min: 2
-            k_max: 10
-            step: 1
-            prefix: "clustering_kmeans_mini_quality"
-            output_dir: "output/clustering_kmeans_mini"
-        - name: cluster_profile
-          metrics: [ "descriptive_stats" ]
-          params:
-            top_n: 10
-            prefix: "clustering_kmeans_mini_profile"
-            output_dir: "output/clustering_kmeans_mini"
-
-
-
-  - name: clustering_kmeans
-    type: pipelines.clustering_pipeline.ClusteringPipeline
-    params:
-      #text_field: "Description"
-      clusterer:
-        name: kmeans
-        params:
-          n_clusters: 5
-          n_init: auto
-          max_iter: 300
-          random_state: 42
-          algorithm: 'elkan'
-          #verbose: 1
-      reducer:
-        - name: truncated_svd
-          params:
-            n_components: 50
-            random_state: 42
-      visualisations:
-         name: cluster_plot
-         params:
-            output_dir: "output/clustering_kmeans"
-            figsize: [10, 8]
-            xlabel: "Dim 1"
-            ylabel: "Dim 2"
-            zlabel: "Dim 3"
-            title: "KMeans Clustering"
-            dimensions: 3
-      evaluators:
-        - name: clustering_quality
-          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
-          params:
-            k_min: 2
-            k_max: 10
-            step: 1
-            prefix: "clustering_kmeans_quality"
-            output_dir: "output/clustering_kmeans"
-        - name: cluster_profile
-          metrics: [ "descriptive_stats" ]
-          params:
-            top_n: 10
-            prefix: "clustering_kmeans_profile"
-            output_dir: "output/clustering_kmeans"
+#  - name: clustering_kmeans_mini
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      #text_field: "Description"
+#      clusterer:
+#        name: kmeans_mini
+#        params:
+#          n_clusters: 5
+#          n_init: 20
+#          max_iter: 500
+#          random_state: 42
+#          batch_size: 2048
+#          reassignment_ratio: 0.01
+#          #algorithm: 'elkan'
+#          #verbose: 1
+#      reducer:
+#        - name: truncated_svd
+#          params:
+#            n_components: 50
+#            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_kmeans_mini"
+#            figsize: [10, 8]
+#            xlabel: "Dim 1"
+#            ylabel: "Dim 2"
+#            zlabel: "Dim 3"
+#            title: "KMeans Clustering"
+#            dimensions: 3
+#      # Example: evaluator configuration for clustering
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_kmeans_mini_quality"
+#            output_dir: "output/clustering_kmeans_mini"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_mini_profile"
+#            output_dir: "output/clustering_kmeans_mini"
+#
+#
+#
+#  - name: clustering_kmeans
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      #text_field: "Description"
+#      clusterer:
+#        name: kmeans
+#        params:
+#          n_clusters: 5
+#          n_init: auto
+#          max_iter: 300
+#          random_state: 42
+#          algorithm: 'elkan'
+#          #verbose: 1
+#      reducer:
+#        - name: truncated_svd
+#          params:
+#            n_components: 50
+#            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_kmeans"
+#            figsize: [10, 8]
+#            xlabel: "Dim 1"
+#            ylabel: "Dim 2"
+#            zlabel: "Dim 3"
+#            title: "KMeans Clustering"
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_kmeans_quality"
+#            output_dir: "output/clustering_kmeans"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_kmeans"

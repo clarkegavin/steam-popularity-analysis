@@ -94,8 +94,9 @@ class ClusteringPipeline(Pipeline):
         # Keep original dataframe with IDs for saving and descriptive stats
         df_original = df.copy()
 
-        # drop id, appid and name columns if present for clustering
-        cols_to_drop = [col for col in ['Id', 'AppId', 'Name'] if col in df.columns]
+        # drop id, appid and name columns if present for clustering.
+        # Total Reviews/Total_Positive/Total_Negative are also dropped to avoid leakage as these form the success metrics
+        cols_to_drop = [col for col in ['Id', 'AppId', 'Name', 'Total_Reviews', 'Total_Positive', 'Total_Negative'] if col in df.columns]
         df_for_clustering = df_original.drop(columns=cols_to_drop, errors='ignore')
         self.logger.info(f"Dropped columns {cols_to_drop}, shape for clustering: {df_for_clustering.shape}")
 
