@@ -44,31 +44,40 @@ class SimpleImputer(Imputer):
             raise ValueError("SimpleImputer.fit expects a pandas DataFrame")
 
         cols = self.columns or list(X.columns)
+        self.logger.info(f"Imputer - Fitting columns: {cols}")
 
         # build mask for filtering if requested
         if self.filter_column and self.filter_column in X.columns:
             if isinstance(self.filter_value, (list, tuple, set)):
                 mask = X[self.filter_column].isin(list(self.filter_value))
             else:
-                mask = X[self.filter_column] == self.filter_value
+                #mask = X[self.filter_column] == self.filter_value
+                mask = X[self.filter_column].astype(str) == str(self.filter_value)
             self.logger.info(f"Imputer - Using filter on column '{self.filter_column}' for fit with value(s)={self.filter_value}")
         else:
             mask = pd.Series([True] * len(X), index=X.index)
             if self.filter_column:
                 self.logger.warning(f"Imputer - filter_column '{self.filter_column}' not found in DataFrame; proceeding without filter")
 
+        self.logger.info(f"Imputer Mask Summary: {mask.sum()} rows selected out of {len(X)} total")
+
         for c in cols:
+            self.logger.info(f"Imputer - Processing column '{c}'")
             if c not in X.columns:
                 self.logger.warning(f"Column '{c}' not found in DataFrame during fit; skipping")
                 continue
 
             ser = X.loc[mask, c]
+            # log type of column
+            self.logger.info(f"Fitting column '{c}' of type {ser.dtype}")
             if pd.api.types.is_numeric_dtype(X[c]):
                 if self.numeric_strategy == 'mean':
                     # compute mean on the filtered subset
+                    self.logger.info(f"Scaling: Computing mean for numeric column '{c}'")
                     mean_val = ser.dropna().astype(float).mean()
                     self.statistics_[c] = mean_val
                 elif self.numeric_strategy == 'zero':
+                    self.logger.info(f"Scaling: Using zero for numeric column '{c}'")
                     self.statistics_[c] = 0
                 else:
                     self.logger.warning(f"Unknown numeric_strategy '{self.numeric_strategy}' - skipping numeric stat for {c}")
@@ -92,7 +101,8 @@ class SimpleImputer(Imputer):
             if isinstance(self.filter_value, (list, tuple, set)):
                 mask = df[self.filter_column].isin(list(self.filter_value))
             else:
-                mask = df[self.filter_column] == self.filter_value
+                #mask = df[self.filter_column] == self.filter_value
+                mask = df[self.filter_column].astype(str) == str(self.filter_value)
             self.logger.info(f"Imputer - Using filter on column '{self.filter_column}' for transform with value(s)={self.filter_value}")
         else:
             mask = pd.Series([True] * len(df), index=df.index)
@@ -109,8 +119,11 @@ class SimpleImputer(Imputer):
                 # compute on the filtered subset (if any) or fallback to overall
                 ser = df.loc[mask, c] if mask.any() else df[c]
                 if pd.api.types.is_numeric_dtype(df[c]):
+                    if self.numeric_strategy == 'mean':
+                        self.logger.info(f"Transform: Computing mean for numeric column '{c}' on the fly")
                     stat = ser.dropna().astype(float).mean()
                 else:
+
                     stat = self.replace_with
 
             try:
@@ -123,9 +136,16 @@ class SimpleImputer(Imputer):
                         df.loc[mask, c] = df.loc[mask, c].fillna(stat)
                     except Exception:
                         # fallback in case of unexpected types
+                        self.logger.info(f"Filling column {c} with {stat} using apply fallback")
                         df.loc[mask, c] = df.loc[mask, c].apply(lambda v: stat if pd.isna(v) else v)
             except Exception as e:
                 self.logger.warning(f"Failed to fill column {c} with {stat}: {e}")
+
+        # --- LOGGING NaNs AFTER IMPUTATION ---
+        for c in cols:
+            n_missing = df[c].isna().sum()
+            if n_missing > 0:
+                self.logger.warning(f"Column '{c}' still has {n_missing} NaN values AFTER imputation")
 
         return df
 

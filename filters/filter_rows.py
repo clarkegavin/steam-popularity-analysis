@@ -112,19 +112,40 @@ class FilterRows(Filter):
         else:
             series_str = series
 
+        # if op in ("in", "not_in"):
+        #     if vals is None:
+        #         # nothing to compare -> no matches
+        #         mask = pd.Series([False] * len(series), index=series.index)
+        #     else:
+        #         # handle None (null) comparison: python None used in YAML for null
+        #         compare_vals = [v for v in vals]
+        #         # if case-insensitive and values are strings, lower them
+        #         if not self.case_sensitive:
+        #             compare_vals = [str(v).lower() if v is not None else v for v in compare_vals]
+        #             mask = series_str.isin(compare_vals)
+        #         else:
+        #             mask = series.isin(compare_vals)
+        #     if op == "not_in":
+        #         mask = ~mask
+        #     return self._normalize_mask(mask, series.index)
         if op in ("in", "not_in"):
             if vals is None:
-                # nothing to compare -> no matches
                 mask = pd.Series([False] * len(series), index=series.index)
             else:
-                # handle None (null) comparison: python None used in YAML for null
-                compare_vals = [v for v in vals]
-                # if case-insensitive and values are strings, lower them
+                # handle None/null comparison
+                mask_nan = series.isna() if any(v is None for v in vals) else pd.Series(False, index=series.index)
+
+                # prepare comparison values for non-null entries
+                compare_vals = [v for v in vals if v is not None]
                 if not self.case_sensitive:
-                    compare_vals = [str(v).lower() if v is not None else v for v in compare_vals]
-                    mask = series_str.isin(compare_vals)
+                    series_comp = series.fillna("").astype(str).str.lower()
+                    compare_vals = [str(v).lower() for v in compare_vals]
                 else:
-                    mask = series.isin(compare_vals)
+                    series_comp = series
+
+                mask_values = series_comp.isin(compare_vals)
+                mask = mask_values | mask_nan
+
             if op == "not_in":
                 mask = ~mask
             return self._normalize_mask(mask, series.index)

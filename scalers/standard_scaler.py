@@ -26,4 +26,5 @@ class StandardDataScaler(Scaler):
     def execute(self, X):
         """Convenience method to fit and transform in one step."""
         self.logger.info("Executing fit_transform on data.")
+
         return self.fit_transform(X)
