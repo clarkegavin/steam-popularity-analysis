@@ -68,11 +68,28 @@ pipelines:
           ]
 
 
-#  - name: eda #output correlations before exploding columns
-#    type: pipelines.eda_pipeline.EDAPipeline
-#    params:
-#      save_path: "output/eda"
-#      steps:
+  - name: eda #output correlations before exploding columns
+    type: pipelines.eda_pipeline.EDAPipeline
+    params:
+      save_path: "output/eda"
+      steps:
+        - name: pair_scatter
+          params:
+            columns: ['Total_Reviews', 'Total_Positive', 'Total_Negative' ]
+            filename: "reviews_scatter_plot.png"
+        - name: pair_scatter
+          params:
+            columns: [ 'Total_Reviews', 'Total_Negative', 'Current_Players' ]
+            filename: "reviews_current_players_scatter_plot.png"
+        - name: pair_scatter
+          params:
+            columns: [ 'Total_Reviews', 'Total_Negative', 'Total_Positive', 'Current_Players', 'Recommendations'  ]
+            filename: "reviews_players_recommendation_scatter_plot.png"
+        - name: pair_scatter
+          params:
+            columns: [ 'Price_Initial', 'Price_Final', 'Price_Discount_Percent' , 'Total_Reviews' ]
+            filename: "price_scatter_plot.png"
+
 ##        - name: describe_info
 ##        - name: duplicate_check # after duplicates have been removed
 #        - name: boxplots
@@ -183,13 +200,71 @@ pipelines:
             sep: ','
             drop_original: true
             prefix: 'num_'
+        - name: count_features
+          applies_to: data
+          params:
+            columns: [ 'Supported_Languages' ]
+            sep: ','
+            drop_original: false
+            prefix: 'num_'
+        - name: count_features
+          applies_to: data
+          params:
+            columns: [ 'Genres' ]
+            sep: ','
+            drop_original: false
+            prefix: 'num_'
+        - name: count_features
+          applies_to: data
+          params:
+            columns: [ 'Platforms' ]
+            sep: ','
+            drop_original: false
+            prefix: 'num_'
+        - name: count_features
+          applies_to: data
+          params:
+            columns: [ 'Categories' ]
+            sep: ','
+            drop_original: false
+            prefix: 'num_'
+        - name: normalise_feature
+          applies_to: data
+          params:
+            numerator: num_Supported_Languages
+            denominator: num_Genres
+            denom_transform: 'log1p'
+            smoothing: 1e-9
+            post_log: true
+            result_col: Languages_per_Genre
+        - name: normalise_feature
+          applies_to: data
+          params:
+            numerator: num_Supported_Languages
+            denominator: num_Platforms
+            denom_transform: 'log1p'
+            smoothing: 1e-9
+            post_log: true
+            result_col: Languages_per_Platform
+        - name: normalise_feature
+          applies_to: data
+          params:
+            numerator: num_Supported_Languages
+            denominator: num_Categories
+            denom_transform: 'log1p'
+            smoothing: 1e-9
+            post_log: true
+            result_col: Languages_per_Category
+
 
   - name: filter_features # DROP RELEASE DATE AFTER  GENERATING TEMPORAL FEATURES
     type: pipelines.filter_pipeline.FilterPipeline
     filter_features:
       - name: drop_columns
         params:
-          columns_to_drop:  ['Release_Date', 'Developers', 'Publishers']
+          columns_to_drop:  ['Release_Date', 'Developers', 'Publishers', 'Supported_Languages', 'Price_Final',
+                             'num_Genres', 'num_Platforms', 'num_Categories' # these were only needed for feature engineering
+          ]
 
   - name: data_cleanup
     type: pipelines.data_cleanup_pipeline.DataCleanupPipeline
@@ -200,11 +275,11 @@ pipelines:
 #          params:
 #            columns: ['Platforms', 'Categories', 'Supported_Languages', 'Genres']
 #            sep: ","
-        - name: remove_html_tags
-          params:
-            columns: ['Supported_Languages']
-            br_replace: ', '     # optional: replace <br> with ', ' or use ' / ' etc.
-            strip: true           # optional: default true
+#        - name: remove_html_tags # only do this if i haven't removed supported_languages/replaced with engineered features
+#          params:
+#            columns: ['Supported_Languages']
+#            br_replace: ', '     # optional: replace <br> with ', ' or use ' / ' etc.
+#            strip: true           # optional: default true
         - name: log_transform
           params:
             columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations', 'catalog_count_Developers', 'catalog_count_Publishers' ]
@@ -212,18 +287,18 @@ pipelines:
             shift: true
             suffix: ''  # empty means replace original columns; set to '_log' to persist alongside originals
 
-#
-#  - name: eda #output correlations before exploding columns
-#    type: pipelines.eda_pipeline.EDAPipeline
-#    params:
-#      save_path: "output/eda"
-#      steps:
-#
-#       # EDA After Log Transform
+
+  - name: eda #output correlations before exploding columns
+    type: pipelines.eda_pipeline.EDAPipeline
+    params:
+      save_path: "output/eda"
+      steps:
+
+       # EDA After Log Transform
 #        - name: boxplots
 #          params:
 #            exclude_columns: [ 'Release_Date']
-#            log_transform_columns: ['Price_Initial', 'Price_Final', 'Total_Reviews',
+#            log_transform_columns: ['Price_Initial', 'Total_Reviews',
 #                                    'Total_Positive', 'Total_Negative', 'Recommendations',
 #                                    'Current_Players']
 #            filename: "boxplots_after_feature_engineering.png"

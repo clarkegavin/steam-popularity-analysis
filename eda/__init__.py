@@ -7,6 +7,7 @@ from .describe_info_eda import DescribeInfoEDA
 from .info_eda import InfoEDA
 from .dython_correlation_eda import DythonCorrelationEDA
 from .boxplot_eda import BoxPlotEDA
+from .pair_scatter_eda import PairScatterEDA
 
 EDAFactory.register_eda("class_balance", ClassBalanceEDA)
 EDAFactory.register_eda("wordcloud_global", lambda: WordCloudEDA(per_class=False))
@@ -17,6 +18,7 @@ EDAFactory.register_eda("info", InfoEDA)
 EDAFactory.register_eda("dython_correlation_matrix", DythonCorrelationEDA)
 EDAFactory.register_eda("correlation_matrix", DythonCorrelationEDA)
 EDAFactory.register_eda("boxplots", BoxPlotEDA)
+EDAFactory.register_eda("pair_scatter", PairScatterEDA)
 
 __all__ = [
     "EDAFactory",
@@ -27,4 +29,5 @@ __all__ = [
     "InfoEDA",
     "DythonCorrelationEDA",
     "BoxPlotEDA",
+    "PairScatterEDA",
 ]
