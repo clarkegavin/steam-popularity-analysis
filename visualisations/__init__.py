@@ -8,6 +8,7 @@ from .base import Visualisation
 from .correlation_matrix import CorrelationMatrix
 from .histogram import Histogram
 from .boxplot import BoxPlot
+from .pair_scatter import PairScatter
 
 # Register visualisations
 
@@ -19,6 +20,7 @@ VisualisationFactory.register_visualisation("correlation_matrix", CorrelationMat
 VisualisationFactory.register_visualisation("dython_correlation_matrix", CorrelationMatrix)  # alias
 VisualisationFactory.register_visualisation("histogram", Histogram)
 VisualisationFactory.register_visualisation("boxplot", BoxPlot)
+VisualisationFactory.register_visualisation("pair_scatter", PairScatter)
 
 __all__ = [
     "ConfusionMatrixChart",
@@ -29,5 +31,6 @@ __all__ = [
     "ClusterPlotter",
     "CorrelationMatrix",
     "Histogram",
-    "BoxPlot"
+    "BoxPlot",
+    "PairScatter"
 ]

@@ -21,6 +21,7 @@ from .log_transform import LogTransform
 from .temporal_features import TemporalFeatures
 from .count_features import CountFeatures
 from .catalog_count import CatalogCount
+from .normalise_feature import NormaliseFeature
 import nltk
 
 # Register built-in preprocessors
@@ -62,6 +63,8 @@ PreprocessorFactory.register("count_features", CountFeatures)
 PreprocessorFactory.register("count", CountFeatures)
 PreprocessorFactory.register("catalog_count", CatalogCount)
 PreprocessorFactory.register("catalog", CatalogCount)
+PreprocessorFactory.register("normalise_feature", NormaliseFeature)
+PreprocessorFactory.register("normalise", NormaliseFeature)
 
 # List of required resources
 REQUIRED_NLTK_RESOURCES = ["punkt", "stopwords"]
@@ -78,4 +81,4 @@ __all__ = ["Preprocessor", "PreprocessorFactory", "Stemmer", "Lemmatizer",
            "Lowercase", "StopwordRemover", "EmojiRemover", "FilterRows", "MaskGenreWords",
            "RemoveDuplicates", "RemoveURLs", "RemoveRepeatedCharacters", "RemovePunctuationNoise",
            "RemoveWhitespace", "MergeFeatures", "CountFeatures", "ExplodeColumns", "RemoveHTMLTags",
-           "LogTransform", "TemporalFeatures", "CatalogCount"]
+           "LogTransform", "TemporalFeatures", "CatalogCount", "NormaliseFeature"]
