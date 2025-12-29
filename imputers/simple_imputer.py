@@ -15,22 +15,28 @@ class SimpleImputer(Imputer):
     Parameters
     - columns: optional list of columns to target; if omitted, operates on all DataFrame columns
     - numeric_strategy: optional, currently 'mean' and 'zero' supported
+    - filter_column: optional column name used to select rows to compute statistics and to apply imputation
+    - filter_value: optional value (or list) used with filter_column for equality matching
     """
 
-    def __init__(self, columns: Optional[List[str]] = None, numeric_strategy: str = 'mean', text_strategy: str = ''):
+    def __init__(self, columns: Optional[List[str]] = None, numeric_strategy: str = 'mean', text_strategy: str = '', filter_column: Optional[str] = None, filter_value: Optional[Any] = None):
         """Create a SimpleImputer.
 
         Parameters:
         - columns: list of column names to impute (None => all columns)
         - numeric_strategy: 'mean' or 'zero'
         - replace_with: string to use when imputing text/missing non-numeric values
+        - filter_column: optional column name used to select which rows are considered when computing statistics and where imputation is applied
+        - filter_value: value or list of values to match in filter_column (equality / isin match)
         """
         self.columns = columns
         self.numeric_strategy = numeric_strategy
         self.replace_with = text_strategy
+        self.filter_column = filter_column
+        self.filter_value = filter_value
         self.statistics_: Dict[str, Any] = {}
         self.logger = get_logger(self.__class__.__name__)
-        self.logger.info(f"Initialized SimpleImputer(columns={self.columns}, numeric_strategy={self.numeric_strategy}, replace_with={self.replace_with})")
+        self.logger.info(f"Initialized SimpleImputer(columns={self.columns}, numeric_strategy={self.numeric_strategy}, replace_with={self.replace_with}, filter_column={self.filter_column}, filter_value={self.filter_value})")
 
     def fit(self, X: pd.DataFrame):
         self.logger.info("Imputer - Starting fit")
@@ -38,14 +44,28 @@ class SimpleImputer(Imputer):
             raise ValueError("SimpleImputer.fit expects a pandas DataFrame")
 
         cols = self.columns or list(X.columns)
+
+        # build mask for filtering if requested
+        if self.filter_column and self.filter_column in X.columns:
+            if isinstance(self.filter_value, (list, tuple, set)):
+                mask = X[self.filter_column].isin(list(self.filter_value))
+            else:
+                mask = X[self.filter_column] == self.filter_value
+            self.logger.info(f"Imputer - Using filter on column '{self.filter_column}' for fit with value(s)={self.filter_value}")
+        else:
+            mask = pd.Series([True] * len(X), index=X.index)
+            if self.filter_column:
+                self.logger.warning(f"Imputer - filter_column '{self.filter_column}' not found in DataFrame; proceeding without filter")
+
         for c in cols:
             if c not in X.columns:
                 self.logger.warning(f"Column '{c}' not found in DataFrame during fit; skipping")
                 continue
 
-            ser = X[c]
-            if pd.api.types.is_numeric_dtype(ser):
+            ser = X.loc[mask, c]
+            if pd.api.types.is_numeric_dtype(X[c]):
                 if self.numeric_strategy == 'mean':
+                    # compute mean on the filtered subset
                     mean_val = ser.dropna().astype(float).mean()
                     self.statistics_[c] = mean_val
                 elif self.numeric_strategy == 'zero':
@@ -66,6 +86,19 @@ class SimpleImputer(Imputer):
 
         df = X.copy()
         cols = self.columns or list(df.columns)
+
+        # build mask for filtering if requested
+        if self.filter_column and self.filter_column in df.columns:
+            if isinstance(self.filter_value, (list, tuple, set)):
+                mask = df[self.filter_column].isin(list(self.filter_value))
+            else:
+                mask = df[self.filter_column] == self.filter_value
+            self.logger.info(f"Imputer - Using filter on column '{self.filter_column}' for transform with value(s)={self.filter_value}")
+        else:
+            mask = pd.Series([True] * len(df), index=df.index)
+            if self.filter_column:
+                self.logger.warning(f"Imputer - filter_column '{self.filter_column}' not found in DataFrame; proceeding without filter")
+
         for c in cols:
             if c not in df.columns:
                 self.logger.debug(f"Column {c} missing from DataFrame; skipping")
@@ -73,15 +106,24 @@ class SimpleImputer(Imputer):
 
             stat = self.statistics_.get(c, None)
             if stat is None:
-                # if numeric and no statistic computed, compute on the fly
-                ser = df[c]
-                if pd.api.types.is_numeric_dtype(ser):
+                # compute on the filtered subset (if any) or fallback to overall
+                ser = df.loc[mask, c] if mask.any() else df[c]
+                if pd.api.types.is_numeric_dtype(df[c]):
                     stat = ser.dropna().astype(float).mean()
                 else:
                     stat = self.replace_with
 
             try:
-                df[c] = df[c].fillna(stat)
+                if mask.all():
+                    # no filtering, fill entire column
+                    df[c] = df[c].fillna(stat)
+                else:
+                    # only fill rows matching the mask
+                    try:
+                        df.loc[mask, c] = df.loc[mask, c].fillna(stat)
+                    except Exception:
+                        # fallback in case of unexpected types
+                        df.loc[mask, c] = df.loc[mask, c].apply(lambda v: stat if pd.isna(v) else v)
             except Exception as e:
                 self.logger.warning(f"Failed to fill column {c} with {stat}: {e}")
 
@@ -92,4 +134,4 @@ class SimpleImputer(Imputer):
         return self.fit(X).transform(X)
 
     def get_params(self):
-        return {'columns': self.columns, 'numeric_strategy': self.numeric_strategy, 'replace_with': self.replace_with}
+        return {'columns': self.columns, 'numeric_strategy': self.numeric_strategy, 'replace_with': self.replace_with, 'filter_column': self.filter_column, 'filter_value': self.filter_value}

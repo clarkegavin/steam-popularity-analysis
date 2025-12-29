@@ -334,12 +334,25 @@ pipelines:
       imputers:
         - name: simple
           params:
-            columns: [ 'Current_Players',
-                      'Price_Initial', 'Price_Final', 'Price_Discount_Percent',  'Recommendations',
+            columns: [ 'Current_Players', 'Price_Discount_Percent',  'Recommendations',
                       #  'Total_Reviews', 'Total_Positive', 'Total_Negative' # These are the result metrics, so should be excluded
             ]
             numeric_strategy: 'zero'
-            text_strategy: 'UNKNOWN'
+            #text_strategy: 'UNKNOWN'
+        - name: simple
+          params:
+            columns: [ 'Price_Initial']
+            numeric_strategy: 'zero'
+            filter_column: 'Is_Free'
+            filter_value: 1
+            #text_strategy: 'UNKNOWN'
+        - name: simple
+          params:
+            columns: [ 'Price_Initial' ]
+            numeric_strategy: 'mean'
+            filter_column: 'Is_Free'
+            filter_value: 0
+            #text_strategy: 'UNKNOWN'
         - name: simple
           params:
             columns: [  'Platforms' ]
