@@ -31,7 +31,11 @@ class KMeansMiniClusterer(Model):
         self.logger.info(f"MiniBatchKMeans Input data shape: {X.shape}")
 
         # Convert to numpy
-        X = X.to_numpy(dtype=np.float32, copy=False)
+        if isinstance(X, np.ndarray):
+            self.logger.info(f"MiniBatchKMeans Input data is already numpy array with dtype: {X.dtype} ")
+        else:
+            X = X.to_numpy(dtype=np.float32, copy=False)
+
         self.logger.info(f"MiniBatchKMeans Converted data type: {X.dtype} ")
         if self.model is None:
             self.build()
