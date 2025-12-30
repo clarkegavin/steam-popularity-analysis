@@ -185,6 +185,24 @@ pipelines:
             prefix: 'release'
             quarter: true
             quarter_format: 'int'
+        - name: cyclic_encode
+          applies_to: data
+          params:
+            columns: [ release_month ]
+            period: 12
+            drop_original: true
+        - name: cyclic_encode
+          applies_to: data
+          params:
+            columns: [ release_day ]
+            period: 365
+            drop_original: true
+        - name: cyclic_encode
+          applies_to: data
+          params:
+            columns: [ release_quarter ]
+            period: 4
+            drop_original: true
         - name: catalog_count
           applies_to: data
           params:
@@ -367,8 +385,6 @@ pipelines:
           params:
             columns: [ 'Genres' ]
             text_strategy: '__UNKNOWN_GENRES__'
-
-
         - name: simple
           params:
             columns: [ 'Review_Score' ]
@@ -398,13 +414,34 @@ pipelines:
                  'catalog_count_Developers', 'catalog_count_Publishers',
                  'num_Supported_Languages', 'num_Publishers', 'num_Developers',
                  'Languages_per_Genre', 'Languages_per_Platform', 'Languages_per_Category',
-                 'release_days_since', 'release_quarter', 'release_year'
+                 'release_days_since', 'release_year', 'Review_Score'
       ]
       params:
         with_mean: true
         with_std: true
 
 
+
+  # EDA After Preprocessing
+  - name: eda
+    type: pipelines.eda_pipeline.EDAPipeline
+    params:
+      save_path: "output/eda/after_preprocessing"
+      steps:
+      - name: boxplots
+        params:
+          filename: "boxplots_after_preprocessing.png"
+      - name: dython_correlation_matrix
+        params:
+          annot: false
+          cmap: "coolwarm"
+          max_rows: 20000
+          filename: "correlation_matrix_after_preprocessing.png"
+      - name: class_balance
+        params:
+          label_max_chars: 10
+          top_n: 15
+          filename: "class_balance_after_preprocessing.png"
 
 
 #------------------------------------------------------------
@@ -694,3 +731,4 @@ pipelines:
             top_n: 10
             prefix: "clustering_kmeans_profile"
             output_dir: "output/clustering_hdbscan/pca"
+

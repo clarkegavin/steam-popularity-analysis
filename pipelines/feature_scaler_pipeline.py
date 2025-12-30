@@ -31,6 +31,9 @@ class FeatureScalerPipeline:
         data = data.copy()
         data.columns = data.columns.astype(str)
 
+        # Ensure column names are plain strings
+        data.columns = [str(c) for c in data.columns]
+
         # Select columns to scale
         if self.columns:
             cols_to_scale = [c for c in self.columns if c in data.columns]
@@ -44,8 +47,11 @@ class FeatureScalerPipeline:
 
         self.logger.info(f"Scaling columns: {cols_to_scale}")
 
-        X = data[cols_to_scale]
 
+        X = data[cols_to_scale].copy()
+       #X = X.apply(pd.to_numeric, errors='coerce')
+        # Ensure numeric dtype
+        X = X.astype("float64")
 
         # Fit once
         if not self.fitted:
