@@ -49,6 +49,8 @@ class UMAPReducer(Reducer):
         if isinstance(X, pd.DataFrame):
             self.logger.info("Input is a DataFrame, converting to numpy array")
             X_np = np.asarray(X, dtype=np.float32)
+        else:
+            X_np = X
 
         # --- Sanity checks ---
         if np.isnan(X_np).any():

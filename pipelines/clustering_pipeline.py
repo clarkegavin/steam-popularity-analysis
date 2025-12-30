@@ -116,14 +116,21 @@ class ClusteringPipeline(Pipeline):
 
         # Reduce
         X_cluster.columns = X_cluster.columns.astype(str) # ensure columns are str for reducers
+        #if not already numpy array, convert to numpy
+        if not isinstance(X_cluster, np.ndarray):
+            X_cluster_values = X_cluster.to_numpy(dtype=np.float32, copy=False)
+        else:
+            X_cluster_values = X_cluster
+
         for reducer in self.reducers:
             self.logger.info(f"Reducing dimensions using {reducer.name}")
-            X_cluster = reducer.fit_transform(X_cluster)
-            self.logger.info(f"Shape after {reducer.name}: {X_cluster.shape}")
+            #X_cluster = reducer.fit_transform(X_cluster)
+            X_cluster = reducer.fit_transform(X_cluster_values)
+            self.logger.info(f"Shape after {reducer.name}: {X_cluster_values.shape}")
 
         # Cluster
         self.logger.info(f"Clustering using {self.clusterer.name}")
-        labels = self.clusterer.fit_predict(X_cluster)
+        labels = self.clusterer.fit_predict(X_cluster_values)
         probabilities = self.clusterer.probabilities_ if hasattr(self.clusterer, "probabilities_") else None
         self.logger.info(f"Cluster labels assigned: {set(labels)}")
         if probabilities is not None:
@@ -137,7 +144,8 @@ class ClusteringPipeline(Pipeline):
         self.logger.info(f"Reducing dimensions using {viz_reducer}")
         # dimensions = self.dimensions
         # self.reducer.set_components(dimensions)
-        X_reduced = viz_reducer.fit_transform(X_cluster)
+        #X_reduced = viz_reducer.fit_transform(X_cluster)
+        X_reduced = viz_reducer.fit_transform(X_cluster_values)
         self.logger.info(f"Reduced shape: {X_reduced.shape}")
 
         # Plot

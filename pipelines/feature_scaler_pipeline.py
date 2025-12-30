@@ -28,6 +28,9 @@ class FeatureScalerPipeline:
         if not isinstance(data, pd.DataFrame):
             raise ValueError("FeatureScalerPipeline expects a pandas DataFrame")
 
+        data = data.copy()
+        data.columns = data.columns.astype(str)
+
         # Select columns to scale
         if self.columns:
             cols_to_scale = [c for c in self.columns if c in data.columns]
@@ -42,6 +45,7 @@ class FeatureScalerPipeline:
         self.logger.info(f"Scaling columns: {cols_to_scale}")
 
         X = data[cols_to_scale]
+
 
         # Fit once
         if not self.fitted:
