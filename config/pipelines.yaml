@@ -420,38 +420,38 @@ pipelines:
         with_std: true
 
 
-  # EDA: scatter visualisation prior to clustering
-  - name: eda_scatter
-    type: pipelines.eda_pipeline.EDAPipeline
-    params:
-      save_path: "output/eda"
-      steps:
-        - name: scatter_plot
-          params:
-            # Specify the reducer to compute coordinates for visualization instead of listing columns
-            reducer:
-              name: umap
-              params:
-                n_components: 3
-#            # Optional: color points by a metadata column
-#            color_by: Genre
-            # Visualiser factory params - use existing 'cluster_plot' visualiser
-            viz_params:
-              name: cluster_plot
-              output_dir: "output/eda/scatter"
-              figsize: [10, 8]
-              xlabel: "UMAP Dimension 1"
-              ylabel: "UMAP Dimension 2"
-              zlabel: "UMAP Dimension 3"
-              title: "Pre-clustering Scatter of Steam Games"
-              xticks_rotation: 45
-              label_min_cluster_size: 250
-              dimensions: 3
-            # Save both a static PNG and an interactive HTML (Plotly)
-            save_interactive: true
-            filename: "pre_clustering_scatter.png"
+#  # EDA: scatter visualisation prior to clustering
+#  - name: eda_scatter
+#    type: pipelines.eda_pipeline.EDAPipeline
+#    params:
+#      save_path: "output/eda"
+#      steps:
+#        - name: scatter_plot
+#          params:
+#            # Specify the reducer to compute coordinates for visualization instead of listing columns
+#            reducer:
+#              name: umap
+#              params:
+#                n_components: 3
+##            # Optional: color points by a metadata column
+##            color_by: Genre
+#            # Visualiser factory params - use existing 'cluster_plot' visualiser
+#            viz_params:
+#              name: cluster_plot
+#              output_dir: "output/eda/scatter"
+#              figsize: [10, 8]
+#              xlabel: "UMAP Dimension 1"
+#              ylabel: "UMAP Dimension 2"
+#              zlabel: "UMAP Dimension 3"
+#              title: "Pre-clustering Scatter of Steam Games"
+#              xticks_rotation: 45
+#              label_min_cluster_size: 250
+#              dimensions: 3
+#            # Save both a static PNG and an interactive HTML (Plotly)
+#            save_interactive: true
+#            filename: "pre_clustering_scatter.png"
 
-#  # EDA After Preprocessing
+# #  EDA After Preprocessing
 #  - name: eda
 #    type: pipelines.eda_pipeline.EDAPipeline
 #    params:
