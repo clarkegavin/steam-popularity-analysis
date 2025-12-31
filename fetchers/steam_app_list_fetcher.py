@@ -1,14 +1,8 @@
 # fetchers/steam_app_list_fetcher.py
 from .base import Fetcher
-import requests
 from logs.logger import get_logger
 from utils.steam_http import steam_get
-import os
-import json
-from ratelimit import limits, sleep_and_retry
-from typing import Dict
 
-ONE_MINUTE = 60
 
 class SteamAppListFetcher(Fetcher):
     """Fetch all Steam AppIDs."""
