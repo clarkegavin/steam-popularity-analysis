@@ -519,52 +519,52 @@ pipelines:
 #            label_min_cluster_size: 250
 #            dimensions: 3
 #
-#  - name: clustering_kmeans_mini_svd
-#    type: pipelines.clustering_pipeline.ClusteringPipeline
-#    params:
-#      #text_field: "Description"
-#      clusterer:
-#        name: kmeans_mini
-#        params:
-#          n_clusters: 5
-#          n_init: 20
-#          max_iter: 500
-#          random_state: 42
-#          batch_size: 2048
-#          reassignment_ratio: 0.01
-#          #algorithm: 'elkan'
-#          #verbose: 1
-#      reducer:
-#        - name: truncated_svd
-#          params:
-#            n_components: 50
-#            random_state: 42
-#      visualisations:
-#         name: cluster_plot
-#         params:
-#            output_dir: "output/clustering_kmeans_mini/svd"
-#            figsize: [10, 8]
-#            xlabel: "Dim 1"
-#            ylabel: "Dim 2"
-#            zlabel: "Dim 3"
-#            title: "KMeans Clustering"
-#            dimensions: 3
-#      # Example: evaluator configuration for clustering
-#      evaluators:
-#        - name: clustering_quality
-#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
-#          params:
-#            k_min: 2
-#            k_max: 10
-#            step: 1
-#            prefix: "clustering_kmeans_mini_quality"
-#            output_dir: "output/clustering_kmeans_mini/svd"
-#        - name: cluster_profile
-#          metrics: [ "descriptive_stats" ]
-#          params:
-#            top_n: 10
-#            prefix: "clustering_kmeans_mini_profile"
-#            output_dir: "output/clustering_kmeans_mini/svd"
+  - name: clustering_kmeans_mini_svd
+    type: pipelines.clustering_pipeline.ClusteringPipeline
+    params:
+      #text_field: "Description"
+      clusterer:
+        name: kmeans_mini
+        params:
+          n_clusters: 5
+          n_init: 20
+          max_iter: 500
+          random_state: 42
+          batch_size: 2048
+          reassignment_ratio: 0.01
+          #algorithm: 'elkan'
+          #verbose: 1
+      reducer:
+        - name: truncated_svd
+          params:
+            n_components: 50
+            random_state: 42
+      visualisations:
+         name: cluster_plot
+         params:
+            output_dir: "output/clustering_kmeans_mini/svd"
+            figsize: [10, 8]
+            xlabel: "Dim 1"
+            ylabel: "Dim 2"
+            zlabel: "Dim 3"
+            title: "KMeans Clustering"
+            dimensions: 3
+      # Example: evaluator configuration for clustering
+      evaluators:
+        - name: clustering_quality
+          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+          params:
+            k_min: 2
+            k_max: 10
+            step: 1
+            prefix: "clustering_kmeans_mini_quality"
+            output_dir: "output/clustering_kmeans_mini/svd"
+        - name: cluster_profile
+          metrics: [ "descriptive_stats" ]
+          params:
+            top_n: 10
+            prefix: "clustering_kmeans_mini_profile"
+            output_dir: "output/clustering_kmeans_mini/svd"
 #
 #
 #  - name: clustering_kmeans_mini_pca
