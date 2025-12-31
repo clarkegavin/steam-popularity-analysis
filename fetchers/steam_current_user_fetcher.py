@@ -1,16 +1,10 @@
 import datetime
 
 from .base import Fetcher
-import requests
 from typing import List
 from logs.logger import get_logger
-import os
-import json
 from utils.steam_http import steam_get
 from datetime import datetime, timezone
-from ratelimit import limits, sleep_and_retry
-from utils.request_rate_limiter import rate_limited_request
-ONE_MINUTE = 60
 
 class SteamCurrentUserFetcher(Fetcher):
     """Fetch current user data via Steam API."""

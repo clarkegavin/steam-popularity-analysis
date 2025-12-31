@@ -82,67 +82,7 @@ class SteamDataPipeline:
 
                 mapped.append(map_payload_to_steamgame(app))
 
-
-
             self.steam_extractor.save_data(mapped)
             self.logger.info(f"Saved {len(mapped)} apps to database")
 
         self.logger.info("Steam data pipeline completed successfully")
-
-    # def run(self):
-    #     # Fetch app IDs
-    #     self.logger.info("Fetching Steam app IDs")
-    #     app_ids_dict = self.app_list_fetcher.fetch()
-    #     app_ids = list(app_ids_dict.keys())
-    #
-    #     if self.limit_apps:
-    #         app_ids = app_ids[:self.limit_apps]
-    #
-    #
-    #     # Step 1: Fetch store metadata
-    #     self.logger.info(f"Fetching store metadata for {len(app_ids)} apps")
-    #     store_data_raw = self.store_fetcher.fetch_app_batch(app_ids)
-    #
-    #     # Step 2: Fetch review summaries
-    #     self.logger.info(f"Fetching review summaries for {len(app_ids)} apps")
-    #     review_data_raw = [self.review_fetcher.fetch_review_summary(app_id) for app_id in app_ids]
-    #
-    #     # Step 3: Merge store + review summary
-    #     review_dict = {r["AppID"]: r for r in review_data_raw if r}  # ignore empty dicts
-    #     merged_data = []
-    #     for app in store_data_raw:
-    #         app_id = app.get("steam_appid")
-    #         if app_id in review_dict:
-    #             app.update(review_dict[app_id])
-    #         mapped = map_payload_to_steamgame(app)
-    #         merged_data.append(mapped)
-    #
-    #     self.logger.info(f"Saving {len(merged_data)} apps to database")
-    #     self.steam_extractor.save_data(merged_data)
-    #     self.logger.info("Steam data pipeline completed successfully")
-
-    # def run(self):
-    #     app_ids_dict = self.app_list_fetcher.fetch()
-    #     all_app_ids = list(app_ids_dict.keys())
-    #
-    #     for i in range(0, len(all_app_ids), 10000):
-    #         batch_app_ids = all_app_ids[i:i + 10000]
-    #
-    #         # Fetch store metadata in smaller batches
-    #         store_data = self.store_fetcher.fetch_app_batch(batch_app_ids, batch_size=self.BATCH_SIZE)
-    #
-    #         # Fetch review summaries for each app
-    #         review_data = [self.review_fetcher.fetch_review_summary(app_id) for app_id in batch_app_ids]
-    #
-    #         # Merge and map
-    #         review_dict = {r["AppID"]: r for r in review_data if r}
-    #         merged_data = []
-    #         for app in store_data:
-    #             app_id = app.get("steam_appid")
-    #             if app_id in review_dict:
-    #                 app.update(review_dict[app_id])
-    #             mapped = map_payload_to_steamgame(app)
-    #             merged_data.append(mapped)
-    #
-    #         # Save to DB
-    #         self.steam_extractor.save_data(merged_data)

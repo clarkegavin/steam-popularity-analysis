@@ -77,10 +77,11 @@ class LogTransform(Preprocessor):
 
             out_col = f"{col}{self.suffix}" if self.suffix else col
             # assign safely (cast to float to avoid dtype incompatibility with integer columns)
-            try:
-                df.loc[:, out_col] = transformed.astype(float)
-            except Exception:
-                df.loc[:, out_col] = transformed
+            # try:
+            #     df.loc[:, out_col] = transformed.astype(float)
+            # except Exception:
+            #     df.loc[:, out_col] = transformed
+            df[out_col] = transformed.astype("float64")
             self.logger.info(f"Written transformed column: {out_col}")
 
         return df
