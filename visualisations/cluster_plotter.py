@@ -4,11 +4,12 @@ from .base import Visualisation
 from logs.logger import get_logger
 import os
 import pandas as pd
-from mpl_toolkits.mplot3d import Axes3D
 from collections import Counter
 import numpy as np
 import plotly.express as px
-from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.patches as mpatches
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
 
 class ClusterPlotter(Visualisation):
     """
@@ -36,7 +37,7 @@ class ClusterPlotter(Visualisation):
         return self
 
 
-    def plot(self, X_reduced, labels, **kwargs):
+    def plot(self, data, labels=None, **kwargs):
         """
         Plot 2D or 3D cluster scatter plot.
         Automatically detects dimensionality.
@@ -47,13 +48,27 @@ class ClusterPlotter(Visualisation):
             kwargs: optional style overrides (e.g. cmap, alpha)
         """
         # Convert DataFrame to NumPy array if necessary
-        if isinstance(X_reduced, pd.DataFrame):
-            X_plot = X_reduced.values
+        # Accept either a DataFrame or array-like in `data`
+        if isinstance(data, pd.DataFrame):
+            X_plot = data.values
         else:
-            X_plot = X_reduced
+            X_plot = data
 
         n_dims = X_plot.shape[1]
         self.logger.info(f"Creating cluster plot with {X_plot.shape[0]} points and {n_dims}D embedding")
+
+        # Prepare label -> color mapping (handle categorical labels)
+        cmap_name = kwargs.pop('cmap', self.params.get('cmap', 'tab10'))
+        color_vals = None
+        legend_labels = None
+        if labels is not None:
+            labels_arr = np.asarray(labels)
+            if not np.issubdtype(labels_arr.dtype, np.number):
+                uniques, inverse = np.unique(labels_arr, return_inverse=True)
+                color_vals = inverse
+                legend_labels = list(uniques)
+            else:
+                color_vals = labels_arr
 
         # --- 3D PLOT ---------------------------------------------------------
         if n_dims == 3:
@@ -64,7 +79,8 @@ class ClusterPlotter(Visualisation):
                 X_plot[:, 0],
                 X_plot[:, 1],
                 X_plot[:, 2],
-                c=labels,
+                c=color_vals if color_vals is not None else labels,
+                cmap=cmap_name,
                 **kwargs
             )
 
@@ -86,7 +102,8 @@ class ClusterPlotter(Visualisation):
             scatter = ax.scatter(
                 X_plot[:, 0],
                 X_plot[:, 1],
-                c=labels,
+                c=color_vals if color_vals is not None else labels,
+                cmap=cmap_name,
                 **kwargs
             )
 
@@ -105,6 +122,19 @@ class ClusterPlotter(Visualisation):
             # Optional: label large clusters
             min_size = self.params.get("label_min_cluster_size", 100)
             self._label_large_clusters(ax, X_plot, labels, min_cluster_size=min_size)
+
+            # Add legend for categorical labels if present
+            if legend_labels is not None:
+                try:
+                    cmap_obj = cm.get_cmap(cmap_name)
+                except Exception:
+                    cmap_obj = cm.get_cmap('tab10')
+                patches = []
+                for i, lab in enumerate(legend_labels):
+                    # Normalize index into colormap
+                    color = mcolors.to_hex(cmap_obj(i / max(1, len(legend_labels)-1)))
+                    patches.append(mpatches.Patch(color=color, label=str(lab)))
+                ax.legend(handles=patches, title='label')
 
             self.logger.info("2D cluster plot created with cluster labels (if enabled)")
             return fig, ax, scatter
@@ -188,7 +218,7 @@ class ClusterPlotter(Visualisation):
             X_plot = X_reduced
 
         # Build dataframe
-        if X_reduced.shape[1] == 2:
+        if X_plot.shape[1] == 2:
             df = pd.DataFrame({
                 "x": X_plot[:, 0],
                 "y": X_plot[:, 1],
@@ -203,7 +233,7 @@ class ClusterPlotter(Visualisation):
                 title=self.title
             )
 
-        elif X_reduced.shape[1] == 3:
+        elif X_plot.shape[1] == 3:
             df = pd.DataFrame({
                 "x": X_plot[:, 0],
                 "y": X_plot[:, 1],

@@ -142,9 +142,6 @@ class ClusteringPipeline(Pipeline):
         # Reduce (for visualisation)
         viz_reducer = ReducerFactory.create_reducer(name='umap', n_components=self.dimensions)
         self.logger.info(f"Reducing dimensions using {viz_reducer}")
-        # dimensions = self.dimensions
-        # self.reducer.set_components(dimensions)
-        #X_reduced = viz_reducer.fit_transform(X_cluster)
         X_reduced = viz_reducer.fit_transform(X_cluster_values)
         self.logger.info(f"Reduced shape: {X_reduced.shape}")
 
