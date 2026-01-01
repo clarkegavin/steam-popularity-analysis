@@ -61,7 +61,8 @@ pipelines:
     filter_features:
       - name: drop_columns
         params:
-          columns_to_drop: ['Id', 'AppID', 'Name',  'Type', 'URL', 'Tags',
+          columns_to_drop: [#'Id', 'AppID', 'Name',  # excluding these in teh clustering pipeline so they can be added back in for success metrics
+                            'Type', 'URL', 'Tags',
                             'Price_Currency', 'Metacritic_URL',  'Metacritic_Score',
                              'Content_Descriptors', 'Current_Players_Last_Updated',
 
@@ -282,7 +283,8 @@ pipelines:
           columns_to_drop:  ['Release_Date', 'Developers', 'Publishers', 'Supported_Languages', 'Price_Final',
                              'Review_Score_Desc',
                              'num_Genres', 'num_Platforms', 'num_Categories', # these were only needed for feature engineering
-                             'Total_Reviews', 'Total_Positive', 'Total_Negative' # These are the result metrics, so should be excluded
+                             #'Total_Reviews', #keep for success index, but drop before clustering
+                             'Total_Positive', 'Total_Negative' # These are the result metrics, so should be excluded
           ]
 
   - name: data_cleanup
@@ -301,7 +303,9 @@ pipelines:
 #            strip: true           # optional: default true
         - name: log_transform
           params:
-            columns: ['Current_Players', 'Total_Reviews', 'Total_Positive', 'Total_Negative', 'Recommendations', 'catalog_count_Developers', 'catalog_count_Publishers' ]
+            columns: ['Current_Players',
+                      # 'Total_Reviews',
+                      'Total_Positive', 'Total_Negative', 'Recommendations', 'catalog_count_Developers', 'catalog_count_Publishers' ]
             method: 'log1p'
             shift: true
             suffix: ''  # empty means replace original columns; set to '_log' to persist alongside originals
@@ -413,7 +417,8 @@ pipelines:
                  'catalog_count_Developers', 'catalog_count_Publishers',
                  'num_Supported_Languages', 'num_Publishers', 'num_Developers',
                  'Languages_per_Genre', 'Languages_per_Platform', 'Languages_per_Category',
-                 'release_days_since', 'release_year', 'Review_Score'
+                 'release_days_since', 'release_year',
+#                 'Review_Score', 'Total_Reviews'
       ]
       params:
         with_mean: true
@@ -457,6 +462,14 @@ pipelines:
 #    params:
 #      save_path: "output/eda/after_preprocessing"
 #      steps:
+#        - name: pca_analysis
+#          params :
+#            n_components: null  # Set to None to compute all components
+#            top_k: 10
+#            explained_variance_filename: "pca_explained_variance.xlsx"
+#            loadings_filename: "pca_top_loadings.xlsx"
+#            scree_plot_filename: "pca_scree_plot_after_preprocessing.png"
+
 #      - name: boxplots
 #        params:
 #          filename: "boxplots_after_preprocessing.png"
@@ -519,52 +532,52 @@ pipelines:
 #            label_min_cluster_size: 250
 #            dimensions: 3
 #
-  - name: clustering_kmeans_mini_svd
-    type: pipelines.clustering_pipeline.ClusteringPipeline
-    params:
-      #text_field: "Description"
-      clusterer:
-        name: kmeans_mini
-        params:
-          n_clusters: 5
-          n_init: 20
-          max_iter: 500
-          random_state: 42
-          batch_size: 2048
-          reassignment_ratio: 0.01
-          #algorithm: 'elkan'
-          #verbose: 1
-      reducer:
-        - name: truncated_svd
-          params:
-            n_components: 50
-            random_state: 42
-      visualisations:
-         name: cluster_plot
-         params:
-            output_dir: "output/clustering_kmeans_mini/svd"
-            figsize: [10, 8]
-            xlabel: "Dim 1"
-            ylabel: "Dim 2"
-            zlabel: "Dim 3"
-            title: "KMeans Clustering"
-            dimensions: 3
-      # Example: evaluator configuration for clustering
-      evaluators:
-        - name: clustering_quality
-          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
-          params:
-            k_min: 2
-            k_max: 10
-            step: 1
-            prefix: "clustering_kmeans_mini_quality"
-            output_dir: "output/clustering_kmeans_mini/svd"
-        - name: cluster_profile
-          metrics: [ "descriptive_stats" ]
-          params:
-            top_n: 10
-            prefix: "clustering_kmeans_mini_profile"
-            output_dir: "output/clustering_kmeans_mini/svd"
+#  - name: clustering_kmeans_mini_svd
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      #text_field: "Description"
+#      clusterer:
+#        name: kmeans_mini
+#        params:
+#          n_clusters: 5
+#          n_init: 20
+#          max_iter: 500
+#          random_state: 42
+#          batch_size: 2048
+#          reassignment_ratio: 0.01
+#          #algorithm: 'elkan'
+#          #verbose: 1
+#      reducer:
+#        - name: truncated_svd
+#          params:
+#            n_components: 50
+#            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_kmeans_mini/svd"
+#            figsize: [10, 8]
+#            xlabel: "Dim 1"
+#            ylabel: "Dim 2"
+#            zlabel: "Dim 3"
+#            title: "KMeans Clustering"
+#            dimensions: 3
+#      # Example: evaluator configuration for clustering
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_kmeans_mini_quality"
+#            output_dir: "output/clustering_kmeans_mini/svd"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_mini_profile"
+#            output_dir: "output/clustering_kmeans_mini/svd"
 #
 #
 #  - name: clustering_kmeans_mini_pca
@@ -658,72 +671,104 @@ pipelines:
 #            prefix: "clustering_kmeans_profile"
 #            output_dir: "output/clustering_kmeans/svd"
 #
-#  - name: clustering_kmeans_pca
-#    type: pipelines.clustering_pipeline.ClusteringPipeline
-#    params:
-#      #text_field: "Description"
-#      clusterer:
-#        name: kmeans
-#        params:
-#          n_clusters: 8
-#          n_init: auto
-#          max_iter: 300
-#          random_state: 42
-#          algorithm: 'elkan'
-#          #verbose: 1
+  - name: clustering_kmeans_pca
+    type: pipelines.clustering_pipeline.ClusteringPipeline
+    params:
+      #text_field: "Description"
+      clusterer:
+        name: kmeans
+        params:
+          n_clusters: 8
+          n_init: auto
+          max_iter: 300
+          random_state: 42
+          algorithm: 'elkan'
+          #verbose: 1
+      reducer:
+        - name: pca
+          params:
+            n_components: 20
+            random_state: 42
+      visualisations:
+         name: cluster_plot
+         params:
+            output_dir: "output/clustering_kmeans/pca8_20"
+            figsize: [10, 8]
+            xlabel: "Dim 1"
+            ylabel: "Dim 2"
+            zlabel: "Dim 3"
+            title: "KMeans Clustering"
+            dimensions: 3
+      evaluators:
+        - name: clustering_quality
+          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+          params:
+            k_min: 2
+            k_max: 10
+            step: 1
+            prefix: "clustering_kmeans_quality"
+            output_dir: "output/clustering_kmeans/pca8_20"
+        - name: cluster_profile
+          metrics: [ "descriptive_stats" ]
+          params:
+            top_n: 10
+            prefix: "clustering_kmeans_profile"
+            output_dir: "output/clustering_kmeans/pca8_20"
+
+
+  - name: clustering_kmeans_success_metrics
+    type: pipelines.clustering_pipeline.ClusteringPipeline
+    params:
+      #text_field: "Description"
+      clusterer:
+        name: kmeans
+        params:
+          n_clusters: 8
+          n_init: auto
+          max_iter: 300
+          random_state: 42
+          algorithm: 'elkan'
+          #verbose: 1
 #      reducer:
 #        - name: pca
 #          params:
-#            n_components: 50
+#            n_components: 20
 #            random_state: 42
-#      visualisations:
-#         name: cluster_plot
-#         params:
-#            output_dir: "output/clustering_kmeans/pca8"
-#            figsize: [10, 8]
-#            xlabel: "Dim 1"
-#            ylabel: "Dim 2"
-#            zlabel: "Dim 3"
-#            title: "KMeans Clustering"
-#            dimensions: 3
-#      evaluators:
-#        - name: clustering_quality
-#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
-#          params:
-#            k_min: 2
-#            k_max: 10
-#            step: 1
-#            prefix: "clustering_kmeans_quality"
-#            output_dir: "output/clustering_kmeans/pca8"
-#        - name: cluster_profile
-#          metrics: [ "descriptive_stats" ]
-#          params:
-#            top_n: 10
-#            prefix: "clustering_kmeans_profile"
-#            output_dir: "output/clustering_kmeans/pca8"
+      visualisations:
+         name: cluster_plot
+         params:
+            output_dir: "output/clustering_kmeans/pca_success_metrics"
+            figsize: [10, 8]
+            xlabel: "Dim 1"
+            ylabel: "Dim 2"
+            zlabel: "Dim 3"
+            title: "KMeans Clustering"
+            dimensions: 3
+      evaluators:
+        - name: clustering_quality
+          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+          params:
+            k_min: 2
+            k_max: 10
+            step: 1
+            prefix: "clustering_kmeans_quality"
+            output_dir: "output/clustering_kmeans/pca_success_metrics"
+        - name: cluster_profile
+          metrics: [ "descriptive_stats" ]
+          params:
+            top_n: 10
+            prefix: "clustering_kmeans_profile"
+            output_dir: "output/clustering_kmeans/pca_success_metrics"
 
-#
-#  - name: clustering_hdbscan_pca
-#    type: pipelines.clustering_pipeline.ClusteringPipeline
-#    params:
-##      text_field: "Description"
-##      genre_field: "Genre"
-##      filter_genre: "All"
-##      vectorizer:
-##        vectorizer_name: "tfidf"
-##        vectorizer_field: "Description"
-##        vectorizer_params:
-##          max_features: 10000
-##          ngram_range: [ 4, 6 ]
-##          analyzer: "char_wb"
-#      clusterer:
-#         name: "hdbscan"
-#         params:
-#            min_cluster_size: 50
-#            min_samples: 25
-#            #metric: "cosine" # memory issues with cosine on large datasets
-#            #algorithm: "brute"
-#            metric: "euclidean" # memory issues... try euclidean
+  - name: clustering_hdbscan_no_reducer
+    type: pipelines.clustering_pipeline.ClusteringPipeline
+    params:
+      clusterer:
+         name: "hdbscan"
+         params:
+            min_cluster_size: 50
+            min_samples: 25
+            metric: "euclidean" # memory issues... try euclidean
 #      reducer:
 #        - name: pca
 #          params:
@@ -733,33 +778,33 @@ pipelines:
 #          params:
 #            n_components: 5
 #            n_neighbors: 15
-#      visualisations:
-#         name: cluster_plot
-#         params:
-#            output_dir: "output/clustering_hdbscan/pca"
-#            figsize: [10, 8]
-#            xlabel: "UMAP Dimension 1"
-#            ylabel: "UMAP Dimension 2"
-#            zlabel: "UMAP Dimension 3"
-#            title: "HDBSCAN Clustering of Steam Games"
-#            xticks_rotation: 45
-#            label_min_cluster_size: 250
-#            dimensions: 3
-#      evaluators:
-#        - name: clustering_quality
-#          metrics: [ "silhouette_average", "silhouette_per_point" ]
-#          params:
-#            k_min: 2
-#            k_max: 10
-#            step: 1
-#            prefix: "clustering_hdbscan_quality"
-#            output_dir: "output/clustering_hdbscan/pca"
-#        - name: cluster_profile
-#          metrics: [ "descriptive_stats" ]
-#          params:
-#            top_n: 10
-#            prefix: "clustering_kmeans_profile"
-#            output_dir: "output/clustering_hdbscan/pca"
+      visualisations:
+         name: cluster_plot
+         params:
+            output_dir: "output/clustering_hdbscan/no_reducer"
+            figsize: [10, 8]
+            xlabel: "UMAP Dimension 1"
+            ylabel: "UMAP Dimension 2"
+            zlabel: "UMAP Dimension 3"
+            title: "HDBSCAN Clustering of Steam Games"
+            xticks_rotation: 45
+            label_min_cluster_size: 250
+            dimensions: 3
+      evaluators:
+        - name: clustering_quality
+          metrics: [ "silhouette_average", "silhouette_per_point" ]
+          params:
+            k_min: 2
+            k_max: 10
+            step: 1
+            prefix: "clustering_hdbscan_quality"
+            output_dir: "output/clustering_hdbscan/no_reducer"
+        - name: cluster_profile
+          metrics: [ "descriptive_stats" ]
+          params:
+            top_n: 10
+            prefix: "clustering_kmeans_profile"
+            output_dir: "output/clustering_hdbscan/no_reducer"
 
 #
 #  - name: clustering_hdbscan_svd
@@ -820,118 +865,118 @@ pipelines:
 #            prefix: "clustering_kmeans_profile"
 #            output_dir: "output/clustering_hdbscan/svd"
 
+#
+#  - name: agglomerative_pca
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+##      text_field: "Description"
+##      genre_field: "Genre"
+##      filter_genre: "All"
+##      vectorizer:
+##        vectorizer_name: "tfidf"
+##        vectorizer_field: "Description"
+##        vectorizer_params:
+##          max_features: 10000
+##          ngram_range: [ 4, 6 ]
+##          analyzer: "char_wb"
+#      clusterer:
+#         name: "agglomerative"
+#         params:
+#            n_clusters: 8
+#            metric: "euclidean"
+#            linkage: "average"
+#
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+#        - name: "umap"
+#          params:
+#            n_components: 5
+#            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_agglomerative/pca"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_agglomerative/pca"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_agglomerative/pca"
 
-  - name: agglomerative_pca
-    type: pipelines.clustering_pipeline.ClusteringPipeline
-    params:
-#      text_field: "Description"
-#      genre_field: "Genre"
-#      filter_genre: "All"
-#      vectorizer:
-#        vectorizer_name: "tfidf"
-#        vectorizer_field: "Description"
-#        vectorizer_params:
-#          max_features: 10000
-#          ngram_range: [ 4, 6 ]
-#          analyzer: "char_wb"
-      clusterer:
-         name: "agglomerative"
-         params:
-            n_clusters: 8
-            metric: "euclidean"
-            linkage: "average"
 
-      reducer:
-        - name: pca
-          params:
-            n_components: 20
-            random_state: 42
-        - name: "umap"
-          params:
-            n_components: 5
-            n_neighbors: 15
-      visualisations:
-         name: cluster_plot
-         params:
-            output_dir: "output/clustering_agglomerative/pca"
-            figsize: [10, 8]
-            xlabel: "UMAP Dimension 1"
-            ylabel: "UMAP Dimension 2"
-            zlabel: "UMAP Dimension 3"
-            title: "HDBSCAN Clustering of Steam Games"
-            xticks_rotation: 45
-            label_min_cluster_size: 250
-            dimensions: 3
-      evaluators:
-        - name: clustering_quality
-          metrics: [ "silhouette_average", "silhouette_per_point" ]
-          params:
-            k_min: 2
-            k_max: 10
-            step: 1
-            prefix: "clustering_hdbscan_quality"
-            output_dir: "output/clustering_agglomerative/pca"
-        - name: cluster_profile
-          metrics: [ "descriptive_stats" ]
-          params:
-            top_n: 10
-            prefix: "clustering_kmeans_profile"
-            output_dir: "output/clustering_agglomerative/pca"
-
-
-  - name: agglomerative_svd
-    type: pipelines.clustering_pipeline.ClusteringPipeline
-    params:
-#      text_field: "Description"
-#      genre_field: "Genre"
-#      filter_genre: "All"
-#      vectorizer:
-#        vectorizer_name: "tfidf"
-#        vectorizer_field: "Description"
-#        vectorizer_params:
-#          max_features: 10000
-#          ngram_range: [ 4, 6 ]
-#          analyzer: "char_wb"
-      clusterer:
-         name: "agglomerative"
-         params:
-            n_clusters: 8
-            metric: "euclidean"
-            linkage: "average"
-      reducer:
-        - name: truncated_svd
-          params:
-            n_components: 20
-            random_state: 42
-        - name: "umap"
-          params:
-            n_components: 5
-            n_neighbors: 15
-      visualisations:
-         name: cluster_plot
-         params:
-            output_dir: "output/clustering_agglomerative/svd"
-            figsize: [10, 8]
-            xlabel: "UMAP Dimension 1"
-            ylabel: "UMAP Dimension 2"
-            zlabel: "UMAP Dimension 3"
-            title: "HDBSCAN Clustering of Steam Games"
-            xticks_rotation: 45
-            label_min_cluster_size: 250
-            dimensions: 3
-      evaluators:
-        - name: clustering_quality
-          metrics: [ "silhouette_average", "silhouette_per_point" ]
-          params:
-            k_min: 2
-            k_max: 10
-            step: 1
-            prefix: "clustering_hdbscan_quality"
-            output_dir: "output/clustering_agglomerative/svd"
-        - name: cluster_profile
-          metrics: [ "descriptive_stats" ]
-          params:
-            top_n: 10
-            prefix: "clustering_kmeans_profile"
-            output_dir: "output/clustering_agglomerative/svd"
+#  - name: agglomerative_svd
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+##      text_field: "Description"
+##      genre_field: "Genre"
+##      filter_genre: "All"
+##      vectorizer:
+##        vectorizer_name: "tfidf"
+##        vectorizer_field: "Description"
+##        vectorizer_params:
+##          max_features: 10000
+##          ngram_range: [ 4, 6 ]
+##          analyzer: "char_wb"
+#      clusterer:
+#         name: "agglomerative"
+#         params:
+#            n_clusters: 8
+#            metric: "euclidean"
+#            linkage: "average"
+#      reducer:
+#        - name: truncated_svd
+#          params:
+#            n_components: 20
+#            random_state: 42
+#        - name: "umap"
+#          params:
+#            n_components: 5
+#            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_agglomerative/svd"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_agglomerative/svd"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_agglomerative/svd"
 

@@ -91,14 +91,14 @@ class ClusteringPipeline(Pipeline):
         # texts = df_filtered[self.text_field].fillna("").tolist()
         # self.logger.info(f"Filtered records: {len(texts)}")
 
-        # Keep original dataframe with IDs for saving and descriptive stats
         df_original = df.copy()
 
         # drop id, appid and name columns if present for clustering.
         # Total Reviews/Total_Positive/Total_Negative are also dropped to avoid leakage as these form the success metrics
-        cols_to_drop = [col for col in ['Id', 'AppId', 'Name', 'Total_Reviews', 'Total_Positive', 'Total_Negative'] if col in df.columns]
+        cols_to_drop = [col for col in [ 'Id', 'AppId', 'Name', 'Total_Reviews', 'Review_Score'] if col in df.columns]
         df_for_clustering = df_original.drop(columns=cols_to_drop, errors='ignore')
         self.logger.info(f"Dropped columns {cols_to_drop}, shape for clustering: {df_for_clustering.shape}")
+        self.logger.info(f"df_original columns: {df_original.columns.tolist()}")
 
         # if cols_to_drop:
         #     self.logger.info(f"Dropping columns: {cols_to_drop}")
@@ -145,15 +145,18 @@ class ClusteringPipeline(Pipeline):
         X_reduced = viz_reducer.fit_transform(X_cluster_values)
         self.logger.info(f"Reduced shape: {X_reduced.shape}")
 
+
         # Plot
         self.logger.info(f"Plotting clusters using {self.plotter.name}")
         fig, ax, scatter = self.plotter.plot(X_reduced, labels)
         self.logger.info("Cluster plot generated")
         plot_path = os.path.join(self.plotter.output_dir, f"{self.name}_cluster_plot.png")
         self.plotter.save(fig, plot_path)
-        self.plotter.save_embeddings(X_reduced, labels, df_original, prefix=f"{self.name}_clustering_pipeline")
         self.logger.info(f"Cluster plot saved as '{self.name}_cluster_plot.png'")
         self.plotter.save_interactive_plot(X_reduced, labels, prefix=f"{self.name}_cluster_plot")
+
+        self.plotter.save_embeddings(X_reduced, labels, df_original, prefix=f"{self.name}_clustering_pipeline")
+
         if probabilities is not None:
             self.plotter.save_interactive_plot_by_probability(
                 X_reduced,
@@ -185,6 +188,7 @@ class ClusteringPipeline(Pipeline):
         #         self.logger.info(f"Evaluator results: {eval_results}")
         #     except Exception as e:
         #         self.logger.error(f"Error running evaluator: {e}")
+
 
         for evaluator, cfg in self.evaluators:
             self.logger.info(f"Running evaluator {evaluator.name} with config {cfg}")

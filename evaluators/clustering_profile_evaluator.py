@@ -35,11 +35,14 @@ class ClusterProfileEvaluator:
         # ---- success metric ----
         required_cols = {"Total_Reviews", "Review_Score"}
         if required_cols.issubset(df.columns):
+            self.logger.info("Calculating success_index metric")
             df["success_index"] = np.log1p(df["Total_Reviews"]) * df["Review_Score"]
+            self.logger.info(f"Sample success_index values:\n{df['success_index'].head()}")
         else:
             self.logger.warning(
                 "Missing columns for success_index; skipping success metric"
             )
+            self.logger.info(f"Cluster Profile Dataframe columns: {df.columns.tolist()}")
             df["success_index"] = np.nan
 
         # ---------------- numeric ----------------
@@ -124,6 +127,7 @@ class ClusterProfileEvaluator:
         self._save_numeric_csv(results["numeric_summary"])
         self._save_binary_csv(results["binary_sparse_summary"])
         self._save_categorical_csv(results["categorical_summary"])
+
 
         self.logger.info("Saved cluster profile summaries to CSV")
         if "success_index" in df.columns:
