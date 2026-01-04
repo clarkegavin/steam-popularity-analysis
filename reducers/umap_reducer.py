@@ -47,6 +47,16 @@ class UMAPReducer(Reducer):
 
         # if X is a dataframe, convert to numpy array
         if isinstance(X, pd.DataFrame):
+            # check for NaNs
+            nan_cols = X.columns[X.isna().any()].tolist()
+            self.logger.warning(f"Columns containing NaNs: {nan_cols}")
+            nan_counts = X.isna().sum()
+            nan_counts = nan_counts[nan_counts > 0]
+            self.logger.warning(
+                "NaN counts per column:\n%s",
+                nan_counts.to_string()
+            )
+
             self.logger.info("Input is a DataFrame, converting to numpy array")
             X_np = np.asarray(X, dtype=np.float32)
         else:
@@ -59,7 +69,7 @@ class UMAPReducer(Reducer):
 
         self._model = umap.UMAP(n_components=self.n_components, random_state=self.random_state, **self.kwargs)
         self.logger.info("UMAP model created, performing fit_transform")
-        embedding  = self._model.fit_transform(X)
+        embedding  = self._model.fit_transform(X_np)
         # convert numpy array back to DataFrame
         columns = [f"umap_{i}" for i in range(embedding.shape[1])]
         embedding_df = pd.DataFrame(

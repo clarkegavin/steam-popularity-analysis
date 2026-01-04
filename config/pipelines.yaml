@@ -283,7 +283,7 @@ pipelines:
           columns_to_drop:  ['Release_Date', 'Developers', 'Publishers', 'Supported_Languages', 'Price_Final',
                              'Review_Score_Desc',
                              'num_Genres', 'num_Platforms', 'num_Categories', # these were only needed for feature engineering
-                             #'Total_Reviews', #keep for success index, but drop before clustering
+                            # 'Total_Reviews', #keep for success index, but drop before clustering
                              'Total_Positive', 'Total_Negative' # These are the result metrics, so should be excluded
           ]
 
@@ -418,13 +418,13 @@ pipelines:
                  'num_Supported_Languages', 'num_Publishers', 'num_Developers',
                  'Languages_per_Genre', 'Languages_per_Platform', 'Languages_per_Category',
                  'release_days_since', 'release_year',
-#                 'Review_Score', 'Total_Reviews'
+                 'Review_Score', 'Total_Reviews'
       ]
       params:
         with_mean: true
         with_std: true
 
-
+#
 #  # EDA: scatter visualisation prior to clustering
 #  - name: eda_scatter
 #    type: pipelines.eda_pipeline.EDAPipeline
@@ -443,7 +443,7 @@ pipelines:
 #            # Visualiser factory params - use existing 'cluster_plot' visualiser
 #            viz_params:
 #              name: cluster_plot
-#              output_dir: "output/eda/scatter"
+#              output_dir: "output/eda/scatter/test"
 #              figsize: [10, 8]
 #              xlabel: "UMAP Dimension 1"
 #              ylabel: "UMAP Dimension 2"
@@ -670,143 +670,460 @@ pipelines:
 #            top_n: 10
 #            prefix: "clustering_kmeans_profile"
 #            output_dir: "output/clustering_kmeans/svd"
-#
-  - name: clustering_kmeans_pca
-    type: pipelines.clustering_pipeline.ClusteringPipeline
-    params:
-      #text_field: "Description"
-      clusterer:
-        name: kmeans
-        params:
-          n_clusters: 8
-          n_init: auto
-          max_iter: 300
-          random_state: 42
-          algorithm: 'elkan'
-          #verbose: 1
-      reducer:
-        - name: pca
-          params:
-            n_components: 20
-            random_state: 42
-      visualisations:
-         name: cluster_plot
-         params:
-            output_dir: "output/clustering_kmeans/pca8_20"
-            figsize: [10, 8]
-            xlabel: "Dim 1"
-            ylabel: "Dim 2"
-            zlabel: "Dim 3"
-            title: "KMeans Clustering"
-            dimensions: 3
-      evaluators:
-        - name: clustering_quality
-          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
-          params:
-            k_min: 2
-            k_max: 10
-            step: 1
-            prefix: "clustering_kmeans_quality"
-            output_dir: "output/clustering_kmeans/pca8_20"
-        - name: cluster_profile
-          metrics: [ "descriptive_stats" ]
-          params:
-            top_n: 10
-            prefix: "clustering_kmeans_profile"
-            output_dir: "output/clustering_kmeans/pca8_20"
-
-
-  - name: clustering_kmeans_success_metrics
-    type: pipelines.clustering_pipeline.ClusteringPipeline
-    params:
-      #text_field: "Description"
-      clusterer:
-        name: kmeans
-        params:
-          n_clusters: 8
-          n_init: auto
-          max_iter: 300
-          random_state: 42
-          algorithm: 'elkan'
-          #verbose: 1
+##
+#  - name: clustering_kmeans_pca
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      #text_field: "Description"
+#      clusterer:
+#        name: kmeans
+#        params:
+#          n_clusters: 8
+#          n_init: auto
+#          max_iter: 300
+#          random_state: 42
+#          algorithm: 'elkan'
+#          #verbose: 1
 #      reducer:
 #        - name: pca
 #          params:
 #            n_components: 20
 #            random_state: 42
-      visualisations:
-         name: cluster_plot
-         params:
-            output_dir: "output/clustering_kmeans/pca_success_metrics"
-            figsize: [10, 8]
-            xlabel: "Dim 1"
-            ylabel: "Dim 2"
-            zlabel: "Dim 3"
-            title: "KMeans Clustering"
-            dimensions: 3
-      evaluators:
-        - name: clustering_quality
-          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
-          params:
-            k_min: 2
-            k_max: 10
-            step: 1
-            prefix: "clustering_kmeans_quality"
-            output_dir: "output/clustering_kmeans/pca_success_metrics"
-        - name: cluster_profile
-          metrics: [ "descriptive_stats" ]
-          params:
-            top_n: 10
-            prefix: "clustering_kmeans_profile"
-            output_dir: "output/clustering_kmeans/pca_success_metrics"
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_kmeans/pca8_20"
+#            figsize: [10, 8]
+#            xlabel: "Dim 1"
+#            ylabel: "Dim 2"
+#            zlabel: "Dim 3"
+#            title: "KMeans Clustering"
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_kmeans_quality"
+#            output_dir: "output/clustering_kmeans/pca8_20"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_kmeans/pca8_20"
 
-  - name: clustering_hdbscan_no_reducer
-    type: pipelines.clustering_pipeline.ClusteringPipeline
-    params:
-      clusterer:
-         name: "hdbscan"
-         params:
-            min_cluster_size: 50
-            min_samples: 25
-            metric: "euclidean" # memory issues... try euclidean
+#
+#  - name: clustering_kmeans_success_metrics
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      #text_field: "Description"
+#      clusterer:
+#        name: kmeans
+#        params:
+#          n_clusters: 8
+#          n_init: auto
+#          max_iter: 300
+#          random_state: 42
+#          algorithm: 'elkan'
+#          #verbose: 1
+##      reducer:
+##        - name: pca
+##          params:
+##            n_components: 20
+##            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_kmeans/pca_success_metrics"
+#            figsize: [10, 8]
+#            xlabel: "Dim 1"
+#            ylabel: "Dim 2"
+#            zlabel: "Dim 3"
+#            title: "KMeans Clustering"
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_kmeans_quality"
+#            output_dir: "output/clustering_kmeans/pca_success_metrics"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_kmeans/pca_success_metrics"
+#
+#  - name: clustering_hdbscan_no_reducer
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 25
+#            metric: "euclidean" # memory issues... try euclidean
+##      reducer:
+##        - name: pca
+##          params:
+##            n_components: 20
+##            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/no_reducer"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/no_reducer"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/no_reducer"
+
+
+#  - name: clustering_kmeans_pca
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      #text_field: "Description"
+#      clusterer:
+#        name: kmeans
+#        params:
+#          n_clusters: 8
+#          n_init: auto
+#          max_iter: 300
+#          random_state: 42
+#          algorithm: 'elkan'
+#          #verbose: 1
 #      reducer:
 #        - name: pca
 #          params:
 #            n_components: 20
 #            random_state: 42
-#        - name: "umap"
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_kmeans/pca8_20"
+#            figsize: [10, 8]
+#            xlabel: "Dim 1"
+#            ylabel: "Dim 2"
+#            zlabel: "Dim 3"
+#            title: "KMeans Clustering"
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
 #          params:
-#            n_components: 5
-#            n_neighbors: 15
-      visualisations:
-         name: cluster_plot
-         params:
-            output_dir: "output/clustering_hdbscan/no_reducer"
-            figsize: [10, 8]
-            xlabel: "UMAP Dimension 1"
-            ylabel: "UMAP Dimension 2"
-            zlabel: "UMAP Dimension 3"
-            title: "HDBSCAN Clustering of Steam Games"
-            xticks_rotation: 45
-            label_min_cluster_size: 250
-            dimensions: 3
-      evaluators:
-        - name: clustering_quality
-          metrics: [ "silhouette_average", "silhouette_per_point" ]
-          params:
-            k_min: 2
-            k_max: 10
-            step: 1
-            prefix: "clustering_hdbscan_quality"
-            output_dir: "output/clustering_hdbscan/no_reducer"
-        - name: cluster_profile
-          metrics: [ "descriptive_stats" ]
-          params:
-            top_n: 10
-            prefix: "clustering_kmeans_profile"
-            output_dir: "output/clustering_hdbscan/no_reducer"
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_kmeans_quality"
+#            output_dir: "output/clustering_kmeans/pca8_20"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_kmeans/pca8_20"
 
 #
+#  - name: clustering_kmeans_success_metrics
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      #text_field: "Description"
+#      clusterer:
+#        name: kmeans
+#        params:
+#          n_clusters: 8
+#          n_init: auto
+#          max_iter: 300
+#          random_state: 42
+#          algorithm: 'elkan'
+#          #verbose: 1
+##      reducer:
+##        - name: pca
+##          params:
+##            n_components: 20
+##            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_kmeans/pca_success_metrics"
+#            figsize: [10, 8]
+#            xlabel: "Dim 1"
+#            ylabel: "Dim 2"
+#            zlabel: "Dim 3"
+#            title: "KMeans Clustering"
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_kmeans_quality"
+#            output_dir: "output/clustering_kmeans/pca_success_metrics"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_kmeans/pca_success_metrics"
+
+#  - name: clustering_hdbscan_no_reducer
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 25
+#            metric: "euclidean" # memory issues... try euclidean
+##      reducer:
+##        - name: pca
+##          params:
+##            n_components: 20
+##            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/no_reducer"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/no_reducer"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/no_reducer"
+
+
+#  - name: clustering_kmeans_pca
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      #text_field: "Description"
+#      clusterer:
+#        name: kmeans
+#        params:
+#          n_clusters: 8
+#          n_init: auto
+#          max_iter: 300
+#          random_state: 42
+#          algorithm: 'elkan'
+#          #verbose: 1
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_kmeans/pca8_20"
+#            figsize: [10, 8]
+#            xlabel: "Dim 1"
+#            ylabel: "Dim 2"
+#            zlabel: "Dim 3"
+#            title: "KMeans Clustering"
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_kmeans_quality"
+#            output_dir: "output/clustering_kmeans/pca8_20"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_kmeans/pca8_20"
+
+#
+#  - name: clustering_kmeans_success_metrics
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      #text_field: "Description"
+#      clusterer:
+#        name: kmeans
+#        params:
+#          n_clusters: 8
+#          n_init: auto
+#          max_iter: 300
+#          random_state: 42
+#          algorithm: 'elkan'
+#          #verbose: 1
+##      reducer:
+##        - name: pca
+##          params:
+##            n_components: 20
+##            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_kmeans/pca_success_metrics"
+#            figsize: [10, 8]
+#            xlabel: "Dim 1"
+#            ylabel: "Dim 2"
+#            zlabel: "Dim 3"
+#            title: "KMeans Clustering"
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_kmeans_quality"
+#            output_dir: "output/clustering_kmeans/pca_success_metrics"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_kmeans/pca_success_metrics"
+#
+#  - name: clustering_hdbscan_v2
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 100
+#            min_samples: 50
+#            metric: "euclidean" # memory issues... try euclidean
+##      reducer:
+##        - name: pca
+##          params:
+##            n_components: 20
+##            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/v2"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/v2"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/v2"
+
+#  - name: clustering_hdbscan_v3
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 5
+#            min_samples: 5
+#            metric: "euclidean" # memory issues... try euclidean
+##      reducer:
+##        - name: pca
+##          params:
+##            n_components: 20
+##            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/v3"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/v3"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/v3"
+
 #  - name: clustering_hdbscan_svd
 #    type: pipelines.clustering_pipeline.ClusteringPipeline
 #    params:
@@ -979,4 +1296,1073 @@ pipelines:
 #            top_n: 10
 #            prefix: "clustering_kmeans_profile"
 #            output_dir: "output/clustering_agglomerative/svd"
+#
+#  - name: clustering_hdbscan_v4
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 25
+#            metric: "euclidean" # memory issues... try euclidean
+##      reducer:
+##        - name: pca
+##          params:
+##            n_components: 20
+##            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/v4"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/v4"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/v4"
+#
+#  - name: clustering_hdbscan_v5
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 75
+#            min_samples: 30
+#            metric: "euclidean" # memory issues... try euclidean
+##      reducer:
+##        - name: pca
+##          params:
+##            n_components: 20
+##            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/v5"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/v5"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/v5"
+#
+#  - name: clustering_hdbscan_v6
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 25
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/v6"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/v6"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/v6"
+#
+#
+#  - name: clustering_hdbscan_v7
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 50
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/v7"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/v7"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/v7"
+#
+#
+#  - name: clustering_hdbscan_v8
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 25
+#            min_samples: 50
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/v8"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/v8"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/v8"
 
+#
+#  - name: clustering_kmeans_pca_test
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      #text_field: "Description"
+#      clusterer:
+#        name: kmeans
+#        params:
+#          n_clusters: 8
+#          n_init: auto
+#          max_iter: 300
+#          random_state: 42
+#          algorithm: 'elkan'
+#          #verbose: 1
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_kmeans/test"
+#            figsize: [10, 8]
+#            xlabel: "Dim 1"
+#            ylabel: "Dim 2"
+#            zlabel: "Dim 3"
+#            title: "KMeans Clustering"
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point", "elbow" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_kmeans_quality"
+#            output_dir: "output/clustering_kmeans/test"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_kmeans/test"
+##
+#
+
+#  - name: clustering_hdbscan_v10
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 25
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+#        - name: "umap"
+#          params:
+#            n_components: 5
+#            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/v10"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/v10"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_hdbscan_profile"
+#            output_dir: "output/clustering_hdbscan/v10"
+#
+#  - name: clustering_hdbscan_umap_v1
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 25
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: "umap"
+#          params:
+#            n_components: 20
+#            n_neighbors: 15
+#            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/umap_v1"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/umap_v1"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/umap_v1"
+#
+#
+#  - name: clustering_hdbscan_umap_v2
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 50
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: "umap"
+#          params:
+#            n_components: 20
+#            n_neighbors: 15
+#            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/umap_v2"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/umap_v2"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/umap_v2"
+#
+#
+#  - name: clustering_hdbscan_umap_v3
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 24
+#            min_samples: 50
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: "umap"
+#          params:
+#            n_components: 20
+#            n_neighbors: 15
+#            random_state: 42
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/umap_v3"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/umap_v3"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/umap_v3"
+
+
+
+# Hypterparmeter Tuning Runs
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_1
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 50 #increase min samples to raise the density bar
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_1"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_1"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_1"
+#
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_2
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 100
+#            min_samples: 50 #increase min samples to raise the density bar
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_2"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_2"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_2"
+#
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_3
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 200
+#            min_samples: 50
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_3"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_3"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_3"
+#
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_4
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 300
+#            min_samples: 50
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_4"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_4"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_4"
+#
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_5
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 500
+#            min_samples: 50
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_5"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_5"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_5"
+#
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_6
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 25
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_6"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_6"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_6"
+#
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_7
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 75
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_7"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_7"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_7"
+#
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_8
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 100
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_8"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_8"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_8"
+#
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_9
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 50
+#            min_samples: 150
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_9"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_9"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_9"
+
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_10
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 25
+#            min_samples: 25
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_10"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_10"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_10"
+#
+#
+#  - name: clustering_hdbscan_hyperparam_tuning_11
+#    type: pipelines.clustering_pipeline.ClusteringPipeline
+#    params:
+#      clusterer:
+#         name: "hdbscan"
+#         params:
+#            min_cluster_size: 5
+#            min_samples: 5
+#            metric: "euclidean" # memory issues... try euclidean
+#      reducer:
+#        - name: pca
+#          params:
+#            n_components: 20
+#            random_state: 42
+##        - name: "umap"
+##          params:
+##            n_components: 5
+##            n_neighbors: 15
+#      visualisations:
+#         name: cluster_plot
+#         params:
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_11"
+#            figsize: [10, 8]
+#            xlabel: "UMAP Dimension 1"
+#            ylabel: "UMAP Dimension 2"
+#            zlabel: "UMAP Dimension 3"
+#            title: "HDBSCAN Clustering of Steam Games"
+#            xticks_rotation: 45
+#            label_min_cluster_size: 250
+#            dimensions: 3
+#      evaluators:
+#        - name: clustering_quality
+#          metrics: [ "silhouette_average", "silhouette_per_point" ]
+#          params:
+#            k_min: 2
+#            k_max: 10
+#            step: 1
+#            prefix: "clustering_hdbscan_quality"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_11"
+#        - name: cluster_profile
+#          metrics: [ "descriptive_stats" ]
+#          params:
+#            top_n: 10
+#            prefix: "clustering_kmeans_profile"
+#            output_dir: "output/clustering_hdbscan/hyperparam_tuning_11"
+
+
+  - name: clustering_hdbscan_hyperparam_tuning_12
+    type: pipelines.clustering_pipeline.ClusteringPipeline
+    params:
+      clusterer:
+         name: "hdbscan"
+         params:
+            min_cluster_size: 10
+            min_samples: 5
+            metric: "euclidean" # memory issues... try euclidean
+      reducer:
+        - name: pca
+          params:
+            n_components: 20
+            random_state: 42
+#        - name: "umap"
+#          params:
+#            n_components: 5
+#            n_neighbors: 15
+      visualisations:
+         name: cluster_plot
+         params:
+            output_dir: "output/clustering_hdbscan/hyperparam_tuning_12"
+            figsize: [10, 8]
+            xlabel: "UMAP Dimension 1"
+            ylabel: "UMAP Dimension 2"
+            zlabel: "UMAP Dimension 3"
+            title: "HDBSCAN Clustering of Steam Games"
+            xticks_rotation: 45
+            label_min_cluster_size: 250
+            dimensions: 3
+      evaluators:
+        - name: clustering_quality
+          metrics: [ "silhouette_average", "silhouette_per_point" ]
+          params:
+            k_min: 2
+            k_max: 10
+            step: 1
+            prefix: "clustering_hdbscan_quality"
+            output_dir: "output/clustering_hdbscan/hyperparam_tuning_12"
+        - name: cluster_profile
+          metrics: [ "descriptive_stats" ]
+          params:
+            top_n: 10
+            prefix: "clustering_kmeans_profile"
+            output_dir: "output/clustering_hdbscan/hyperparam_tuning_12"
+
+
+  - name: clustering_hdbscan_hyperparam_tuning_13
+    type: pipelines.clustering_pipeline.ClusteringPipeline
+    params:
+      clusterer:
+         name: "hdbscan"
+         params:
+            min_cluster_size: 50
+            min_samples: 5
+            metric: "euclidean" # memory issues... try euclidean
+      reducer:
+        - name: pca
+          params:
+            n_components: 20
+            random_state: 42
+#        - name: "umap"
+#          params:
+#            n_components: 5
+#            n_neighbors: 15
+      visualisations:
+         name: cluster_plot
+         params:
+            output_dir: "output/clustering_hdbscan/hyperparam_tuning_13"
+            figsize: [10, 8]
+            xlabel: "UMAP Dimension 1"
+            ylabel: "UMAP Dimension 2"
+            zlabel: "UMAP Dimension 3"
+            title: "HDBSCAN Clustering of Steam Games"
+            xticks_rotation: 45
+            label_min_cluster_size: 250
+            dimensions: 3
+      evaluators:
+        - name: clustering_quality
+          metrics: [ "silhouette_average", "silhouette_per_point" ]
+          params:
+            k_min: 2
+            k_max: 10
+            step: 1
+            prefix: "clustering_hdbscan_quality"
+            output_dir: "output/clustering_hdbscan/hyperparam_tuning_13"
+        - name: cluster_profile
+          metrics: [ "descriptive_stats" ]
+          params:
+            top_n: 10
+            prefix: "clustering_kmeans_profile"
+            output_dir: "output/clustering_hdbscan/hyperparam_tuning_13"
